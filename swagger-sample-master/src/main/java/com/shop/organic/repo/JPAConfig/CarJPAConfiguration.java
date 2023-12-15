@@ -27,6 +27,7 @@ import com.shop.organic.entity.car.Car;
   entityManagerFactoryRef = "carEntityManagerFactory",
   transactionManagerRef = "carTransactionManager"
 )
+//@ConfigurationProperties("application-dev")
 public class CarJPAConfiguration {
 	
 	@Primary
