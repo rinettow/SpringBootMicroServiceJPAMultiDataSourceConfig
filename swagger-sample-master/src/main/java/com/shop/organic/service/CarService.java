@@ -1,6 +1,7 @@
 package com.shop.organic.service;
 
 import java.beans.PropertyDescriptor;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -23,6 +24,7 @@ import javax.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.shop.organic.dto.AddressDTO;
@@ -50,10 +52,15 @@ import com.shop.organic.util.CreateEntityManager;
 
 @Service
 @Transactional
+//@ConfigurationProperties("application-dev")
 public class CarService {
 	
 	//@Autowired
 	//private CarRepository carRepository;
+	
+	//@Value("${server.port}")
+    private String port;
+
 	
 	@Autowired
 	private CreateEntityManager em;
@@ -70,7 +77,7 @@ public class CarService {
 		Query q = entityManager.createQuery("SELECT c FROM Car c", Car.class);
 	    //q.setParameter("keyword", keyword); //etc
 		carEntityList= q.getResultList();
-		System.out.println("carEntityList.size()::::" +carEntityList.size());
+		System.out.println("carEntityList.size()::::" +carEntityList.size()+ port);
 		
 		carDTOList.clear();
 		int i=0;
