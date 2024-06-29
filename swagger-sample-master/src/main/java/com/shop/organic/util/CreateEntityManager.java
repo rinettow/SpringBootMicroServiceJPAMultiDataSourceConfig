@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 public class CreateEntityManager {
 	
 	@Autowired
-	@Qualifier("carEntityManagerFactory")  
-    EntityManagerFactory carEm;
+	@Qualifier("builderEntityManagerFactory")  
+    EntityManagerFactory builderEm;
 	
 	@Autowired
 	@Qualifier("categoryEntityManagerFactory")  
@@ -22,8 +22,8 @@ public class CreateEntityManager {
      
     public EntityManager getEntityManager(String enviroment) {
         EntityManagerFactory entityManager = null;
-        if(enviroment.equals("car")) {
-            entityManager = this.carEm;
+        if(enviroment.equals("builder")) {
+            entityManager = this.builderEm;
         }else if(enviroment.equals("category")){
         	 entityManager = this.categoryEm;
         }

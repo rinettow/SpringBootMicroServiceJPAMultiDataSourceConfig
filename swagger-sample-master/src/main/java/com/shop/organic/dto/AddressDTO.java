@@ -4,7 +4,7 @@ import javax.persistence.Column;
 
 public class AddressDTO {
 	
-    private String addressId;
+    private int addressId;
 	private String doorNumber;
 	private String streetFirst;
 	private String streetSecond;
@@ -15,10 +15,10 @@ public class AddressDTO {
 	private String pincode;
 	private String country;
 	
-	public String getAddressId() {
+	public int getAddressId() {
 		return addressId;
 	}
-	public void setAddressId(String addressId) {
+	public void setAddressId(int addressId) {
 		this.addressId = addressId;
 	}
 	public String getDoorNumber() {

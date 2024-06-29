@@ -18,36 +18,53 @@ public class Picture {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "PICTURE_ID", insertable = false, updatable = false)
-	private String pictureId;
+	private int pictureId;
 	
-	@Column(name = "CAR_ID")
-	private String carId;
+	@Column(name = "PROJECT_ID")
+	private int projectId;
 	
-	@ManyToOne
-	@JoinColumn(name="CAR_ID", insertable = false, updatable = false)
-	private Car car;
-	
-	public Car getCar() {
-		return car;
-	}
-	public void setCar(Car car) {
-		this.car = car;
-	}
+
 	@Column(name = "PICTURE_FILE_PATH")
 	private String pictureFilePath;
 	
-	public String getPictureId() {
+	
+	@Column(name = "VIDEO_FILE_PATH")
+	private String videoFilePath;
+	
+	
+	@ManyToOne
+	@JoinColumn(name="PROJECT_ID", insertable = false, updatable = false)
+	private Projects projects;
+	
+	
+	
+	
+	public Projects getProjects() {
+		return projects;
+	}
+	public void setProjects(Projects projects) {
+		this.projects = projects;
+	}
+	public String getVideoFilePath() {
+		return videoFilePath;
+	}
+	public void setVideoFilePath(String videoFilePath) {
+		this.videoFilePath = videoFilePath;
+	}
+	public int getProjectId() {
+		return projectId;
+	}
+	public void setProjectId(int projectId) {
+		this.projectId = projectId;
+	}
+	
+	public int getPictureId() {
 		return pictureId;
 	}
-	public void setPictureId(String pictureId) {
+	public void setPictureId(int pictureId) {
 		this.pictureId = pictureId;
 	}
-	/*public String getCarId() {
-		return carId;
-	}
-	public void setCarId(String carId) {
-		this.carId = carId;
-	}*/
+
 	public String getPictureFilePath() {
 		return pictureFilePath;
 	}

@@ -7,14 +7,28 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Parameter;
+
 @Entity
 @Table(name = "ADDRESS")
 public class Address {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+	/*@Id
+    @GeneratedValue(generator = "sequence-generator")
+    @GenericGenerator(
+      name = "sequence-generator",
+      strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator",
+      parameters = {
+        @Parameter(name = "sequence_name", value = "Address_sequence"),
+        @Parameter(name = "initial_value", value = "1"),
+        @Parameter(name = "increment_size", value = "1")
+        }
+    )*/
 	@Column(name = "ADDRESS_ID", insertable = false, updatable = false)
-	private String addressId;
+	private int addressId;
 	
 	@Column(name = "DOOR_NUMBER")
 	private String doorNumber;
@@ -44,12 +58,15 @@ public class Address {
 	private String country;
 	
 	
-	public String getAddressId() {
+
+	public int getAddressId() {
 		return addressId;
 	}
-	public void setAddressId(String addressId) {
+	public void setAddressId(int addressId) {
 		this.addressId = addressId;
 	}
+	
+	
 	public String getDoorNumber() {
 		return doorNumber;
 	}
