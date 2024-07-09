@@ -135,15 +135,6 @@ public class BuilderController {
 	    		.ok().headers(responseHeaders).body("Response with header using ResponseEntity");*/
 	}
 	
-	@PostMapping("/handleFileUpload")
-	public ResponseEntity<Object> handleFileUpload(@RequestParam("image") MultipartFile file,
-			@RequestParam("projectDTO") String projectDTO) {
-		System.out.println("addNewProject" +file.getName());
-		return generateResponse("List of Builders!", HttpStatus.OK, new ProjectsDTO());
-
-		//return "redirect:";
-	}
-	
 	
 	@PostMapping(value = "/SendOTP")
 	public ResponseEntity<Object> SendOTP(@RequestBody BuilderDTO builderDTO) {
@@ -157,22 +148,6 @@ public class BuilderController {
 		//return generateResponse("List of Cars!", HttpStatus.OK, carList);
 		return generateResponse("List of Builders!", HttpStatus.OK, loginBuilder);
 	}
-	
-	
-	@PostMapping(value = "/projectMainImgupload")
-	//public void projectMainImgupload(@RequestParam("image") MultipartFile file) {
-	public ResponseEntity<Object>  projectMainImgupload(@RequestBody ProjectsDTO projectDTO) {
-	
-			//@RequestParam("projectId") int projectId, 
-			//@RequestParam("builderId") int builderId) {
-		ProjectsDTO newProjectAddded = new ProjectsDTO();
-		System.out.println("projectId" +projectDTO);
-		System.out.println("projectId" +projectDTO);
-		return generateResponse("List of Builders!", HttpStatus.OK, newProjectAddded);
-		
-      
-	}
-	
 	
 	
 	@GetMapping(value = "/{builderId}")
