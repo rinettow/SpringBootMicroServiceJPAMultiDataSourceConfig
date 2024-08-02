@@ -10,12 +10,15 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
 @Table(name = "BUILDER")
@@ -55,11 +58,16 @@ public class Builder {
 	
 
 	@OneToMany(mappedBy="builder", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+	@JsonManagedReference
 	private List<Projects> projects;
 	
 	
 	@OneToMany(mappedBy="builder", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
+	
+	@ManyToOne
+    @JoinColumn(name="AMENITIES_AND_SPECIFICATIONS_ID", insertable = false, updatable = false)
+	private AmenitiesAndSpecifications amenitiesAndSpecifications;
 	
 	@Column(name = "USER_NAME")
 	private String userName;
@@ -67,8 +75,23 @@ public class Builder {
 	@Column(name = "EN_PASSWORD")
 	private String password;
 	
+	@Column(name = "AMENITIES_AND_SPECIFICATIONS_ID")
+	private int amenityAndSpecificationId;
 	
 	
+	
+	public int getAmenityAndSpecificationId() {
+		return amenityAndSpecificationId;
+	}
+	public void setAmenityAndSpecificationId(int amenityAndSpecificationId) {
+		this.amenityAndSpecificationId = amenityAndSpecificationId;
+	}
+	public AmenitiesAndSpecifications getAmenitiesAndSpecifications() {
+		return amenitiesAndSpecifications;
+	}
+	public void setAmenitiesAndSpecifications(AmenitiesAndSpecifications amenitiesAndSpecifications) {
+		this.amenitiesAndSpecifications = amenitiesAndSpecifications;
+	}
 	public List<Projects> getProjects() {
 		return projects;
 	}

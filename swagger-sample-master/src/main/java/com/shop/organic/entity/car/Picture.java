@@ -36,8 +36,39 @@ public class Picture {
 	@JoinColumn(name="PROJECT_ID", insertable = false, updatable = false)
 	private Projects projects;
 	
+	@Column(name = "ROOM_TYPE")
+	private String roomType;
+	
+	@Column(name = "ROOM_DESCRIPTION")
+	private String roomDescription;
 	
 	
+	//@Column(name = "ROOM_SQUARE_FEET")
+	//private int roomSquareFeet;
+	
+	@Column(name = "MATERIAL_BRAND")
+	private String materialBrand;
+	
+	
+	
+	public String getMaterialBrand() {
+		return materialBrand;
+	}
+	public void setMaterialBrand(String materialBrand) {
+		this.materialBrand = materialBrand;
+	}
+	public String getRoomType() {
+		return roomType;
+	}
+	public void setRoomType(String roomType) {
+		this.roomType = roomType;
+	}
+	public String getRoomDescription() {
+		return roomDescription;
+	}
+	public void setRoomDescription(String roomDescription) {
+		this.roomDescription = roomDescription;
+	}
 	
 	public Projects getProjects() {
 		return projects;

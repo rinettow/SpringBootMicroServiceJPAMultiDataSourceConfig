@@ -15,10 +15,52 @@ public class PictureDTO {
     private String pictureFilePath;
 	private int projectId;
 	private String videoFilePath;
-   
-    
+	private byte[] picture;
+	private int builderId;
+	private String roomType;
+	private String roomDescription;
+    private int roomSquareFeet;
+	private String materialBrand;
 	
 	
+	
+	public int getRoomSquareFeet() {
+		return roomSquareFeet;
+	}
+	public void setRoomSquareFeet(int roomSquareFeet) {
+		this.roomSquareFeet = roomSquareFeet;
+	}
+	public String getMaterialBrand() {
+		return materialBrand;
+	}
+	public void setMaterialBrand(String materialBrand) {
+		this.materialBrand = materialBrand;
+	}
+	public String getRoomType() {
+		return roomType;
+	}
+	public void setRoomType(String roomType) {
+		this.roomType = roomType;
+	}
+	public String getRoomDescription() {
+		return roomDescription;
+	}
+	public void setRoomDescription(String roomDescription) {
+		this.roomDescription = roomDescription;
+	}
+	
+	public int getBuilderId() {
+		return builderId;
+	}
+	public void setBuilderId(int builderId) {
+		this.builderId = builderId;
+	}
+	public byte[] getPicture() {
+		return picture;
+	}
+	public void setPicture(byte[] picture) {
+		this.picture = picture;
+	}
 	public int getProjectId() {
 		return projectId;
 	}

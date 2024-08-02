@@ -14,6 +14,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 
 @Entity
 @Table(name = "PROJECTS")
@@ -41,8 +43,9 @@ public class Projects {
     private String projMainPicFilePath;
 	
 
-	@ManyToOne
+	@ManyToOne(cascade=CascadeType.ALL)
 	@JoinColumn(name="BUILDER_ID", insertable = false, updatable = false)
+	@JsonBackReference
 	private Builder builder;
 	
 	@ManyToOne

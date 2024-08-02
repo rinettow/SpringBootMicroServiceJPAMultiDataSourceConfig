@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.persistence.Column;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.PersistenceContext;
@@ -43,6 +44,7 @@ import com.google.gson.Gson;
 import com.shop.organic.dto.AddressDTO;
 import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
+import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.entity.car.Address;
@@ -91,23 +93,36 @@ public class BuilderService {
 	}
     
 	private List<Builder> builderEntityList;
+	private List<AmenitiesAndSpecifications> builderEntityListAmenities;
 	private List<BuilderDTO> builderDTOList=new ArrayList<BuilderDTO>();
 	//private List<CategoryDTO> catgDTOList;
 	
-	public List<BuilderDTO> findBuildersList() {
+	public List<BuilderDTO> findBuildersList(int amenitiesAndSpecificationsId) {
 		//return categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
 		//carEntityList=carRepository.findAll();
 		
 		EntityManager entityManager = em.getEntityManager("builder");
-		Query q = entityManager.createQuery("SELECT b FROM Builder b", Builder.class);
-	    //q.setParameter("keyword", keyword); //etc
-		builderEntityList= q.getResultList();
-		System.out.println("carEntityList.size()::::" +builderEntityList.size()+ port);
 		
 		builderDTOList.clear();
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		  CriteriaQuery<AmenitiesAndSpecifications> criteria = builder.createQuery(AmenitiesAndSpecifications.class);
+		  Root<AmenitiesAndSpecifications> rootBuilder = criteria.from(AmenitiesAndSpecifications.class);
+		  criteria.select(rootBuilder);
+		  
+		  List<Predicate> restrictions = new ArrayList<Predicate>();
+		  restrictions.add(builder.equal(rootBuilder.get("amenitiesAndSpecificationsId"), amenitiesAndSpecificationsId));
+		  
+		  criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		  TypedQuery<AmenitiesAndSpecifications> query = entityManager.createQuery(criteria);
+		  query.setHint(QueryHints.HINT_CACHEABLE, true);
+		  query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		  builderEntityListAmenities = query.getResultList();
+		  
+		  if (builderEntityListAmenities.isEmpty()) {
+            throw new ResourceNotFoundException("Builder: " +amenitiesAndSpecificationsId+ " not Found..." );
+        }
 		int i=0;
-		
-		return builderEntityList.stream().map(this::setBuilderDTO).collect(Collectors.toList());
+		return builderEntityListAmenities.get(0).getBuilder().stream().map(builders->  setBuilderDTO(builders, getAmenitiesAndSpecificationsById(builderEntityListAmenities.get(0).getAmenitiesAndSpecificationsId()))).collect(Collectors.toList());
 	}
 	
 	public Builder registerBuilder(BuilderDTO builderDTO) {
@@ -169,6 +184,65 @@ public class BuilderService {
 		return projectEntity;
 	}
 	
+	public ProjectsDTO getProjectDetailsById(ProjectsDTO projectDTO) {
+		ProjectsDTO responseProjectDTO =new ProjectsDTO();
+		Projects projectEntityResponse=new Projects();
+		Builder builderEntity = new Builder();
+		
+		Projects projectEntity= setProjectEntity(projectDTO);
+		EntityManager entityManager = em.getEntityManager("builder");
+		
+		
+		entityManager.getTransaction().begin();
+	    //if (entityManager.contains(projectEntity)) {
+	    	projectEntityResponse=entityManager.find(Projects.class, projectEntity.getProjectId());
+	    	builderEntity = entityManager.find(Builder.class, projectEntityResponse.getBuilderId());
+	    //}
+	    // commit transaction at all
+	    entityManager.getTransaction().commit();
+		
+		System.out.println("builderEntity.getBuilderId()::::" +projectEntity.getProjectId());
+		System.out.println("builderEntity.getAddress().getAddressId())::::" +projectEntity.getBuilderId());
+		
+		
+		//responseBuilderDTO= this.setBuilderDTO(builderEntity);
+		
+		return setProjectDTO(projectEntityResponse, builderEntity);
+	}
+	
+	public Picture addNewPicture(PictureDTO pictureDTO) {
+		ProjectsDTO responseProjectDTO =new ProjectsDTO();
+		
+		Picture pictureEntity= setPictureEntity(pictureDTO);
+		EntityManager entityManager = em.getEntityManager("builder");
+		
+		
+		entityManager.getTransaction().begin();
+	    if (!entityManager.contains(pictureEntity)) {
+	    	Picture entityAvailableOrNot=entityManager.find(Picture.class, pictureEntity.getPictureId());
+	    	if(entityAvailableOrNot == null) {
+	    		// persist object - add to entity manager
+		    	entityManager.persist(pictureEntity);
+		        // flush em - save to DB
+		    	entityManager.flush();
+	    	}else {
+		    	entityManager.merge(pictureEntity);
+		    }
+	        	
+	        
+	    }
+	    // commit transaction at all
+	    entityManager.getTransaction().commit();
+		
+		System.out.println("pictureEntity.getPictureId()::::" +pictureEntity.getPictureId());
+		System.out.println("pictureEntity.getProjectId()::::" +pictureEntity.getProjectId());
+		
+		
+		//responseBuilderDTO= this.setBuilderDTO(builderEntity);
+		
+		return pictureEntity;
+	}
+	
 	public void ceateImageDirectoryForBuilder(BuilderDTO builderDTO) {
 		System.out.println("ceateImageDirectoryForBuilder");
 		 
@@ -203,9 +277,7 @@ public class BuilderService {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-	        
 	    }
-		
 		String childImagePath= path.concat("Builder").concat(Integer.toString(projectDTO.getBuilderId()))
 				.concat("/").concat("Project").concat(Integer.toString(projectDTO.getProjectId())).concat("/ChildImages");
 		if(! new File(childImagePath).exists())
@@ -214,6 +286,32 @@ public class BuilderService {
 	        new File(childImagePath).mkdir();
 	    }
 	    System.out.println("realPathtoUploads = {}" +finalPath);
+	        
+	  }
+		
+		public void ceateImageDirectoryForPicture(PictureDTO pictureDTO, String builderId, MultipartFile multipartFile) {
+			System.out.println("ceateImageDirectoryForBuilder");
+			 
+			String path= "C:/Users/User/GitHub Repository/BuildersImage/";
+			String finalPath= path.concat("Builder").concat(builderId)
+					.concat("/").concat("Project").concat(Integer.toString(pictureDTO.getProjectId()))
+					.concat("/").concat("ChildImages");
+			if( new File(finalPath).exists())
+		    {
+		    	System.out.println("ceateImageDirectoryForBuilder2");
+		        try {
+		        	String fileName = multipartFile.getOriginalFilename();
+					multipartFile.transferTo(new File(finalPath.concat("/").concat(fileName)));
+					pictureDTO.setPictureFilePath(finalPath.concat("/").concat(fileName));
+				} catch (IllegalStateException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		        
+		    }
 	}
 	
 	
@@ -238,15 +336,47 @@ public class BuilderService {
 		
 		if(!LoginBuilder.isEmpty()) {
 			
-			LoginBuilderDTO= setBuilderDTO(LoginBuilder.get(0));
+			LoginBuilderDTO= setBuilderDTO(LoginBuilder.get(0), getAmenitiesAndSpecificationsById(LoginBuilder.get(0).getAmenityAndSpecificationId()));
 		}
 		System.out.println("LoginBuilderDTO" +new Gson().toJson(LoginBuilderDTO));
 		return LoginBuilderDTO;
 	}
 	
+	public AmenitiesAndSpecifications getAmenitiesAndSpecificationsById(int amenitiesAndSpecificationsId) {
+		AmenitiesAndSpecifications amenitiesAndSpecifications =new AmenitiesAndSpecifications();
+		
+		EntityManager entityManager = em.getEntityManager("builder");
+		
+		
+		entityManager.getTransaction().begin();
+	    amenitiesAndSpecifications=entityManager.find(AmenitiesAndSpecifications.class, amenitiesAndSpecificationsId);
+	    
+	    // commit transaction at all
+	    entityManager.getTransaction().commit();
+		
+		
+		return amenitiesAndSpecifications;
+	}
+	
+	public Builder getBuildersById(int builderId) {
+		Builder builder =new Builder();
+		
+		EntityManager entityManager = em.getEntityManager("builder");
+		
+		
+		entityManager.getTransaction().begin();
+		builder=entityManager.find(Builder.class, builderId);
+	    
+	    // commit transaction at all
+	    entityManager.getTransaction().commit();
+		
+		
+		return builder;
+	}
 	
 	
-	public List<BuilderDTO> getBuilderById(String builderId) {
+	
+	/*public List<BuilderDTO> getBuilderById(String builderId) {
 		EntityManager entityManager = em.getEntityManager("car");
 		
 		builderDTOList.clear();
@@ -271,7 +401,7 @@ public class BuilderService {
           }
 		  System.out.println("carEntityList.size()::::" +builderEntityList.size());
 		return builderEntityList.stream().map(this::setBuilderDTO).collect(Collectors.toList());
-	}
+	}*/
 	
 	
 	
@@ -280,8 +410,8 @@ public class BuilderService {
 		
 		builderEntity.setAddress(this.copyAddressDTOToEntity(builderDTO.getAddress()));
 		
-		final Set<String> prop = new HashSet<>(Arrays.asList("builderName", "manufacturingCompany", 
-				  "phone", "userName", "password"));
+		final Set<String> prop = new HashSet<>(Arrays.asList("builderName", "manufacturingCompany", "projectType", 
+				  "phone", "userName", "password", "amenityAndSpecificationId"));
 		this.copyBuilderBasicDTOToEntity(builderDTO, builderEntity, prop);
 		
 		
@@ -298,10 +428,35 @@ public class BuilderService {
 		return projectEntity;
 	}
 	
-	public BuilderDTO setBuilderDTO(Builder builderEntity){
+	public Picture setPictureEntity(PictureDTO picturetDTO) {
+		Picture pictureEntity =new Picture();
+		final Set<String> prop = new HashSet<>(Arrays.asList("pictureId", "projectId", "pictureFilePath", "videoFilePath", "roomType", "roomDescription", "materialBrand"));
+		this.copyPicturesBasicDTOToEntity(picturetDTO, pictureEntity, prop);
+		
+		return pictureEntity;
+	}
+	
+	public BuilderDTO setBuilderDTO(Builder builderEntity, AmenitiesAndSpecifications amenitiesAndSpecificationsEntity){
 		BuilderDTO builderDTO= new BuilderDTO();
 		builderDTO.setAddress(this.copyAddressEntityToDto(builderEntity.getAddress()));
-		builderDTO.setProjects(builderEntity.getProjects().stream().map(this::setProjectDTO).collect(Collectors.toList()));
+		if(amenitiesAndSpecificationsEntity != null) {
+			builderDTO.setAmenitiesAndSpecifications(this.copyAmenitiesAndSpecificationEntityToDto(amenitiesAndSpecificationsEntity));	
+		}
+		
+		if(builderEntity.getProjects() != null && !builderEntity.getProjects().isEmpty()) {
+			builderDTO.setProjects(builderEntity.getProjects().stream().map(project -> setProjectDTO(project, builderEntity)).collect(Collectors.toList()));
+		}
+		
+		final Set<String> prop = new HashSet<>(Arrays.asList("builderName", "manufacturingCompany", "projectType", 
+				  "phone", "userName", "password", "amenityAndSpecificationId"));
+		this.copyBuilderBasicEntityToDTO(builderEntity, builderDTO, prop);
+		//carDTOList.add(carDTO);
+		return builderDTO;
+	}
+	
+	public BuilderDTO setBuilderDTOWithoutProject(Builder builderEntity){
+		BuilderDTO builderDTO= new BuilderDTO();
+		builderDTO.setAddress(this.copyAddressEntityToDto(builderEntity.getAddress()));
 		final Set<String> prop = new HashSet<>(Arrays.asList("builderId", "builderName", 
 				  "projectType", "manufacturingCompany", 
 				  "phone"));
@@ -310,7 +465,7 @@ public class BuilderService {
 		return builderDTO;
 	}
 	
-	public ProjectsDTO setProjectDTO(Projects projectEntity){
+	public ProjectsDTO setProjectDTO(Projects projectEntity, Builder builderEntity){
 		ProjectsDTO projectDTO= new ProjectsDTO();
 		HttpServletResponse response = null;
 		final Set<String> prop = new HashSet<>(Arrays.asList("projectId", "builderId", "amenitiesAndSpecificationsId", "estimateCost", 
@@ -336,8 +491,44 @@ public class BuilderService {
 			}
 		    
 		}
+		if(builderEntity != null) {
+			projectDTO.setBuilder(setBuilderDTOWithoutProject(builderEntity));	
+		}
+		if(projectEntity.getPicture() != null && !projectEntity.getPicture().isEmpty()) {
+			projectDTO.setPicture(projectEntity.getPicture().stream().map(this::setPictureDTO).collect(Collectors.toList()));
+		}
+		
 		//carDTOList.add(carDTO);
 		return projectDTO;
+	}
+	
+	public PictureDTO setPictureDTO(Picture pictureEntity){
+		PictureDTO pictureDTO= new PictureDTO();
+		HttpServletResponse response = null;
+		final Set<String> prop = new HashSet<>(Arrays.asList("pictureId", "projectId", "pictureFilePath", "videoFilePath", "roomType", "roomDescription", "materialBrand"));
+		this.copyPicturesBasicEntityToDTO(pictureEntity, pictureDTO, prop);
+		if(pictureEntity.getPictureFilePath() != null) {
+		//projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(), response));
+		ServletContext sc = null;
+		 //InputStream in = sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+		InputStream in = null;
+		try {
+			in = this.getFileSystem(pictureEntity.getPictureFilePath(), response).getInputStream();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		    try {
+				byte[] media = IOUtils.toByteArray(in);
+				pictureDTO.setPicture(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		    
+		}
+		//carDTOList.add(carDTO);
+		return pictureDTO;
 	}
 	
 	private ProjectsDTO copyProjectsEntityToDto(Projects projectEntity) {
@@ -361,6 +552,18 @@ public class BuilderService {
 		return addressDTO;
 	}
 	
+	private BuildersAvailableAmenitiesDTO copymenitiesEntityToDto(AmenitiesAndSpecifications amenitiesAndSpecificationsEntity) {
+		BuildersAvailableAmenitiesDTO buildersAvailableAmenitiesDTODTO= new BuildersAvailableAmenitiesDTO();
+		final Set<String> prop = new HashSet<>(Arrays.asList("amenitiesAndSpecificationsId", "amenitiesAndSpecificationsName"));
+		 String[] excludedProperties = 
+		            Arrays.stream(BeanUtils.getPropertyDescriptors(amenitiesAndSpecificationsEntity.getClass()))
+		                  .map(PropertyDescriptor::getName)
+		                  .filter(name -> !prop.contains(name))
+		                  .toArray(String[]::new);
+		BeanUtils.copyProperties(amenitiesAndSpecificationsEntity, buildersAvailableAmenitiesDTODTO, excludedProperties);
+		return buildersAvailableAmenitiesDTODTO;
+	}
+	
 	private Address copyAddressDTOToEntity(AddressDTO addressDTO) {
 		Address addressEntity= new Address();
 		BeanUtils.copyProperties(addressDTO, addressEntity);
@@ -378,8 +581,15 @@ public class BuilderService {
 	
 	
 	private AmenitiesAndSpecificationsDTO copyAmenitiesAndSpecificationEntityToDto(AmenitiesAndSpecifications amenitiesAndSpecifications) {
+		
 		AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsDTO= new AmenitiesAndSpecificationsDTO();
-		BeanUtils.copyProperties(amenitiesAndSpecifications, amenitiesAndSpecificationsDTO);
+		final Set<String> prop = new HashSet<>(Arrays.asList("amenitiesAndSpecificationsId", "amenitiesAndSpecificationsName"));
+		 String[] excludedProperties = 
+		            Arrays.stream(BeanUtils.getPropertyDescriptors(amenitiesAndSpecificationsDTO.getClass()))
+		                  .map(PropertyDescriptor::getName)
+		                  .filter(name -> !prop.contains(name))
+		                  .toArray(String[]::new);
+		BeanUtils.copyProperties(amenitiesAndSpecifications, amenitiesAndSpecificationsDTO, excludedProperties);
 		return amenitiesAndSpecificationsDTO;
 	}
 	
@@ -392,6 +602,16 @@ public class BuilderService {
 	                  .toArray(String[]::new);
 
 	    BeanUtils.copyProperties(projectEntity, projectDTO, excludedProperties);
+	}
+	
+	public static void copyPicturesBasicEntityToDTO(Picture pictureEntity, PictureDTO pictureDTO, Set<String> props) {
+	    String[] excludedProperties = 
+	            Arrays.stream(BeanUtils.getPropertyDescriptors(pictureEntity.getClass()))
+	                  .map(PropertyDescriptor::getName)
+	                  .filter(name -> !props.contains(name))
+	                  .toArray(String[]::new);
+
+	    BeanUtils.copyProperties(pictureEntity, pictureDTO, excludedProperties);
 	}
 	
 	public static void copyBuilderBasicEntityToDTO(Builder builderEntity, BuilderDTO builderDTO, Set<String> props) {
@@ -423,6 +643,16 @@ public class BuilderService {
 	                  .toArray(String[]::new);
 
 	    BeanUtils.copyProperties(projectDTO, projectEntity, excludedProperties);
+	}
+	
+	public static void copyPicturesBasicDTOToEntity(PictureDTO pictureDTO, Picture pictureEntity, Set<String> props) {
+	    String[] excludedProperties = 
+	            Arrays.stream(BeanUtils.getPropertyDescriptors(pictureEntity.getClass()))
+	                  .map(PropertyDescriptor::getName)
+	                  .filter(name -> !props.contains(name))
+	                  .toArray(String[]::new);
+
+	    BeanUtils.copyProperties(pictureDTO, pictureEntity, excludedProperties);
 	}
 	
 		

@@ -27,12 +27,23 @@ public class AmenitiesAndSpecifications {
 	
 	@OneToMany(mappedBy="amenitiesAndSpecifications", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Projects> projects;
-
 	
+	@OneToMany(mappedBy="amenitiesAndSpecifications", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Builder> builder;
+	
+
 	@OneToMany(mappedBy="amenitiesAndSpecifications")
     private Set<BuildersAvailableAmenities> buildersAvailableAmenities;
 	
 		
+	
+	public List<Builder> getBuilder() {
+		return builder;
+	}
+
+	public void setBuilder(List<Builder> builder) {
+		this.builder = builder;
+	}
 	
 	public List<Projects> getProjects() {
 		return projects;

@@ -11,7 +11,7 @@ import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 
 public class AmenitiesAndSpecificationsDTO {
-    private String amenitiesAndSpecificationsId;
+    private int amenitiesAndSpecificationsId;
     private String amenitiesAndSpecificationsName;
     private List<ProjectsDTO> projects;
 	private Set<BuildersAvailableAmenitiesDTO> buildersAvailableAmenities;
@@ -23,10 +23,11 @@ public class AmenitiesAndSpecificationsDTO {
 	public void setProjects(List<ProjectsDTO> projects) {
 		this.projects = projects;
 	}
-	public String getAmenitiesAndSpecificationsId() {
+	
+	public int getAmenitiesAndSpecificationsId() {
 		return amenitiesAndSpecificationsId;
 	}
-	public void setAmenitiesAndSpecificationsId(String amenitiesAndSpecificationsId) {
+	public void setAmenitiesAndSpecificationsId(int amenitiesAndSpecificationsId) {
 		this.amenitiesAndSpecificationsId = amenitiesAndSpecificationsId;
 	}
 	public String getAmenitiesAndSpecificationsName() {

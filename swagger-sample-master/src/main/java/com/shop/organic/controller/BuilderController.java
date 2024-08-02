@@ -29,12 +29,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
+import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.entity.car.Builder;
+import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 import com.shop.organic.exception.ResourceNotFoundException;
 import com.shop.organic.service.BuilderService;
@@ -54,17 +59,20 @@ public class BuilderController {
 	
 	List<BuilderDTO> buildersList=null;
 	
-	@GetMapping(value = "/Builders")
+	@PostMapping(value = "/Builders")
 	@HystrixCommand(fallbackMethod="fallbackRetrieveAllBuilders")
-	public ResponseEntity<List<BuilderDTO>> getAllBuilders() {
+	public ResponseEntity<List<BuilderDTO>> getAllBuilders(@RequestParam("amenitiesAndSpecificationsId") String amenitiesAndSpecificationsId) {
 		throw new RuntimeException("Not Available");
 		//carList = carService.findCarList();
 		//return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
 		//return generateResponse("List of Cars!", HttpStatus.OK, carList);
 	}
 	
-	public ResponseEntity<List<BuilderDTO>> fallbackRetrieveAllBuilders() {
-		buildersList = builderService.findBuildersList();
+	public ResponseEntity<List<BuilderDTO>> fallbackRetrieveAllBuilders(String amenitiesAndSpecificationsId) throws JsonMappingException, JsonProcessingException {
+		AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsDTO = new AmenitiesAndSpecificationsDTO();
+		ObjectMapper objectMapper = new ObjectMapper();
+		amenitiesAndSpecificationsDTO= objectMapper.readValue(amenitiesAndSpecificationsId, AmenitiesAndSpecificationsDTO.class);
+		buildersList = builderService.findBuildersList(amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId());
 		Object uriVariables = null;
 		final HttpHeaders headers = new HttpHeaders();
 		headers.setCacheControl(CacheControl.noCache().getHeaderValue());
@@ -85,7 +93,7 @@ public class BuilderController {
 		Builder registeredBuilderEntity = new Builder();
 		registeredBuilderEntity = builderService.registerBuilder(builderDTO);
 		Object uriVariables = null;
-		registeredBuilder= builderService.setBuilderDTO(registeredBuilderEntity);
+		registeredBuilder= builderService.setBuilderDTO(registeredBuilderEntity, builderService.getAmenitiesAndSpecificationsById(registeredBuilderEntity.getAmenityAndSpecificationId()));
 		builderService.ceateImageDirectoryForBuilder(registeredBuilder);
 		//throw new RuntimeException("Not Available");
 		//carList = carService.findCarList();
@@ -110,11 +118,11 @@ public class BuilderController {
 		Projects newProjectEntity = new Projects();
 		newProjectEntity = builderService.addNewProject(projectDTO);
 		Object uriVariables = null;
-		newProjectAddded= builderService.setProjectDTO(newProjectEntity);
+		newProjectAddded= builderService.setProjectDTO(newProjectEntity, builderService.getBuildersById(newProjectEntity.getBuilderId()));
 		builderService.ceateImageDirectoryForProject(newProjectAddded, file);
 		// Save Project Image Directory path in DB 
 		newProjectEntity = builderService.addNewProject(newProjectAddded);
-		newProjectAddded= builderService.setProjectDTO(newProjectEntity);
+		newProjectAddded= builderService.setProjectDTO(newProjectEntity, builderService.getBuildersById(newProjectEntity.getBuilderId()));
 		//throw new RuntimeException("Not Available");
 		//carList = carService.findCarList();
 		//return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
@@ -135,6 +143,26 @@ public class BuilderController {
 	    		.ok().headers(responseHeaders).body("Response with header using ResponseEntity");*/
 	}
 	
+	@PostMapping(value = "/addNewPicture")
+	public ResponseEntity<Object> addNewPicture(@RequestParam("image") MultipartFile file,
+	        @RequestParam("pictureDTO") String pictureDTOString) throws IOException{
+		System.out.println("pictureDTO" + new Gson().toJson(pictureDTOString));
+		ObjectMapper objectMapper = new ObjectMapper();
+		
+		PictureDTO pictureDTO = new PictureDTO();
+		pictureDTO= objectMapper.readValue(pictureDTOString, PictureDTO.class);
+		
+		PictureDTO newPictureAddded = new PictureDTO();
+		Picture newPictureEntity = new Picture();
+		builderService.ceateImageDirectoryForPicture(pictureDTO,Integer.toString(pictureDTO.getBuilderId()), file);
+		newPictureEntity = builderService.addNewPicture(pictureDTO);
+		Object uriVariables = null;
+		newPictureAddded= builderService.setPictureDTO(newPictureEntity);
+		return generateResponse("List of Builders!", HttpStatus.OK, newPictureAddded);
+	}
+	
+	
+	
 	
 	@PostMapping(value = "/SendOTP")
 	public ResponseEntity<Object> SendOTP(@RequestBody BuilderDTO builderDTO) {
@@ -149,13 +177,26 @@ public class BuilderController {
 		return generateResponse("List of Builders!", HttpStatus.OK, loginBuilder);
 	}
 	
+	@PostMapping(value = "/getProjectDetailsById")
+	public ResponseEntity<Object> getProjectDetailsById(@RequestBody ProjectsDTO projectsDTO) {
+		ProjectsDTO selectedProject = new ProjectsDTO();
+		System.out.println("builderDTO:::::Test" + new Gson().toJson(projectsDTO));
+		selectedProject = builderService.getProjectDetailsById(projectsDTO);
+		Object uriVariables = null;
+		//throw new RuntimeException("Not Available");
+		//carList = carService.findCarList();
+		//return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+		//return generateResponse("List of Cars!", HttpStatus.OK, carList);
+		return generateResponse("List of Builders!", HttpStatus.OK, selectedProject.getPicture());
+	}
 	
-	@GetMapping(value = "/{builderId}")
+	
+	/*@GetMapping(value = "/{builderId}")
 	public ResponseEntity<Object> getCar(@PathVariable String builderId) throws ResourceNotFoundException{
 		buildersList = builderService.getBuilderById(builderId);
 		//return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
 		return generateResponse("List of Builders!", HttpStatus.OK, buildersList);
-	}
+	}*/
 	
 	public static ResponseEntity<Object> generateResponse(String message, HttpStatus status, Object responseObj) {
         Map<String, Object> map = new HashMap<String, Object>();

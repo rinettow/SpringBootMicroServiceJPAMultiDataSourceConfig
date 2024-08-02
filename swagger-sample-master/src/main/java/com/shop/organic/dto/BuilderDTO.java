@@ -10,6 +10,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
 import com.shop.organic.entity.car.Address;
+import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
@@ -22,13 +23,28 @@ public class BuilderDTO {
 	private String projectType;
 	private AddressDTO address;
 	private List<ProjectsDTO> projects;
+	private AmenitiesAndSpecificationsDTO amenitiesAndSpecifications;
 	private String phone;
 	private List<BuildersAvailableAmenitiesDTO> buildersAvailableAmenities;
 	private String userName;
 	private String password;
+	private int amenityAndSpecificationId;
 	
 	
 	
+	
+	public int getAmenityAndSpecificationId() {
+		return amenityAndSpecificationId;
+	}
+	public void setAmenityAndSpecificationId(int amenityAndSpecificationId) {
+		this.amenityAndSpecificationId = amenityAndSpecificationId;
+	}
+	public AmenitiesAndSpecificationsDTO getAmenitiesAndSpecifications() {
+		return amenitiesAndSpecifications;
+	}
+	public void setAmenitiesAndSpecifications(AmenitiesAndSpecificationsDTO amenitiesAndSpecifications) {
+		this.amenitiesAndSpecifications = amenitiesAndSpecifications;
+	}
 	public List<ProjectsDTO> getProjects() {
 		return projects;
 	}
