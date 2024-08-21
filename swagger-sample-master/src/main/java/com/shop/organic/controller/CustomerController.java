@@ -38,28 +38,35 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
+import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.dto.StateDTO;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
+import com.shop.organic.entity.car.Customer;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 import com.shop.organic.entity.car.ProjectsAvailableAmenities;
 import com.shop.organic.entity.car.State;
 import com.shop.organic.exception.ResourceNotFoundException;
 import com.shop.organic.service.BuilderService;
+import com.shop.organic.service.CustomerService;
+
 import org.springframework.scheduling.annotation.Async;
 
 @CrossOrigin(origins = "http://localhost")
 @Validated
 @RestController
-@RequestMapping("/Builder")
-public class BuilderController {
+@RequestMapping("/Customer")
+public class CustomerController {
 	
 	@Autowired
 	private BuilderService builderService;
+	
+	@Autowired
+	private CustomerService customerService;
 	
 	@Autowired
     private HttpServletRequest request;
@@ -94,29 +101,23 @@ public class BuilderController {
 		//return (ResponseEntity<List<BuilderDTO>>) ResponseEntity.ok().headers(headers).body(buildersList);
 	}
 	
-	@PostMapping(value = "/RegisterBuilder")
-	public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
-		System.out.println("BuilderDirectory" + new Gson().toJson(builderDTO));
-		BuilderDTO registeredBuilder = new BuilderDTO();
-		Builder registeredBuilderEntity = new Builder();
-		registeredBuilderEntity = builderService.registerBuilder(builderDTO);
-		int builderid = registeredBuilderEntity.getBuilderId();
-		List<BuildersAvailableAmenitiesDTO> buildersAvailableAmenitiesDTOWithBuilderId = builderDTO.getBuildersAvailableAmenities().stream().peek(buildersAvailableAmenitiesDTO -> buildersAvailableAmenitiesDTO.setBuilderId(builderid)).collect(Collectors.toList());
-		List<BuildersAvailableAmenities> buildersAvailableAmenities = buildersAvailableAmenitiesDTOWithBuilderId
-				.stream()
-				.map(buildersAvailableAmenitiesDTO -> builderService.copyBuildersBasicAvailableAmenitiesDTOToEntity(buildersAvailableAmenitiesDTO, new BuildersAvailableAmenities())).collect(Collectors.toList());
-		for(BuildersAvailableAmenities availavleAmenities : buildersAvailableAmenities) {
-			builderService.registerBuildersAvailableAminities(availavleAmenities);
-		};
+	@PostMapping(value = "/RegisterCustomer")
+	public ResponseEntity<Object> registerBuilder(@RequestBody CustomerDTO customerDTO) {
+		System.out.println("BuilderDirectory" + new Gson().toJson(customerDTO));
+		CustomerDTO registeredCustomer = new CustomerDTO();
+		Customer registeredCustomersEntity = new Customer();
+		registeredCustomersEntity = customerService.registerCustomer(customerDTO);
 		
-		Object uriVariables = null;
-		registeredBuilder= builderService.setBuilderDTO(registeredBuilderEntity);
-		builderService.ceateImageDirectoryForBuilder(registeredBuilder);
-		//throw new RuntimeException("Not Available");
-		//carList = carService.findCarList();
-		//return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
-		//return generateResponse("List of Cars!", HttpStatus.OK, carList);
-		return generateResponse("List of Builders!", HttpStatus.OK, registeredBuilder);
+		registeredCustomer= customerService.setCustomerDTO(registeredCustomersEntity);
+		return generateResponse("List of Builders!", HttpStatus.OK, registeredCustomer);
+	}
+	
+	
+aram("planPDFFileFormat") MultipartFile planPDFFileFormat,
+			@RequestParam("landImagePNGorJPGFileFormat") MultipartFile landImagePNGorJPGFileFormat,
+	        @RequestParam("createRequirementDTO") String CderDidCustomersEntity = customerService.registerCustomer(customerDTO);
+		
+		registerer);
 	}
 	
 	@GetMapping(value = "/AllStates")
@@ -210,6 +211,21 @@ public class BuilderController {
 		//return generateResponse("List of Cars!", HttpStatus.OK, carList);
 		return generateResponse("List of Builders!", HttpStatus.OK, loginBuilder);
 	}
+	
+	@PostMapping(value = "/SendOTPCustomerLogin")
+	public ResponseEntity<Object> SendOTPCustomerLogin(@RequestBody CustomerDTO customerDTO) {
+		CustomerDTO loginCustomer = new CustomerDTO();
+		System.out.println("builderDTO:::::Test" + new Gson().toJson(customerDTO));
+		loginCustomer = customerService.sendOTPForCustomerLogin(customerDTO);
+		Object uriVariables = null;
+		//throw new RuntimeException("Not Available");
+		//carList = carService.findCarList();
+		//return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+		//return generateResponse("List of Cars!", HttpStatus.OK, carList);
+		return generateResponse("List of Builders!", HttpStatus.OK, loginCustomer);
+	}
+	
+	
 	
 	@PostMapping(value = "/getProjectDetailsById")
 	public ResponseEntity<Object> getProjectDetailsById(@RequestBody ProjectsDTO projectsDTO) {

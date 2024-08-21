@@ -56,18 +56,14 @@ public class Builder {
     @JoinColumn(name = "ADDRESS_ID", referencedColumnName = "ADDRESS_ID")
 	private Address address;
 	
-
-	@OneToMany(mappedBy="builder", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
-	@JsonManagedReference
+	//@JsonManagedReference
+	@OneToMany(mappedBy="builderForProjects")
 	private List<Projects> projects;
 	
 	
-	@OneToMany(mappedBy="builder", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+	@OneToMany(mappedBy="builderForAmenity")
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
 	
-	@ManyToOne
-    @JoinColumn(name="AMENITIES_AND_SPECIFICATIONS_ID", insertable = false, updatable = false)
-	private AmenitiesAndSpecifications amenitiesAndSpecifications;
 	
 	@Column(name = "USER_NAME")
 	private String userName;
@@ -75,23 +71,7 @@ public class Builder {
 	@Column(name = "EN_PASSWORD")
 	private String password;
 	
-	@Column(name = "AMENITIES_AND_SPECIFICATIONS_ID")
-	private int amenityAndSpecificationId;
 	
-	
-	
-	public int getAmenityAndSpecificationId() {
-		return amenityAndSpecificationId;
-	}
-	public void setAmenityAndSpecificationId(int amenityAndSpecificationId) {
-		this.amenityAndSpecificationId = amenityAndSpecificationId;
-	}
-	public AmenitiesAndSpecifications getAmenitiesAndSpecifications() {
-		return amenitiesAndSpecifications;
-	}
-	public void setAmenitiesAndSpecifications(AmenitiesAndSpecifications amenitiesAndSpecifications) {
-		this.amenitiesAndSpecifications = amenitiesAndSpecifications;
-	}
 	public List<Projects> getProjects() {
 		return projects;
 	}

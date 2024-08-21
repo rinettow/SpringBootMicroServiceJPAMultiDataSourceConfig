@@ -9,21 +9,29 @@ import javax.persistence.OneToMany;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
+import com.shop.organic.entity.car.ProjectsAvailableAmenities;
 
 public class AmenitiesAndSpecificationsDTO {
     private int amenitiesAndSpecificationsId;
     private String amenitiesAndSpecificationsName;
-    private List<ProjectsDTO> projects;
-	private Set<BuildersAvailableAmenitiesDTO> buildersAvailableAmenities;
+    private Set<ProjectsAvailableAmenities> projectsAvailableAmenities;
+    private Set<BuildersAvailableAmenities> buildersAvailableAmenities;
 	
     
-	public List<ProjectsDTO> getProjects() {
-		return projects;
-	}
-	public void setProjects(List<ProjectsDTO> projects) {
-		this.projects = projects;
-	}
 	
+	
+	public Set<ProjectsAvailableAmenities> getProjectsAvailableAmenities() {
+		return projectsAvailableAmenities;
+	}
+	public void setProjectsAvailableAmenities(Set<ProjectsAvailableAmenities> projectsAvailableAmenities) {
+		this.projectsAvailableAmenities = projectsAvailableAmenities;
+	}
+	public Set<BuildersAvailableAmenities> getBuildersAvailableAmenities() {
+		return buildersAvailableAmenities;
+	}
+	public void setBuildersAvailableAmenities(Set<BuildersAvailableAmenities> buildersAvailableAmenities) {
+		this.buildersAvailableAmenities = buildersAvailableAmenities;
+	}
 	public int getAmenitiesAndSpecificationsId() {
 		return amenitiesAndSpecificationsId;
 	}
@@ -36,11 +44,6 @@ public class AmenitiesAndSpecificationsDTO {
 	public void setAmenitiesAndSpecificationsName(String amenitiesAndSpecificationsName) {
 		this.amenitiesAndSpecificationsName = amenitiesAndSpecificationsName;
 	}
-	public Set<BuildersAvailableAmenitiesDTO> getBuildersAvailableAmenities() {
-		return buildersAvailableAmenities;
-	}
-	public void setBuildersAvailableAmenities(Set<BuildersAvailableAmenitiesDTO> buildersAvailableAmenities) {
-		this.buildersAvailableAmenities = buildersAvailableAmenities;
-	}
+	
 	
 }

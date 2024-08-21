@@ -32,9 +32,9 @@ public class Picture {
 	private String videoFilePath;
 	
 	
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="PROJECT_ID", insertable = false, updatable = false)
-	private Projects projects;
+	private Projects projectForPicture;
 	
 	@Column(name = "ROOM_TYPE")
 	private String roomType;
@@ -48,6 +48,54 @@ public class Picture {
 	
 	@Column(name = "MATERIAL_BRAND")
 	private String materialBrand;
+	
+	@Column(name = "PAINT_BRAND")
+	private String paintBrand;
+	
+	@Column(name = "PLUMBING_BRAND")
+	private String plumbingBrand;
+	
+	@Column(name = "ELECTRICAL_BRAND")
+	private String electricalBrand;
+	
+	@Column(name = "CEMENT_BRAND")
+	private String cementBrand;
+	
+	@Column(name = "STEEL_BRAND")
+	private String steelBrand;
+	
+	
+	public String getPaintBrand() {
+		return paintBrand;
+	}
+	public void setPaintBrand(String paintBrand) {
+		this.paintBrand = paintBrand;
+	}
+	public String getPlumbingBrand() {
+		return plumbingBrand;
+	}
+	public void setPlumbingBrand(String plumbingBrand) {
+		this.plumbingBrand = plumbingBrand;
+	}
+	public String getElectricalBrand() {
+		return electricalBrand;
+	}
+	public void setElectricalBrand(String electricalBrand) {
+		this.electricalBrand = electricalBrand;
+	}
+	public String getCementBrand() {
+		return cementBrand;
+	}
+	public void setCementBrand(String cementBrand) {
+		this.cementBrand = cementBrand;
+	}
+	public String getSteelBrand() {
+		return steelBrand;
+	}
+	public void setSteelBrand(String steelBrand) {
+		this.steelBrand = steelBrand;
+	}
+	
 	
 	
 	
@@ -70,11 +118,12 @@ public class Picture {
 		this.roomDescription = roomDescription;
 	}
 	
-	public Projects getProjects() {
-		return projects;
+	
+	public Projects getProjectForPicture() {
+		return projectForPicture;
 	}
-	public void setProjects(Projects projects) {
-		this.projects = projects;
+	public void setProjectForPicture(Projects projectForPicture) {
+		this.projectForPicture = projectForPicture;
 	}
 	public String getVideoFilePath() {
 		return videoFilePath;

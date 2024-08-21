@@ -25,43 +25,36 @@ public class AmenitiesAndSpecifications {
 	@Column(name = "AMENITIES_AND_SPECIFICATIONS_NAME")
 	private String amenitiesAndSpecificationsName;
 	
-	@OneToMany(mappedBy="amenitiesAndSpecifications", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Projects> projects;
-	
-	@OneToMany(mappedBy="amenitiesAndSpecifications", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Builder> builder;
-	
 
-	@OneToMany(mappedBy="amenitiesAndSpecifications")
-    private Set<BuildersAvailableAmenities> buildersAvailableAmenities;
+	@OneToMany(mappedBy="amenitiesAndSpecificationsForBuilders")
+	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
+	
+	@OneToMany(mappedBy="amenitiesAndSpecificationsForProjects")
+    private List<ProjectsAvailableAmenities> projectsAvailableAmenities;
+	
+	@OneToMany(mappedBy="amenitiesAndSpecificationsForCustomerRequirement")
+    private List<CustomerRequirement> customerRequirement;
+	
 	
 		
 	
-	public List<Builder> getBuilder() {
-		return builder;
-	}
+	
 
-	public void setBuilder(List<Builder> builder) {
-		this.builder = builder;
-	}
-	
-	public List<Projects> getProjects() {
-		return projects;
-	}
-
-	public void setProjects(List<Projects> projects) {
-		this.projects = projects;
-	}
-	
-	
-	public Set<BuildersAvailableAmenities> getBuildersAvailableAmenities() {
+	public List<BuildersAvailableAmenities> getBuildersAvailableAmenities() {
 		return buildersAvailableAmenities;
 	}
 
-	public void setBuildersAvailableAmenities(Set<BuildersAvailableAmenities> buildersAvailableAmenities) {
+	public void setBuildersAvailableAmenities(List<BuildersAvailableAmenities> buildersAvailableAmenities) {
 		this.buildersAvailableAmenities = buildersAvailableAmenities;
 	}
 
+	public List<ProjectsAvailableAmenities> getProjectsAvailableAmenities() {
+		return projectsAvailableAmenities;
+	}
+
+	public void setProjectsAvailableAmenities(List<ProjectsAvailableAmenities> projectsAvailableAmenities) {
+		this.projectsAvailableAmenities = projectsAvailableAmenities;
+	}
 
 	public int getAmenitiesAndSpecificationsId() {
 		return amenitiesAndSpecificationsId;

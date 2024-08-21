@@ -13,8 +13,11 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 
 @Entity
@@ -29,9 +32,6 @@ public class Projects {
 	@Column(name = "BUILDER_ID")
     private int builderId;
    
-	@Column(name = "AMENITIES_AND_SPECIFICATIONS_ID")
-    private int amenitiesAndSpecificationsId;
-   
 	@Column(name = "ESTIMATE_COST")
     private int estimateCost;
    
@@ -42,21 +42,29 @@ public class Projects {
 	@Column(name = "PROJ_MAIN_PIC_FILE_PATH")
     private String projMainPicFilePath;
 	
-
-	@ManyToOne(cascade=CascadeType.ALL)
+	
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="BUILDER_ID", insertable = false, updatable = false)
-	@JsonBackReference
-	private Builder builder;
+	private Builder builderForProjects;
 	
-	@ManyToOne
-    @JoinColumn(name="AMENITIES_AND_SPECIFICATIONS_ID", insertable = false, updatable = false)
-	private AmenitiesAndSpecifications amenitiesAndSpecifications;
+	@OneToMany(mappedBy="projectForAmenity")
+	private List<ProjectsAvailableAmenities> projectsAvailableAmenities;
 	
-	@OneToMany(mappedBy="projects", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+	
+	@OneToMany(mappedBy="projectForPicture")
 	private List<Picture> Picture;
 	
 	
 	
+	
+	public List<ProjectsAvailableAmenities> getProjectsAvailableAmenities() {
+		return projectsAvailableAmenities;
+	}
+
+	public void setProjectsAvailableAmenities(List<ProjectsAvailableAmenities> projectsAvailableAmenities) {
+		this.projectsAvailableAmenities = projectsAvailableAmenities;
+	}
+
 	public String getProjMainPicFilePath() {
 		return projMainPicFilePath;
 	}
@@ -73,23 +81,16 @@ public class Projects {
 		Picture = picture;
 	}
 
-	public Builder getBuilder() {
-		return builder;
-	}
-
-	public void setBuilder(Builder builder) {
-		this.builder = builder;
-	}
-
-	public AmenitiesAndSpecifications getAmenitiesAndSpecifications() {
-		return amenitiesAndSpecifications;
-	}
-
-	public void setAmenitiesAndSpecifications(AmenitiesAndSpecifications amenitiesAndSpecifications) {
-		this.amenitiesAndSpecifications = amenitiesAndSpecifications;
-	}
-
 	
+	
+	public Builder getBuilderForProjects() {
+		return builderForProjects;
+	}
+
+	public void setBuilderForProjects(Builder builderForProjects) {
+		this.builderForProjects = builderForProjects;
+	}
+
 	public int getProjectId() {
 		return projectId;
 	}
@@ -104,14 +105,6 @@ public class Projects {
 
 	public void setBuilderId(int builderId) {
 		this.builderId = builderId;
-	}
-
-	public int getAmenitiesAndSpecificationsId() {
-		return amenitiesAndSpecificationsId;
-	}
-
-	public void setAmenitiesAndSpecificationsId(int amenitiesAndSpecificationsId) {
-		this.amenitiesAndSpecificationsId = amenitiesAndSpecificationsId;
 	}
 
 	public int getEstimateCost() {

@@ -21,9 +21,43 @@ public class PictureDTO {
 	private String roomDescription;
     private int roomSquareFeet;
 	private String materialBrand;
+	private String paintBrand;
+	private String plumbingBrand;
+	private String electricalBrand;
+	private String cementBrand;
+	private String steelBrand;
 	
 	
-	
+	public String getSteelBrand() {
+		return steelBrand;
+	}
+	public void setSteelBrand(String steelBrand) {
+		this.steelBrand = steelBrand;
+	}
+	public String getPaintBrand() {
+		return paintBrand;
+	}
+	public void setPaintBrand(String paintBrand) {
+		this.paintBrand = paintBrand;
+	}
+	public String getPlumbingBrand() {
+		return plumbingBrand;
+	}
+	public void setPlumbingBrand(String plumbingBrand) {
+		this.plumbingBrand = plumbingBrand;
+	}
+	public String getElectricalBrand() {
+		return electricalBrand;
+	}
+	public void setElectricalBrand(String electricalBrand) {
+		this.electricalBrand = electricalBrand;
+	}
+	public String getCementBrand() {
+		return cementBrand;
+	}
+	public void setCementBrand(String cementBrand) {
+		this.cementBrand = cementBrand;
+	}
 	public int getRoomSquareFeet() {
 		return roomSquareFeet;
 	}

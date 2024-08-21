@@ -23,28 +23,11 @@ public class BuilderDTO {
 	private String projectType;
 	private AddressDTO address;
 	private List<ProjectsDTO> projects;
-	private AmenitiesAndSpecificationsDTO amenitiesAndSpecifications;
 	private String phone;
 	private List<BuildersAvailableAmenitiesDTO> buildersAvailableAmenities;
 	private String userName;
 	private String password;
-	private int amenityAndSpecificationId;
 	
-	
-	
-	
-	public int getAmenityAndSpecificationId() {
-		return amenityAndSpecificationId;
-	}
-	public void setAmenityAndSpecificationId(int amenityAndSpecificationId) {
-		this.amenityAndSpecificationId = amenityAndSpecificationId;
-	}
-	public AmenitiesAndSpecificationsDTO getAmenitiesAndSpecifications() {
-		return amenitiesAndSpecifications;
-	}
-	public void setAmenitiesAndSpecifications(AmenitiesAndSpecificationsDTO amenitiesAndSpecifications) {
-		this.amenitiesAndSpecifications = amenitiesAndSpecifications;
-	}
 	public List<ProjectsDTO> getProjects() {
 		return projects;
 	}

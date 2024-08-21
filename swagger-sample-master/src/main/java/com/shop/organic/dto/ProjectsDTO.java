@@ -15,20 +15,19 @@ import org.springframework.web.multipart.MultipartFile;
 import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.Picture;
+import com.shop.organic.entity.car.ProjectsAvailableAmenities;
 
 public class ProjectsDTO {
 	
     private int projectId;
     private int builderId;
-	private int amenitiesAndSpecificationsId;
-    private int estimateCost;
+	private int estimateCost;
     private int areaInSquareFeet;
     private String projMainPicFilePath;
 	private BuilderDTO builder;
-	private AmenitiesAndSpecificationsDTO amenitiesAndSpecifications;
 	private List<PictureDTO> Picture;
 	private byte[] image;
-	
+	private List<ProjectsAvailableAmenitiesDTO> projectsAvailableAmenities;
 	
 	
 	
@@ -38,6 +37,13 @@ public class ProjectsDTO {
 	}
 	public void setImage(byte[] image) {
 		this.image = image;
+	}
+	
+	public List<ProjectsAvailableAmenitiesDTO> getProjectsAvailableAmenities() {
+		return projectsAvailableAmenities;
+	}
+	public void setProjectsAvailableAmenities(List<ProjectsAvailableAmenitiesDTO> projectsAvailableAmenities) {
+		this.projectsAvailableAmenities = projectsAvailableAmenities;
 	}
 	public String getProjMainPicFilePath() {
 		return projMainPicFilePath;
@@ -58,13 +64,7 @@ public class ProjectsDTO {
 	public void setBuilder(BuilderDTO builder) {
 		this.builder = builder;
 	}
-	public AmenitiesAndSpecificationsDTO getAmenitiesAndSpecifications() {
-		return amenitiesAndSpecifications;
-	}
-	public void setAmenitiesAndSpecifications(AmenitiesAndSpecificationsDTO amenitiesAndSpecifications) {
-		this.amenitiesAndSpecifications = amenitiesAndSpecifications;
-	}
-
+	
 	public int getProjectId() {
 		return projectId;
 	}
@@ -77,12 +77,7 @@ public class ProjectsDTO {
 	public void setBuilderId(int builderId) {
 		this.builderId = builderId;
 	}
-	public int getAmenitiesAndSpecificationsId() {
-		return amenitiesAndSpecificationsId;
-	}
-	public void setAmenitiesAndSpecificationsId(int amenitiesAndSpecificationsId) {
-		this.amenitiesAndSpecificationsId = amenitiesAndSpecificationsId;
-	}
+	
 	public int getEstimateCost() {
 		return estimateCost;
 	}
