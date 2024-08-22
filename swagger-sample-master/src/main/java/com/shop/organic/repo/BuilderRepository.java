@@ -9,6 +9,6 @@ import com.shop.organic.entity.car.Builder;
 
 @Configuration
 @ConfigurationProperties("application-dev")
-public interface BuilderRepository extends JpaRepository<Builder, Long>{
+public interface BuilderRepository {// extends JpaRepository<Builder, Long>{
 	Builder findByBuilderId(String builderId);
 }

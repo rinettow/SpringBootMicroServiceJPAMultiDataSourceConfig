@@ -21,24 +21,18 @@ public class AmenitiesAndSpecifications {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "AMENITIES_AND_SPECIFICATIONS_ID", insertable = false, updatable = false)
 	private int amenitiesAndSpecificationsId;
-	
+
 	@Column(name = "AMENITIES_AND_SPECIFICATIONS_NAME")
 	private String amenitiesAndSpecificationsName;
-	
 
-	@OneToMany(mappedBy="amenitiesAndSpecificationsForBuilders")
+	@OneToMany(mappedBy = "amenitiesAndSpecificationsForBuilders")
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
-	
-	@OneToMany(mappedBy="amenitiesAndSpecificationsForProjects")
-    private List<ProjectsAvailableAmenities> projectsAvailableAmenities;
-	
-	@OneToMany(mappedBy="amenitiesAndSpecificationsForCustomerRequirement")
-    private List<CustomerRequirement> customerRequirement;
-	
-	
-		
-	
-	
+
+	@OneToMany(mappedBy = "amenitiesAndSpecificationsForProjects")
+	private List<ProjectsAvailableAmenities> projectsAvailableAmenities;
+
+	@OneToMany(mappedBy = "amenitiesAndSpecificationsForCustomerRequirement")
+	private List<CustomerRequirement> customerRequirement;
 
 	public List<BuildersAvailableAmenities> getBuildersAvailableAmenities() {
 		return buildersAvailableAmenities;
@@ -72,5 +66,4 @@ public class AmenitiesAndSpecifications {
 		this.amenitiesAndSpecificationsName = amenitiesAndSpecificationsName;
 	}
 
-	
 }

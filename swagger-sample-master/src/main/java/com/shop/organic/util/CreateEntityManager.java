@@ -11,24 +11,23 @@ import org.springframework.stereotype.Service;
 @Service
 @Transactional
 public class CreateEntityManager {
-	
+
 	@Autowired
-	@Qualifier("builderEntityManagerFactory")  
-    EntityManagerFactory builderEm;
-	
+	@Qualifier("builderEntityManagerFactory")
+	EntityManagerFactory builderEm;
+
 	@Autowired
-	@Qualifier("categoryEntityManagerFactory")  
-    EntityManagerFactory categoryEm;
-     
-    public EntityManager getEntityManager(String enviroment) {
-        EntityManagerFactory entityManager = null;
-        if(enviroment.equals("builder")) {
-            entityManager = this.builderEm;
-        }else if(enviroment.equals("category")){
-        	 entityManager = this.categoryEm;
-        }
-        return entityManager.createEntityManager();
-    }
-	
+	@Qualifier("categoryEntityManagerFactory")
+	EntityManagerFactory categoryEm;
+
+	public EntityManager getEntityManager(String enviroment) {
+		EntityManagerFactory entityManager = null;
+		if (enviroment.equals("builder")) {
+			entityManager = this.builderEm;
+		} else if (enviroment.equals("category")) {
+			entityManager = this.categoryEm;
+		}
+		return entityManager.createEntityManager();
+	}
 
 }

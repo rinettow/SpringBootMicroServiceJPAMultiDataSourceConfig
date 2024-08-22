@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.google.gson.Gson;
@@ -47,6 +48,7 @@ import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.CustomerDTO;
+import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.DistrictDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
@@ -57,6 +59,7 @@ import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.Customer;
+import com.shop.organic.entity.car.CustomerRequirement;
 import com.shop.organic.entity.car.District;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
@@ -66,6 +69,7 @@ import com.shop.organic.entity.category.category;
 import com.shop.organic.entity.category.price;
 import com.shop.organic.entity.category.product;
 import com.shop.organic.exception.ResourceNotFoundException;
+//import com.shop.organic.service.BuilderService.ResourceType;
 import com.shop.organic.util.CreateEntityManager;
 
 import org.springframework.core.io.Resource;
@@ -102,6 +106,11 @@ public class CustomerService {
 
 	@Autowired
 	private CreateEntityManager em;
+	
+	private enum ResourceType {
+		FILE_SYSTEM, CLASSPATH
+	}
+
 
 	public Customer registerCustomer(CustomerDTO customerDTO) {
 		BuilderDTO responseBuilderDTO = new BuilderDTO();
@@ -120,19 +129,65 @@ public class CustomerService {
 		entityManager.getTransaction().commit();
 
 		System.out.println("builderEntity.getBuilderId()::::" + customerEntity.getCustomerId());
-		System.out
-				.println("builderEntity.getAddress().getAddressId())::::" + customerEntity.getPhoneCustomer());
+		System.out.println("builderEntity.getAddress().getAddressId())::::" + customerEntity.getPhoneCustomer());
 
 		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
 
 		return customerEntity;
 	}
 	
+	public void ceateImageDirectoryForCustomer(CustomerDTO customerDTO) {
+		System.out.println("ceateImageDirectoryForCustomer");
+
+		String path = "C:/Users/User/GitHub Repository/CustomersImage/";
+		String finalPath = path.concat("Customer").concat(Integer.toString(customerDTO.getCustomerId()));
+		if (!new File(finalPath).exists()) {
+			System.out.println("ceateImageDirectoryForCustomer2");
+			new File(finalPath).mkdir();
+		}
+		System.out.println("realPathtoUploads = {}" + finalPath);
+	}
+	
+	public void ceateImageDirectoryForCustomerRequirement(CustomerRequirementDTO CustomerRequirementDTO, MultipartFile planPDFFileFormat,
+			MultipartFile landImagePNGorJPGFileFormat) {
+		System.out.println("ceateImageDirectoryForCustomerRequirement");
+
+		String path = "C:/Users/User/GitHub Repository/CustomersImage/";
+		String finalPath = path.concat("Customer").concat(Integer.toString(CustomerRequirementDTO.getCustomerId())).concat("/")
+				.concat("CustomerRequirement").concat(Integer.toString(CustomerRequirementDTO.getCustomerRequirementId()));
+		if (!new File(finalPath).exists()) {
+			System.out.println("ceateImageDirectoryForCustomerRequirement");
+			new File(finalPath).mkdir();
+			try {
+				String planPDFFileFormatfileName = planPDFFileFormat.getOriginalFilename();
+				String landImagePNGorJPGFileFormatfileName = landImagePNGorJPGFileFormat.getOriginalFilename();
+				if(!planPDFFileFormatfileName.isEmpty()) {
+					planPDFFileFormat.transferTo(new File(finalPath.concat("/").concat(planPDFFileFormatfileName)));
+					CustomerRequirementDTO.setPlanImagePath(finalPath.concat("/").concat(planPDFFileFormatfileName));
+				}
+				
+				if(!landImagePNGorJPGFileFormatfileName.isEmpty()) {
+					landImagePNGorJPGFileFormat.transferTo(new File(finalPath.concat("/").concat(landImagePNGorJPGFileFormatfileName)));
+					CustomerRequirementDTO.setLandImagePath(finalPath.concat("/").concat(landImagePNGorJPGFileFormatfileName));
+				}
+				
+			} catch (IllegalStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+
+
 	public Customer setCustomerEntity(CustomerDTO customerDTO) {
 		Customer customerEntity = new Customer();
-		
-		final Set<String> prop = new HashSet<>(
-				Arrays.asList("customerName", "phoneCustomer"));
+
+		final Set<String> prop = new HashSet<>(Arrays.asList("customerName", "phoneCustomer"));
 		this.copyCustomerBasicDTOToEntity(customerDTO, customerEntity, prop);
 		// builderEntity.setBuildersAvailableAmenities(builderDTO.getBuildersAvailableAmenities().stream().map(buildersAvailableAmenitiesDTO
 		// ->
@@ -141,30 +196,46 @@ public class CustomerService {
 
 		return customerEntity;
 	}
-	
-	public static void copyCustomerBasicDTOToEntity(CustomerDTO customerDTO, Customer custmerEntity, Set<String> props) {
+
+	public static void copyCustomerBasicDTOToEntity(CustomerDTO customerDTO, Customer custmerEntity,
+			Set<String> props) {
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(custmerEntity.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
 
 		BeanUtils.copyProperties(customerDTO, custmerEntity, excludedProperties);
 	}
-	
+
 	public CustomerDTO setCustomerDTO(Customer customerEntity) {
 		CustomerDTO customerDTO = new CustomerDTO();
-		
+
 		final Set<String> prop = new HashSet<>(Arrays.asList("customerId", "customerName", "phoneCustomer"));
 		this.copyCustomerBasicEntityToDTO(customerEntity, customerDTO, prop);
+		
+		if(customerEntity.getCustomerRequirement() != null && !customerEntity.getCustomerRequirement().isEmpty()) {
+		 customerDTO.setCustomerRequirement(customerEntity.getCustomerRequirement()
+				 .stream().map(this::setCustomerRequirementDTO).collect(Collectors.toList()));
+		}
 		// carDTOList.add(carDTO);
 		return customerDTO;
 	}
 	
-	public static void copyCustomerBasicEntityToDTO(Customer customerEntity, CustomerDTO customerDTO, Set<String> props) {
+	public CustomerDTO setCustomerDTOWithoutRequirement(Customer customerEntity) {
+		CustomerDTO customerDTO = new CustomerDTO();
+
+		final Set<String> prop = new HashSet<>(Arrays.asList("customerId", "customerName", "phoneCustomer"));
+		this.copyCustomerBasicEntityToDTO(customerEntity, customerDTO, prop);
+		
+		return customerDTO;
+	}
+
+	public static void copyCustomerBasicEntityToDTO(Customer customerEntity, CustomerDTO customerDTO,
+			Set<String> props) {
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(customerDTO.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
 
 		BeanUtils.copyProperties(customerEntity, customerDTO, excludedProperties);
 	}
-	
+
 	public CustomerDTO sendOTPForCustomerLogin(CustomerDTO customerDTO) {
 		CustomerDTO LoginCustomerDTO = new CustomerDTO();
 		List<Customer> LoginCustomer = new ArrayList<Customer>();
@@ -175,14 +246,14 @@ public class CustomerService {
 		LoginCustomer = q.getResultList();
 
 		System.out.println("LoginBuilderDTO" + LoginCustomer.get(0).getPhoneCustomer());
-		
 
 		LoginCustomer = LoginCustomer.stream()
 				.filter(customer -> customer.getPhoneCustomer().equalsIgnoreCase(customerDTO.getPhoneCustomer()))
 				.collect(Collectors.toList());
 
 		if (LoginCustomer.isEmpty() && LoginCustomer.size() == 0) {
-			throw new ResourceNotFoundException("Mobile Number: " + customerDTO.getPhoneCustomer() + " not Registered...");
+			throw new ResourceNotFoundException(
+					"Mobile Number: " + customerDTO.getPhoneCustomer() + " not Registered...");
 		}
 
 		if (!LoginCustomer.isEmpty()) {
@@ -193,6 +264,145 @@ public class CustomerService {
 		return LoginCustomerDTO;
 	}
 	
+	public CustomerRequirement CreateCustomerRequirement(CustomerRequirementDTO customerRequirementDTO) {
+		CustomerRequirement customerRequirementEntity = new CustomerRequirement();
+		copyCustomerRequirementBasicDTOToEntity(customerRequirementDTO, customerRequirementEntity);
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		
+		if (!entityManager.contains(customerRequirementEntity)) {
+			CustomerRequirement entityAvailableOrNot = entityManager.find(CustomerRequirement.class, customerRequirementEntity.getCustomerForCustomerRequirement());
+			if (entityAvailableOrNot == null) {
+				// persist object - add to entity manager
+				entityManager.persist(customerRequirementEntity);
+				// flush em - save to DB
+				entityManager.flush();
+			} else {
+				entityManager.merge(customerRequirementEntity);
+			}
+
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		System.out.println("builderEntity.getBuilderId()::::" + customerRequirementEntity.getCustomerRequirementId());
+		System.out.println("builderEntity.getAddress().getAddressId())::::" + customerRequirementEntity.getCustomerId());
+
+		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
+
+		return customerRequirementEntity;
+	}
 	
+	public CustomerRequirementDTO setCustomerRequirementDTO(CustomerRequirement customerRequirementEntity) {
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		this.copyCustomerRequirementBasicEntityToDTO(customerRequirementEntity, customerRequirementDTO);
+		HttpServletResponse response = null;
+		if (customerRequirementEntity.getPlanImagePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(customerRequirementEntity.getPlanImagePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				customerRequirementDTO.setPlanPDFFileFormat(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		
+		if (customerRequirementEntity.getLandImagePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(customerRequirementEntity.getLandImagePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				customerRequirementDTO.setLandImagePNGorJPGFileFormat(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		customerRequirementDTO.setCustomerForCustomerRequirement(setCustomerDTOWithoutRequirement(customerRequirementEntity.getCustomerForCustomerRequirement()));
+		// carDTOList.add(carDTO);
+		return customerRequirementDTO;
+	}
+	
+	
+	
+	public static void copyCustomerRequirementBasicDTOToEntity(CustomerRequirementDTO customerRequirementDTO, CustomerRequirement CustomerRequirementEntity) {
+		final Set<String> prop = new HashSet<>(Arrays.asList("customerId", "amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet", 
+				"planImagePath", "landImagePath", "brickType", "pillerBeamRequired", "floorType", "woodType", "paintCoatCount", "paintWallPuttyCount",
+				"paintBrand", "paintQuality", "plumbingBrand", "electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand"));
+		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(CustomerRequirementEntity.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+
+		BeanUtils.copyProperties(customerRequirementDTO, CustomerRequirementEntity, excludedProperties);
+	}
+	
+	public static void copyCustomerRequirementBasicEntityToDTO(CustomerRequirement CustomerRequirementEntity, CustomerRequirementDTO customerRequirementDTO) {
+		final Set<String> prop = new HashSet<>(Arrays.asList("customerRequirementId", "customerId", "amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet", 
+				"planImagePath", "landImagePath", "brickType", "pillerBeamRequired", "floorType", "woodType", "paintCoatCount", "paintWallPuttyCount",
+				"paintBrand", "paintQuality", "plumbingBrand", "electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand"));
+		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(customerRequirementDTO.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+
+		BeanUtils.copyProperties(CustomerRequirementEntity, customerRequirementDTO, excludedProperties);
+	}
+	
+	public Resource getFileSystem(String filename, HttpServletResponse response) {
+		return getResource(filename, response, ResourceType.FILE_SYSTEM);
+	}
+
+	/**
+	 * @param filename filename
+	 * @param response Http response.
+	 * @return file from classpath.
+	 */
+	public Resource getClassPathFile(String filename, HttpServletResponse response) {
+		return getResource(filename, response, ResourceType.CLASSPATH);
+	}
+
+	private Resource getResource(String filename, HttpServletResponse response, ResourceType resourceType) {
+		// response.setContentType("text/csv; charset=utf-8");
+		// response.setHeader("Content-Disposition", "attachment; filename=" +
+		// filename);
+		// response.setHeader("filename", filename);
+
+		Resource resource = null;
+		final String FILE_DIRECTORY = "C:/Users/User/GitHub Repository/BuildersImage/Builder23/Project29/";
+		switch (resourceType) {
+		case FILE_SYSTEM:
+			resource = new FileSystemResource(filename);
+			System.out.println("ceateImageDirectoryForBuilder2" + resource.exists());
+			break;
+		case CLASSPATH:
+			resource = new ClassPathResource("data/" + filename);
+			break;
+		}
+
+		return resource;
+	}
+
 
 }

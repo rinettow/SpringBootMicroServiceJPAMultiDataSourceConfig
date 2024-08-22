@@ -18,28 +18,27 @@ public class price {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "price_Id", insertable = false, updatable = false)
 	private String priceId;
-	
+
 	@Column(name = "CHF")
 	private float CHF;
-	
+
 	@Column(name = "EURO")
 	private float EURO;
-	
+
 	@Column(name = "DOLLAR")
 	private float DOLLAR;
-	
-	/*@OneToOne(mappedBy="price")
-	@Cascade(value=org.hibernate.annotations.CascadeType.SAVE_UPDATE)
-	private category category;
-	
 
-	public category getCategory() {
-		return category;
-	}
-
-	public void setCategory(category category) {
-		this.category = category;
-	}*/
+	/*
+	 * @OneToOne(mappedBy="price")
+	 * 
+	 * @Cascade(value=org.hibernate.annotations.CascadeType.SAVE_UPDATE) private
+	 * category category;
+	 * 
+	 * 
+	 * public category getCategory() { return category; }
+	 * 
+	 * public void setCategory(category category) { this.category = category; }
+	 */
 
 	public String getPriceId() {
 		return priceId;
@@ -72,6 +71,5 @@ public class price {
 	public void setDOLLAR(float dOLLAR) {
 		DOLLAR = dOLLAR;
 	}
-
 
 }

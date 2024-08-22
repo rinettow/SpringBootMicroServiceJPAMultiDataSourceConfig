@@ -25,19 +25,18 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 public class Customer {
 
 	@Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "CUSTOMER_ID")
 	private int customerId;
-	
+
 	@Column(name = "CUSTOMER_NAME")
 	private String customerName;
-	
+
 	@Column(name = "PHONE_CUSTOMER")
 	private String phoneCustomer;
-	
-	@OneToMany(mappedBy="customerForCustomerRequirement")
+
+	@OneToMany(mappedBy = "customerForCustomerRequirement")
 	private List<CustomerRequirement> customerRequirement;
-	
 
 	public int getCustomerId() {
 		return customerId;
@@ -63,5 +62,13 @@ public class Customer {
 		this.phoneCustomer = phoneCustomer;
 	}
 	
-		
+	public List<CustomerRequirement> getCustomerRequirement() {
+		return customerRequirement;
+	}
+
+	public void setCustomerRequirement(List<CustomerRequirement> customerRequirement) {
+		this.customerRequirement = customerRequirement;
+	}
+
+
 }

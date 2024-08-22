@@ -24,45 +24,33 @@ import com.shop.organic.entity.category.category;
 
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(
-  basePackageClasses = category.class,
-  entityManagerFactoryRef = "categoryEntityManagerFactory",
-  transactionManagerRef = "categoryTransactionManager"
-)
+@EnableJpaRepositories(basePackageClasses = category.class, entityManagerFactoryRef = "categoryEntityManagerFactory", transactionManagerRef = "categoryTransactionManager")
 public class CategorgJPAConfiguration {
 
-	
 	@Bean(name = "categoryDataSourceProperties")
 	@ConfigurationProperties("spring.datasource.category")
-    public DataSourceProperties categoryDataSourceProperties() {
-        return new DataSourceProperties();
-    }
-	
+	public DataSourceProperties categoryDataSourceProperties() {
+		return new DataSourceProperties();
+	}
+
 	@Bean(name = "categoryEntityManagerFactory")
 	public LocalContainerEntityManagerFactoryBean categoryEntityManagerFactory(
-      @Qualifier("categoryDataSource") DataSource dataSource,
-      EntityManagerFactoryBuilder builder) {
-        return builder
-          .dataSource(dataSource)
-          //.packages(category.class)
-          .packages("com.shop.organic.entity.category")
-          .build();
-    }
-	
-	 @Bean(name = "categoryTransactionManager")
-	    public PlatformTransactionManager categoryTransactionManager(
-	      @Qualifier("categoryEntityManagerFactory") LocalContainerEntityManagerFactoryBean categoryEntityManagerFactory) {
-	        return new JpaTransactionManager(categoryEntityManagerFactory.getObject());
-	    }
-	
+			@Qualifier("categoryDataSource") DataSource dataSource, EntityManagerFactoryBuilder builder) {
+		return builder.dataSource(dataSource)
+				// .packages(category.class)
+				.packages("com.shop.organic.entity.category").build();
+	}
+
+	@Bean(name = "categoryTransactionManager")
+	public PlatformTransactionManager categoryTransactionManager(
+			@Qualifier("categoryEntityManagerFactory") LocalContainerEntityManagerFactoryBean categoryEntityManagerFactory) {
+		return new JpaTransactionManager(categoryEntityManagerFactory.getObject());
+	}
+
 	@Bean(name = "categoryDataSource")
 	@ConfigurationProperties("spring.datasource.category.hikari")
 	public DataSource categoryDataSource() {
-	    return categoryDataSourceProperties()
-	      .initializeDataSourceBuilder()
-	      .build();
+		return categoryDataSourceProperties().initializeDataSourceBuilder().build();
 	}
-
-
 
 }

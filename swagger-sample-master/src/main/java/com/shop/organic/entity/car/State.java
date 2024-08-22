@@ -20,30 +20,30 @@ import org.hibernate.annotations.Parameter;
 public class State {
 
 	@Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
-	/*@Id
-    @GeneratedValue(generator = "sequence-generator")
-    @GenericGenerator(
-      name = "sequence-generator",
-      strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator",
-      parameters = {
-        @Parameter(name = "sequence_name", value = "Address_sequence"),
-        @Parameter(name = "initial_value", value = "1"),
-        @Parameter(name = "increment_size", value = "1")
-        }
-    )*/
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	/*
+	 * @Id
+	 * 
+	 * @GeneratedValue(generator = "sequence-generator")
+	 * 
+	 * @GenericGenerator( name = "sequence-generator", strategy =
+	 * "org.hibernate.id.enhanced.SequenceStyleGenerator", parameters = {
+	 * 
+	 * @Parameter(name = "sequence_name", value = "Address_sequence"),
+	 * 
+	 * @Parameter(name = "initial_value", value = "1"),
+	 * 
+	 * @Parameter(name = "increment_size", value = "1") } )
+	 */
 	@Column(name = "STATE_ID", insertable = false, updatable = false)
 	private String stateId;
-	
 
 	@Column(name = "STATE_NAME")
 	private String stateName;
-	
-	
-	@OneToMany(mappedBy="state", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+
+	@OneToMany(mappedBy = "state", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private List<District> district;
-	
-	
+
 	public List<District> getDistrict() {
 		return district;
 	}
@@ -68,6 +68,4 @@ public class State {
 		this.stateName = stateName;
 	}
 
-	
-		
 }

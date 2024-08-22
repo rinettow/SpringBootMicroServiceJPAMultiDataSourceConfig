@@ -25,79 +25,79 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 public class CustomerRequirement {
 
 	@Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "CUSTOMER_REQUIREMENT_ID")
 	private int customerRequirementId;
-	
+
 	@Column(name = "CUSTOMER_ID")
 	private int customerId;
-	
+
 	@Column(name = "AMENITIES_AND_SPECIFICATIONS_ID")
 	private int amenityAndSpecifiactionId;
-	
+
 	@Column(name = "REQUIREMENT_STATUS")
 	private String requirementStatus;
-	
+
 	@Column(name = "BHK_COUNT")
 	private String bhkCount;
-	
+
 	@Column(name = "TOTAL_SQUARE_FEET")
 	private int totalSquareFeet;
-	
+
 	@Column(name = "TOTAL_WALL_SQUARE_FEET")
 	private int totalWallSquareFeet;
-	
+
 	@Column(name = "PLAN_IMAGE_PATH")
 	private String planImagePath;
-	
+
 	@Column(name = "lAND_IMAGE_PATH")
 	private String landImagePath;
-	
+
 	@Column(name = "BRICK_TYPE")
 	private String brickType;
-	
+
 	@Column(name = "PILLLER_BEAM_REQUIRED")
 	private boolean pillerBeamRequired;
-	
+
 	@Column(name = "FLOOR_TYPE")
 	private String floorType;
-	
+
 	@Column(name = "WOOD_TYPE")
 	private String woodType;
-	
+
 	@Column(name = "PAINT_COAT_COUNT")
 	private int paintCoatCount;
-	
+
 	@Column(name = "PAINT_WALL_PUTTY_COUNT")
 	private int paintWallPuttyCount;
-	
+
 	@Column(name = "PAINT_BRAND")
 	private String paintBrand;
-	
+
 	@Column(name = "PAINT_QUALITY")
 	private String paintQuality;
-	
+
 	@Column(name = "PLUMBING_BRAND")
 	private String plumbingBrand;
-	
+
 	@Column(name = "ELECTRICAL_BRAND")
 	private String electricalBrand;
-	
+
 	@Column(name = "CEMENT_BRAND")
 	private String cementBrand;
-	
+
 	@Column(name = "STEEL_BRAND")
 	private String steelBrand;
-	
+
 	@Column(name = "TILES_FLOOR_WALL_BRAND")
 	private String tilesFloorWallBrand;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="CUSTOMER_ID", insertable = false, updatable = false)
+	@JoinColumn(name = "CUSTOMER_ID", insertable = false, updatable = false)
 	private Customer customerForCustomerRequirement;
-	
+
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="AMENITIES_AND_SPECIFICATIONS_ID", insertable = false, updatable = false)
+	@JoinColumn(name = "AMENITIES_AND_SPECIFICATIONS_ID", insertable = false, updatable = false)
 	private AmenitiesAndSpecifications amenitiesAndSpecificationsForCustomerRequirement;
 
 	public int getCustomerRequirementId() {
@@ -131,8 +131,6 @@ public class CustomerRequirement {
 	public void setRequirementStatus(String requirementStatus) {
 		this.requirementStatus = requirementStatus;
 	}
-
-	
 
 	public String getBhkCount() {
 		return bhkCount;
@@ -295,6 +293,4 @@ public class CustomerRequirement {
 		this.tilesFloorWallBrand = tilesFloorWallBrand;
 	}
 
-
-	
 }

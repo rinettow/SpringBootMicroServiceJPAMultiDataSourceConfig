@@ -26,8 +26,7 @@ public class DistrictDTO {
 	private String districtName;
 	private String stateId;
 	private StateDTO state;
-	
-	
+
 	public String getStateId() {
 		return stateId;
 	}
@@ -60,7 +59,4 @@ public class DistrictDTO {
 		this.districtName = districtName;
 	}
 
-	
-	
-		
 }

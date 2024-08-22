@@ -150,8 +150,8 @@ public class BuilderService {
 		// builderEntityListAmenities.get(0).getBuilder().stream().map(builders->
 		// setBuilderDTO(builders,
 		// getAmenitiesAndSpecificationsById(builderEntityListAmenities.get(0).getAmenitiesAndSpecificationsId()))).collect(Collectors.toList());
-		response = buildersAvailableAmenities.stream()
-				.map(buildersAvailableAmenities -> setBuilderDTO(getBuildersById(buildersAvailableAmenities.getBuilderId())))
+		response = buildersAvailableAmenities.stream().map(
+				buildersAvailableAmenities -> setBuilderDTO(getBuildersById(buildersAvailableAmenities.getBuilderId())))
 				.collect(Collectors.toList());
 		// entityManager.close();
 		return response;
@@ -547,14 +547,13 @@ public class BuilderService {
 		}
 		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
 		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
-		if (builderEntity.getBuildersAvailableAmenities() != null && !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
-			builderDTO
-			.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
+		if (builderEntity.getBuildersAvailableAmenities() != null
+				&& !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
+			builderDTO.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
 					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
 							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
 					.collect(Collectors.toList()));
 		}
-		
 
 		final Set<String> prop = new HashSet<>(Arrays.asList("builderId", "builderName", "manufacturingCompany",
 				"projectType", "phone", "userName", "password", "amenityAndSpecificationId"));
@@ -817,9 +816,12 @@ public class BuilderService {
 			BuildersAvailableAmenitiesDTO BuildersAvailableAmenitiesDTO) throws BeansException {
 		final Set<String> prop = new HashSet<>(Arrays.asList("builderId", "amenitiesAndSpecificationsId"));
 
-		/*BuildersAvailableAmenitiesDTO.setAmenitiesAndSpecifications(
-				copyAmenityAndSpecificationsEntityToDTO(getAmenitiesAndSpecificationsByAmenityid(
-						BuildersAvailableAmenitiesEntity.getAmenitiesAndSpecificationsId())));*/
+		/*
+		 * BuildersAvailableAmenitiesDTO.setAmenitiesAndSpecifications(
+		 * copyAmenityAndSpecificationsEntityToDTO(
+		 * getAmenitiesAndSpecificationsByAmenityid(
+		 * BuildersAvailableAmenitiesEntity.getAmenitiesAndSpecificationsId())));
+		 */
 		String[] excludedProperties = null;
 		try {
 			excludedProperties = Arrays
@@ -878,9 +880,12 @@ public class BuilderService {
 	public ProjectsAvailableAmenitiesDTO copyProjectsBasicAvailableAmenitiesEntityToDTO(
 			ProjectsAvailableAmenities projectsAvailableAmenitiesEntity,
 			ProjectsAvailableAmenitiesDTO projectsAvailableAmenitiesDTO) throws BeansException {
-		/*projectsAvailableAmenitiesDTO.setAmenitiesAndSpecifications(
-				copyAmenityAndSpecificationsEntityToDTO(getAmenitiesAndSpecificationsByAmenityid(
-						projectsAvailableAmenitiesEntity.getAmenitiesAndSpecificationsId())));*/
+		/*
+		 * projectsAvailableAmenitiesDTO.setAmenitiesAndSpecifications(
+		 * copyAmenityAndSpecificationsEntityToDTO(
+		 * getAmenitiesAndSpecificationsByAmenityid(
+		 * projectsAvailableAmenitiesEntity.getAmenitiesAndSpecificationsId())));
+		 */
 		final Set<String> prop = new HashSet<>(Arrays.asList("projectId", "amenitiesAndSpecificationsId"));
 
 		String[] excludedProperties = null;

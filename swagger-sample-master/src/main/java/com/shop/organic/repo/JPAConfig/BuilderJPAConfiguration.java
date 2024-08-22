@@ -24,47 +24,38 @@ import com.shop.organic.entity.car.Builder;
 
 @Configuration
 @EnableTransactionManagement
-@EnableJpaRepositories(
-  basePackageClasses = Builder.class,
-  entityManagerFactoryRef = "builderEntityManagerFactory",
-  transactionManagerRef = "builderTransactionManager"
-)
+@EnableJpaRepositories(basePackageClasses = Builder.class, entityManagerFactoryRef = "builderEntityManagerFactory", transactionManagerRef = "builderTransactionManager")
 //@ConfigurationProperties("application-dev")
 public class BuilderJPAConfiguration {
-	
+
 	@Primary
 	@Bean(name = "builderDataSourceProperties")
 	@ConfigurationProperties("spring.datasource.car")
-    public DataSourceProperties builderDataSourceProperties() {
-        return new DataSourceProperties();
-    }
-	
+	public DataSourceProperties builderDataSourceProperties() {
+		return new DataSourceProperties();
+	}
+
 	@Primary
 	@Bean(name = "builderEntityManagerFactory")
 	public LocalContainerEntityManagerFactoryBean builderEntityManagerFactory(
-			@Qualifier("builderDataSource") DataSource dataSource,
-      EntityManagerFactoryBuilder builder) {
-        return builder
-          .dataSource(dataSource)
-          //.packages(Car.class)
-          .packages("com.shop.organic.entity.car")
-          .build();
-    }
-	
-	 @Primary
-	 @Bean(name = "builderTransactionManager")
-	    public PlatformTransactionManager builderTransactionManager(
-	      @Qualifier("builderEntityManagerFactory") LocalContainerEntityManagerFactoryBean builderEntityManagerFactory) {
-	        return new JpaTransactionManager(builderEntityManagerFactory.getObject());
-	    }
-	
+			@Qualifier("builderDataSource") DataSource dataSource, EntityManagerFactoryBuilder builder) {
+		return builder.dataSource(dataSource)
+				// .packages(Car.class)
+				.packages("com.shop.organic.entity.car").build();
+	}
+
+	@Primary
+	@Bean(name = "builderTransactionManager")
+	public PlatformTransactionManager builderTransactionManager(
+			@Qualifier("builderEntityManagerFactory") LocalContainerEntityManagerFactoryBean builderEntityManagerFactory) {
+		return new JpaTransactionManager(builderEntityManagerFactory.getObject());
+	}
+
 	@Primary
 	@Bean(name = "builderDataSource")
 	@ConfigurationProperties("spring.datasource.car.hikari")
 	public DataSource builderDataSource() {
-	    return builderDataSourceProperties()
-	      .initializeDataSourceBuilder()
-	      .build();
+		return builderDataSourceProperties().initializeDataSourceBuilder().build();
 	}
 
 }

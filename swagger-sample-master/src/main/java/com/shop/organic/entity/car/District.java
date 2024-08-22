@@ -25,31 +25,34 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 public class District {
 
 	@Id
-    @GeneratedValue(strategy=GenerationType.IDENTITY)
-	/*@Id
-    @GeneratedValue(generator = "sequence-generator")
-    @GenericGenerator(
-      name = "sequence-generator",
-      strategy = "org.hibernate.id.enhanced.SequenceStyleGenerator",
-      parameters = {
-        @Parameter(name = "sequence_name", value = "Address_sequence"),
-        @Parameter(name = "initial_value", value = "1"),
-        @Parameter(name = "increment_size", value = "1")
-        }
-    )*/
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	/*
+	 * @Id
+	 * 
+	 * @GeneratedValue(generator = "sequence-generator")
+	 * 
+	 * @GenericGenerator( name = "sequence-generator", strategy =
+	 * "org.hibernate.id.enhanced.SequenceStyleGenerator", parameters = {
+	 * 
+	 * @Parameter(name = "sequence_name", value = "Address_sequence"),
+	 * 
+	 * @Parameter(name = "initial_value", value = "1"),
+	 * 
+	 * @Parameter(name = "increment_size", value = "1") } )
+	 */
 	@Column(name = "DISTRICT_ID", insertable = false, updatable = false)
 	private String districtId;
-	
+
 	@Column(name = "DISTRICT_NAME")
 	private String districtName;
-	
+
 	@Column(name = "STATE_ID")
 	private String stateId;
-	
-	@ManyToOne(cascade=CascadeType.ALL)
-	@JoinColumn(name="STATE_ID", insertable = false, updatable = false)
+
+	@ManyToOne(cascade = CascadeType.ALL)
+	@JoinColumn(name = "STATE_ID", insertable = false, updatable = false)
 	private State state;
-	
+
 	public String getStateId() {
 		return stateId;
 	}
@@ -65,8 +68,7 @@ public class District {
 	public void setState(State state) {
 		this.state = state;
 	}
-	
-	
+
 	public String getDistrictId() {
 		return districtId;
 	}
@@ -83,7 +85,4 @@ public class District {
 		this.districtName = districtName;
 	}
 
-	
-	
-		
 }

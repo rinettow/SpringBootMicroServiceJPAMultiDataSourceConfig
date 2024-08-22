@@ -19,44 +19,37 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-
 @Entity
 @Table(name = "PROJECTS")
 public class Projects {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "PROJECT_ID", insertable = false, updatable = false)
-	 private int projectId;
-	
+	private int projectId;
+
 	@Column(name = "BUILDER_ID")
-    private int builderId;
-   
+	private int builderId;
+
 	@Column(name = "ESTIMATE_COST")
-    private int estimateCost;
-   
+	private int estimateCost;
+
 	@Column(name = "AREA_IN_SQARE_FEET")
-    private int areaInSquareFeet;
-	
-	
+	private int areaInSquareFeet;
+
 	@Column(name = "PROJ_MAIN_PIC_FILE_PATH")
-    private String projMainPicFilePath;
-	
-	
+	private String projMainPicFilePath;
+
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="BUILDER_ID", insertable = false, updatable = false)
+	@JoinColumn(name = "BUILDER_ID", insertable = false, updatable = false)
 	private Builder builderForProjects;
-	
-	@OneToMany(mappedBy="projectForAmenity")
+
+	@OneToMany(mappedBy = "projectForAmenity")
 	private List<ProjectsAvailableAmenities> projectsAvailableAmenities;
-	
-	
-	@OneToMany(mappedBy="projectForPicture")
+
+	@OneToMany(mappedBy = "projectForPicture")
 	private List<Picture> Picture;
-	
-	
-	
-	
+
 	public List<ProjectsAvailableAmenities> getProjectsAvailableAmenities() {
 		return projectsAvailableAmenities;
 	}
@@ -72,7 +65,7 @@ public class Projects {
 	public void setProjMainPicFilePath(String projMainPicFilePath) {
 		this.projMainPicFilePath = projMainPicFilePath;
 	}
-	
+
 	public List<Picture> getPicture() {
 		return Picture;
 	}
@@ -81,8 +74,6 @@ public class Projects {
 		Picture = picture;
 	}
 
-	
-	
 	public Builder getBuilderForProjects() {
 		return builderForProjects;
 	}
@@ -122,7 +113,5 @@ public class Projects {
 	public void setAreaInSquareFeet(int areaInSquareFeet) {
 		this.areaInSquareFeet = areaInSquareFeet;
 	}
-
-	
 
 }

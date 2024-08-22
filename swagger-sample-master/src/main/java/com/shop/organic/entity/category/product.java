@@ -12,31 +12,31 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "Product")
 public class product {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "product_Id", insertable = false, updatable = false)
 	private String productId;
-	
+
 	@Column(name = "product_Name")
 	private String productName;
-	
+
 	@Column(name = "product_Desc")
 	private String productDesc;
-	
+
 	@Column(name = "category_Id")
 	private String categoryId;
-	
+
 	@Column(name = "quantity")
 	private float quantity;
-	
+
 	@Column(name = "measurement_Unit")
 	private String measurementUnit;
-	
+
 	@ManyToOne
-	@JoinColumn(name="category_Id", insertable = false, updatable = false)
+	@JoinColumn(name = "category_Id", insertable = false, updatable = false)
 	private category category;
-	
+
 	public category getCategory() {
 		return category;
 	}

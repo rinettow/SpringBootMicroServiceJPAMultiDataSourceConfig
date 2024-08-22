@@ -18,24 +18,24 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "Category")
 public class category {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "category_Id")
 	private String categoryId;
-	
+
 	@Column(name = "category_Name")
 	private String categoryName;
-	
+
 	@Column(name = "category_Desc")
 	private String categoryDesc;
-	
+
 	@Column(name = "price_Id")
 	private String priceId;
-	
-	@OneToMany(mappedBy="category", fetch=FetchType.LAZY, cascade = CascadeType.ALL)
+
+	@OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	private List<product> products;
-	
+
 	public List<product> getProducts() {
 		return products;
 	}
@@ -43,9 +43,9 @@ public class category {
 	public void setProducts(List<product> products) {
 		this.products = products;
 	}
-	
-	@OneToOne(cascade=CascadeType.ALL)//one-to-one
-    @JoinColumn(name="price_Id", insertable = false, updatable = false)
+
+	@OneToOne(cascade = CascadeType.ALL) // one-to-one
+	@JoinColumn(name = "price_Id", insertable = false, updatable = false)
 	private price price;
 
 	public price getPrice() {

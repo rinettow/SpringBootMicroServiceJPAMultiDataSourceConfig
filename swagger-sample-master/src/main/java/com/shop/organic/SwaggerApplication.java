@@ -36,22 +36,22 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @EnableHystrix
 @EnableEurekaServer
 @EnableDiscoveryClient
-@EnableFeignClients("com.shop.organic.controller")  
+@EnableFeignClients("com.shop.organic.controller")
 public class SwaggerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(SwaggerApplication.class, args);
 	}
-	
+
 	@Bean
-    public Executor taskExecutor() {
-        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(1);
-        executor.setMaxPoolSize(1);
-        executor.setQueueCapacity(500);
-        executor.setThreadNamePrefix("GithubLookup-");
-        executor.initialize();
-        return executor;
-    }
+	public Executor taskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(1);
+		executor.setMaxPoolSize(1);
+		executor.setQueueCapacity(500);
+		executor.setThreadNamePrefix("GithubLookup-");
+		executor.initialize();
+		return executor;
+	}
 
 }
