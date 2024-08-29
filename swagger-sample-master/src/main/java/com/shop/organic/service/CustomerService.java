@@ -47,6 +47,7 @@ import com.shop.organic.dto.AddressDTO;
 import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
+import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.DistrictDTO;
@@ -58,6 +59,7 @@ import com.shop.organic.entity.car.Address;
 import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
+import com.shop.organic.entity.car.BuildersEstimate;
 import com.shop.organic.entity.car.Customer;
 import com.shop.organic.entity.car.CustomerRequirement;
 import com.shop.organic.entity.car.District;
@@ -100,6 +102,9 @@ public class CustomerService {
 
 	// @Autowired
 	// private CarRepository carRepository;
+	
+	@Autowired
+	private BuilderService builderService;
 
 	// @Value("${server.port}")
 	private String port;
@@ -264,6 +269,77 @@ public class CustomerService {
 		return LoginCustomerDTO;
 	}
 	
+	public boolean validateCustomersOpenRequirement(CustomerRequirementDTO customerRequirementDTO) {
+		// return
+		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
+		// carEntityList=carRepository.findAll();
+		List<CustomerRequirement> customerRequirementEntity;
+		List<CustomerRequirement> customerRequirementEntityOpenStatus;
+		boolean isOpenRequirementAvailable = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<CustomerRequirement> criteria = builder.createQuery(CustomerRequirement.class);
+		Root<CustomerRequirement> rootBuilder = criteria.from(CustomerRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("customerId"), customerRequirementDTO.getCustomerId()));
+		restrictions.add(builder.equal(rootBuilder.get("amenityAndSpecifiactionId"), customerRequirementDTO.getAmenityAndSpecifiactionId()));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<CustomerRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		customerRequirementEntity = query.getResultList();
+
+		if (!customerRequirementEntity.isEmpty()) {
+			customerRequirementEntityOpenStatus = customerRequirementEntity.stream().filter(custRequirement-> custRequirement.getRequirementStatus().equals("OPEN")).collect(Collectors.toList());
+			if(!customerRequirementEntityOpenStatus.isEmpty()) {
+				isOpenRequirementAvailable = true;
+				//throw new ResourceNotFoundException("Open Requirement is already available for " +amenityName+ "Please close the existing requirement");
+			}
+			
+		}
+		return isOpenRequirementAvailable;
+	}
+	
+	public List<CustomerRequirement> getCustomersOpenRequirement(int customerId, int amenityAndSpecificationId) {
+		// return
+		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
+		// carEntityList=carRepository.findAll();
+		List<CustomerRequirement> customerRequirementEntity;
+		List<CustomerRequirement> customerRequirementEntityOpenStatus = null;
+		boolean isOpenRequirementAvailable = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<CustomerRequirement> criteria = builder.createQuery(CustomerRequirement.class);
+		Root<CustomerRequirement> rootBuilder = criteria.from(CustomerRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("customerId"), customerId));
+		restrictions.add(builder.equal(rootBuilder.get("amenityAndSpecifiactionId"), amenityAndSpecificationId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<CustomerRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		customerRequirementEntity = query.getResultList();
+
+		if (!customerRequirementEntity.isEmpty()) {
+			customerRequirementEntityOpenStatus = customerRequirementEntity.stream().filter(custRequirement-> custRequirement.getRequirementStatus().equals("OPEN")).collect(Collectors.toList());
+			if(!customerRequirementEntityOpenStatus.isEmpty()) {
+				isOpenRequirementAvailable = true;
+				//throw new ResourceNotFoundException("Open Requirement is already available for " +amenityName+ "Please close the existing requirement");
+			}
+			
+		}
+		return customerRequirementEntityOpenStatus;
+	}
+	
+	
 	public CustomerRequirement CreateCustomerRequirement(CustomerRequirementDTO customerRequirementDTO) {
 		CustomerRequirement customerRequirementEntity = new CustomerRequirement();
 		copyCustomerRequirementBasicDTOToEntity(customerRequirementDTO, customerRequirementEntity);
@@ -272,7 +348,7 @@ public class CustomerService {
 		entityManager.getTransaction().begin();
 		
 		if (!entityManager.contains(customerRequirementEntity)) {
-			CustomerRequirement entityAvailableOrNot = entityManager.find(CustomerRequirement.class, customerRequirementEntity.getCustomerForCustomerRequirement());
+			CustomerRequirement entityAvailableOrNot = entityManager.find(CustomerRequirement.class, customerRequirementEntity.getCustomerRequirementId());
 			if (entityAvailableOrNot == null) {
 				// persist object - add to entity manager
 				entityManager.persist(customerRequirementEntity);
@@ -292,6 +368,31 @@ public class CustomerService {
 		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
 
 		return customerRequirementEntity;
+	}
+	
+	public BuildersEstimate addBuildersEstimateEntry(int customerOpenRequirementId, int customerId, int amenitiesAndSpecificationId, int projectId, int builderId) {
+		BuildersEstimate buildersEstimate = new BuildersEstimate();
+		buildersEstimate.setCustomerRequirementId(customerOpenRequirementId);
+		buildersEstimate.setProjectId(projectId);
+		buildersEstimate.setBuilderId(builderId);
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		
+		if (!entityManager.contains(buildersEstimate)) {
+				// persist object - add to entity manager
+				entityManager.persist(buildersEstimate);
+				// flush em - save to DB
+				entityManager.flush();
+			
+
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		System.out.println("builderEntity.getBuilderId()::::" + buildersEstimate.getBuildersEstimateId());
+		
+		return buildersEstimate;
 	}
 	
 	public CustomerRequirementDTO setCustomerRequirementDTO(CustomerRequirement customerRequirementEntity) {
@@ -343,15 +444,126 @@ public class CustomerService {
 			}
 
 		}
-		customerRequirementDTO.setCustomerForCustomerRequirement(setCustomerDTOWithoutRequirement(customerRequirementEntity.getCustomerForCustomerRequirement()));
+		if (customerRequirementEntity.getCustomerForCustomerRequirement() != null) {
+			customerRequirementDTO.setCustomerForCustomerRequirement(setCustomerDTOWithoutRequirement(customerRequirementEntity.getCustomerForCustomerRequirement()));
+		}
+		if (customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement() != null) {
+			customerRequirementDTO.setAmenitiesAndSpecificationsForCustomerRequirement(copyAmenitiesAndSpecificationEntityToDto(customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement()));
+		}
+		if (customerRequirementEntity.getBuildersEstimate() != null && !customerRequirementEntity.getBuildersEstimate().isEmpty()) {
+			customerRequirementDTO.setBuildersEstimate(customerRequirementEntity.getBuildersEstimate().stream().map(this::setBuilderEstimateDTO).collect(Collectors.toList()));
+		}
 		// carDTOList.add(carDTO);
 		return customerRequirementDTO;
 	}
 	
+	public BuildersEstimateDTO setBuilderEstimateDTO(BuildersEstimate buildersEstimateEntity) {
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		this.copyBuildersEstimateBasicEntityToDTO(buildersEstimateEntity, buildersEstimateDTO);
+		
+		if (buildersEstimateEntity.getCustomerRequirementForBuildersEstimate() != null) {
+			buildersEstimateDTO.setCustomerRequirementDTO(setCustomerRequirementDTOWithoutBuilderEstimate(buildersEstimateEntity.getCustomerRequirementForBuildersEstimate()));
+		}
+		
+		if (buildersEstimateEntity.getProjectForBuildersEstimate() != null) {
+			buildersEstimateDTO.setProjectDTO(builderService.setProjectDTO(buildersEstimateEntity.getProjectForBuildersEstimate(), null));
+		}
+		
+		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
+			buildersEstimateDTO.setBuilderDTO(builderService.setBuilderDTO(buildersEstimateEntity.getBuilderForBuildersEstimate()));
+		}
+		// carDTOList.add(carDTO);
+		return buildersEstimateDTO;
+	}
+	
+	public CustomerRequirementDTO setCustomerRequirementDTOWithoutBuilderEstimate(CustomerRequirement customerRequirementEntity) {
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		this.copyCustomerRequirementBasicEntityToDTO(customerRequirementEntity, customerRequirementDTO);
+		HttpServletResponse response = null;
+		if (customerRequirementEntity.getPlanImagePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(customerRequirementEntity.getPlanImagePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				customerRequirementDTO.setPlanPDFFileFormat(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		
+		if (customerRequirementEntity.getLandImagePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(customerRequirementEntity.getLandImagePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				customerRequirementDTO.setLandImagePNGorJPGFileFormat(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		if (customerRequirementEntity.getCustomerForCustomerRequirement() != null) {
+			customerRequirementDTO.setCustomerForCustomerRequirement(setCustomerDTOWithoutRequirement(customerRequirementEntity.getCustomerForCustomerRequirement()));
+		}
+		if (customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement() != null) {
+			customerRequirementDTO.setAmenitiesAndSpecificationsForCustomerRequirement(copyAmenitiesAndSpecificationEntityToDto(customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement()));
+		}
+		// carDTOList.add(carDTO);
+		return customerRequirementDTO;
+	}
+	
+	public static void copyBuildersEstimateBasicEntityToDTO(BuildersEstimate buildersEstimatetEntity, BuildersEstimateDTO buildersEstimateDTO) {
+		final Set<String> prop = new HashSet<>(Arrays.asList("buildersEstimateId",
+				"customerRequirementId",
+				"projectId",
+				"builderId",
+				"perSquareFeetCost",
+				"detailedEstimateFilePath"));
+		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(buildersEstimateDTO.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+
+		BeanUtils.copyProperties(buildersEstimatetEntity, buildersEstimateDTO, excludedProperties);
+	}
+	
+	private AmenitiesAndSpecificationsDTO copyAmenitiesAndSpecificationEntityToDto(
+			AmenitiesAndSpecifications amenitiesAndSpecifications) {
+
+		AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsDTO = new AmenitiesAndSpecificationsDTO();
+		final Set<String> prop = new HashSet<>(
+				Arrays.asList("amenitiesAndSpecificationsId", "amenitiesAndSpecificationsName"));
+		String[] excludedProperties = Arrays
+				.stream(BeanUtils.getPropertyDescriptors(amenitiesAndSpecificationsDTO.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+		BeanUtils.copyProperties(amenitiesAndSpecifications, amenitiesAndSpecificationsDTO, excludedProperties);
+		return amenitiesAndSpecificationsDTO;
+	}
 	
 	
 	public static void copyCustomerRequirementBasicDTOToEntity(CustomerRequirementDTO customerRequirementDTO, CustomerRequirement CustomerRequirementEntity) {
-		final Set<String> prop = new HashSet<>(Arrays.asList("customerId", "amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet", 
+		final Set<String> prop = new HashSet<>(Arrays.asList("customerRequirementId", "customerId", "amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet", 
 				"planImagePath", "landImagePath", "brickType", "pillerBeamRequired", "floorType", "woodType", "paintCoatCount", "paintWallPuttyCount",
 				"paintBrand", "paintQuality", "plumbingBrand", "electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand"));
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(CustomerRequirementEntity.getClass()))

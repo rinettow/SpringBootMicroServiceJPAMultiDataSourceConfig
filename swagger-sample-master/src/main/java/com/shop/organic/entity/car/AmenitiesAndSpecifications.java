@@ -34,6 +34,15 @@ public class AmenitiesAndSpecifications {
 	@OneToMany(mappedBy = "amenitiesAndSpecificationsForCustomerRequirement")
 	private List<CustomerRequirement> customerRequirement;
 
+	
+	public List<CustomerRequirement> getCustomerRequirement() {
+		return customerRequirement;
+	}
+
+	public void setCustomerRequirement(List<CustomerRequirement> customerRequirement) {
+		this.customerRequirement = customerRequirement;
+	}
+
 	public List<BuildersAvailableAmenities> getBuildersAvailableAmenities() {
 		return buildersAvailableAmenities;
 	}

@@ -99,6 +99,9 @@ public class CustomerRequirement {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "AMENITIES_AND_SPECIFICATIONS_ID", insertable = false, updatable = false)
 	private AmenitiesAndSpecifications amenitiesAndSpecificationsForCustomerRequirement;
+	
+	@OneToMany(mappedBy = "customerRequirementForBuildersEstimate")
+	private List<BuildersEstimate> buildersEstimate;
 
 	public int getCustomerRequirementId() {
 		return customerRequirementId;
@@ -114,6 +117,14 @@ public class CustomerRequirement {
 
 	public void setCustomerId(int customerId) {
 		this.customerId = customerId;
+	}
+
+	public List<BuildersEstimate> getBuildersEstimate() {
+		return buildersEstimate;
+	}
+
+	public void setBuildersEstimate(List<BuildersEstimate> buildersEstimate) {
+		this.buildersEstimate = buildersEstimate;
 	}
 
 	public int getAmenityAndSpecifiactionId() {

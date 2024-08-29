@@ -66,6 +66,17 @@ public class Builder {
 	@OneToMany(mappedBy = "builderForAmenity")
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
 
+	@OneToMany(mappedBy = "builderForBuildersEstimate")
+	private List<BuildersEstimate> buildersEstimate;
+
+	public List<BuildersEstimate> getBuildersEstimate() {
+		return buildersEstimate;
+	}
+
+	public void setBuildersEstimate(List<BuildersEstimate> buildersEstimate) {
+		this.buildersEstimate = buildersEstimate;
+	}
+
 	@Column(name = "USER_NAME")
 	private String userName;
 

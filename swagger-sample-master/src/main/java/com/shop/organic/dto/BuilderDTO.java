@@ -27,6 +27,16 @@ public class BuilderDTO {
 	private List<BuildersAvailableAmenitiesDTO> buildersAvailableAmenities;
 	private String userName;
 	private String password;
+	private List<BuildersEstimateDTO> buildersEstimate;
+
+
+	public List<BuildersEstimateDTO> getBuildersEstimate() {
+		return buildersEstimate;
+	}
+
+	public void setBuildersEstimate(List<BuildersEstimateDTO> buildersEstimate) {
+		this.buildersEstimate = buildersEstimate;
+	}
 
 	public List<ProjectsDTO> getProjects() {
 		return projects;

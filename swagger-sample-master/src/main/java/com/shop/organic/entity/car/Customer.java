@@ -37,7 +37,7 @@ public class Customer {
 
 	@OneToMany(mappedBy = "customerForCustomerRequirement")
 	private List<CustomerRequirement> customerRequirement;
-
+	
 	public int getCustomerId() {
 		return customerId;
 	}

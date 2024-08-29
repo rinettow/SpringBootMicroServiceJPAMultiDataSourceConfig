@@ -28,6 +28,16 @@ public class ProjectsDTO {
 	private List<PictureDTO> Picture;
 	private byte[] image;
 	private List<ProjectsAvailableAmenitiesDTO> projectsAvailableAmenities;
+	private List<BuildersEstimateDTO> buildersEstimate;
+
+
+	public List<BuildersEstimateDTO> getBuildersEstimate() {
+		return buildersEstimate;
+	}
+
+	public void setBuildersEstimate(List<BuildersEstimateDTO> buildersEstimate) {
+		this.buildersEstimate = buildersEstimate;
+	}
 
 	public byte[] getImage() {
 		return image;

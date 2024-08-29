@@ -38,6 +38,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
+import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.PictureDTO;
@@ -46,6 +47,7 @@ import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.dto.StateDTO;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
+import com.shop.organic.entity.car.BuildersEstimate;
 import com.shop.organic.entity.car.Customer;
 import com.shop.organic.entity.car.CustomerRequirement;
 import com.shop.organic.entity.car.Picture;
@@ -125,13 +127,30 @@ public class CustomerController {
 	@PostMapping(value = "/CreateCustomerRequirement")
 	public ResponseEntity<Object> CreateCustomerRequirement(@RequestParam("planPDFFileFormat") MultipartFile planPDFFileFormat,
 			@RequestParam("landImagePNGorJPGFileFormat") MultipartFile landImagePNGorJPGFileFormat,
-			@RequestParam("createRequirementDTO") String createRequirementDTO) throws JsonMappingException, JsonProcessingException {
+			@RequestParam("customerRequirementDTO") String createRequirementDTO) throws JsonMappingException, JsonProcessingException {
 		System.out.println("ProjectDetails" + new Gson().toJson(createRequirementDTO));
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
 		customerRequirementDTO = objectMapper.readValue(createRequirementDTO, CustomerRequirementDTO.class);
-
+		boolean isOpenRequirementAvailable = customerService.validateCustomersOpenRequirement(customerRequirementDTO);
+		if(isOpenRequirementAvailable) {
+			String amenityName = null;
+			if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 1) {
+				amenityName = "Full House/Flat Construction";
+			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 2) {
+				amenityName = "Interior House Design";
+			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 3) {
+				amenityName = "Electrical Work";
+			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 4) {
+				amenityName = "Plumbing Work";
+			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 5) {
+				amenityName = "Painting";
+			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 6) {
+				amenityName = "Solar Planting";
+			}
+			return generateResponse("Open Requirement is already available for " +amenityName+ "Please close the existing requirement", HttpStatus.NOT_FOUND, null);
+		}
 		CustomerRequirementDTO newCustomerRequirementDTOAddded = new CustomerRequirementDTO();
 		CustomerRequirement customerRequirementEntity = new CustomerRequirement();
 		   /*Add new Customer Requirement entry with new requirement id created*/
@@ -144,6 +163,26 @@ public class CustomerController {
 		customerRequirementEntity = customerService.CreateCustomerRequirement(newCustomerRequirementDTOAddded);
 		newCustomerRequirementDTOAddded = customerService.setCustomerRequirementDTO(customerRequirementEntity);
 		return generateResponse("List of Builders!", HttpStatus.OK, newCustomerRequirementDTOAddded);
+	}
+	
+	@PostMapping(value = "/getEstimate")
+	public ResponseEntity<Object> getEstimate(@RequestParam("builderId") String builderId,
+			@RequestParam("projectsId") String projectsId,
+			@RequestParam("customerId") String customerId,
+			@RequestParam("amenitiesAndSpecificationsDTO") String amenitiesAndSpecifications) throws JsonMappingException, JsonProcessingException {
+		BuildersEstimateDTO buildersEstimateDTO;
+		ObjectMapper objectMapper = new ObjectMapper();
+		AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsDTO = new AmenitiesAndSpecificationsDTO();
+		amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecifications, AmenitiesAndSpecificationsDTO.class);
+		List<CustomerRequirement> customerOpenRequirement= customerService.getCustomersOpenRequirement(Integer.parseInt(customerId), amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId());
+		if(!customerOpenRequirement.isEmpty() && customerOpenRequirement.size() == 1) {
+			BuildersEstimate newBuildersEstimateAdded =	customerService.addBuildersEstimateEntry(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(customerId), 
+					amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId(), Integer.parseInt(projectsId), Integer.parseInt(builderId));
+			 buildersEstimateDTO=  customerService.setBuilderEstimateDTO(newBuildersEstimateAdded);
+		}else {
+			return generateResponse("Open Requirement is not available , Please create Requirement", HttpStatus.NOT_FOUND, null);
+		}
+		return generateResponse("List of Builders!", HttpStatus.OK, buildersEstimateDTO);
 	}
 
 	@GetMapping(value = "/AllStates")

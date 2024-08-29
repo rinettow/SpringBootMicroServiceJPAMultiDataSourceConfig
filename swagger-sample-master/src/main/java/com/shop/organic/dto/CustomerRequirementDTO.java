@@ -20,6 +20,7 @@ import org.hibernate.annotations.Parameter;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.shop.organic.entity.car.AmenitiesAndSpecifications;
+import com.shop.organic.entity.car.BuildersEstimate;
 import com.shop.organic.entity.car.Customer;
 
 public class CustomerRequirementDTO {
@@ -47,9 +48,29 @@ public class CustomerRequirementDTO {
 	private String steelBrand;
 	private String tilesFloorWallBrand;
 	private CustomerDTO customerForCustomerRequirement;
-	private AmenitiesAndSpecifications amenitiesAndSpecificationsForCustomerRequirement;
+	private AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsForCustomerRequirement;
+	private List<BuildersEstimateDTO> buildersEstimate;
 	private byte[] planPDFFileFormat;
 	private byte[] landImagePNGorJPGFileFormat;
+	
+	public AmenitiesAndSpecificationsDTO getAmenitiesAndSpecificationsForCustomerRequirement() {
+		return amenitiesAndSpecificationsForCustomerRequirement;
+	}
+
+	public void setAmenitiesAndSpecificationsForCustomerRequirement(
+			AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsForCustomerRequirement) {
+		this.amenitiesAndSpecificationsForCustomerRequirement = amenitiesAndSpecificationsForCustomerRequirement;
+	}
+
+	public List<BuildersEstimateDTO> getBuildersEstimate() {
+		return buildersEstimate;
+	}
+
+	public void setBuildersEstimate(List<BuildersEstimateDTO> buildersEstimate) {
+		this.buildersEstimate = buildersEstimate;
+	}
+
+	
 	
 	public byte[] getPlanPDFFileFormat() {
 		return planPDFFileFormat;
@@ -116,14 +137,7 @@ public class CustomerRequirementDTO {
 		this.customerForCustomerRequirement = customerForCustomerRequirement;
 	}
 
-	public AmenitiesAndSpecifications getAmenitiesAndSpecificationsForCustomerRequirement() {
-		return amenitiesAndSpecificationsForCustomerRequirement;
-	}
-
-	public void setAmenitiesAndSpecificationsForCustomerRequirement(
-			AmenitiesAndSpecifications amenitiesAndSpecificationsForCustomerRequirement) {
-		this.amenitiesAndSpecificationsForCustomerRequirement = amenitiesAndSpecificationsForCustomerRequirement;
-	}
+	
 
 	public int getTotalSquareFeet() {
 		return totalSquareFeet;
