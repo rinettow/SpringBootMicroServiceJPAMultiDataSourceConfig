@@ -117,8 +117,8 @@ public class CustomerService {
 	}
 
 
-	public Customer registerCustomer(CustomerDTO customerDTO) {
-		BuilderDTO responseBuilderDTO = new BuilderDTO();
+	public CustomerDTO registerCustomer(CustomerDTO customerDTO) {
+		CustomerDTO registeredCustomerDTO = new CustomerDTO();
 
 		Customer customerEntity = setCustomerEntity(customerDTO);
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -132,13 +132,9 @@ public class CustomerService {
 		}
 		// commit transaction at all
 		entityManager.getTransaction().commit();
-
-		System.out.println("builderEntity.getBuilderId()::::" + customerEntity.getCustomerId());
-		System.out.println("builderEntity.getAddress().getAddressId())::::" + customerEntity.getPhoneCustomer());
-
-		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
-
-		return customerEntity;
+		registeredCustomerDTO = setCustomerDTO(customerEntity);
+		entityManager.close();
+		return registeredCustomerDTO;
 	}
 	
 	public void ceateImageDirectoryForCustomer(CustomerDTO customerDTO) {
@@ -265,7 +261,7 @@ public class CustomerService {
 
 			LoginCustomerDTO = setCustomerDTO(LoginCustomer.get(0));
 		}
-		// System.out.println("LoginBuilderDTO" +new Gson().toJson(LoginBuilderDTO));
+		entityManager.close();
 		return LoginCustomerDTO;
 	}
 	
@@ -301,15 +297,17 @@ public class CustomerService {
 			}
 			
 		}
+		entityManager.close();
 		return isOpenRequirementAvailable;
 	}
 	
-	public List<CustomerRequirement> getCustomersOpenRequirement(int customerId, int amenityAndSpecificationId) {
+	public List<CustomerRequirementDTO> getCustomersOpenRequirement(int customerId, int amenityAndSpecificationId) {
 		// return
 		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
 		// carEntityList=carRepository.findAll();
 		List<CustomerRequirement> customerRequirementEntity;
 		List<CustomerRequirement> customerRequirementEntityOpenStatus = null;
+		List<CustomerRequirementDTO> customerRequirementDTOOpenStatus = null;
 		boolean isOpenRequirementAvailable = false;
 		EntityManager entityManager = em.getEntityManager("builder");
 
@@ -336,11 +334,14 @@ public class CustomerService {
 			}
 			
 		}
-		return customerRequirementEntityOpenStatus;
+		customerRequirementDTOOpenStatus = customerRequirementEntityOpenStatus.stream().map(require ->setCustomerRequirementDTO(require)).collect(Collectors.toList());
+		entityManager.close();
+		return customerRequirementDTOOpenStatus;
 	}
 	
 	
-	public CustomerRequirement CreateCustomerRequirement(CustomerRequirementDTO customerRequirementDTO) {
+	public CustomerRequirementDTO CreateCustomerRequirement(CustomerRequirementDTO customerRequirementDTO) {
+		CustomerRequirementDTO customerRequirementDTOResponse = new CustomerRequirementDTO();
 		CustomerRequirement customerRequirementEntity = new CustomerRequirement();
 		copyCustomerRequirementBasicDTOToEntity(customerRequirementDTO, customerRequirementEntity);
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -361,17 +362,14 @@ public class CustomerService {
 		}
 		// commit transaction at all
 		entityManager.getTransaction().commit();
-
-		System.out.println("builderEntity.getBuilderId()::::" + customerRequirementEntity.getCustomerRequirementId());
-		System.out.println("builderEntity.getAddress().getAddressId())::::" + customerRequirementEntity.getCustomerId());
-
-		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
-
-		return customerRequirementEntity;
+		customerRequirementDTOResponse= this.setCustomerRequirementDTO(customerRequirementEntity);
+		entityManager.close();
+		return customerRequirementDTOResponse;
 	}
 	
-	public BuildersEstimate addBuildersEstimateEntry(int customerOpenRequirementId, int customerId, int amenitiesAndSpecificationId, int projectId, int builderId) {
+	public BuildersEstimateDTO addBuildersEstimateEntry(int customerOpenRequirementId, int customerId, int amenitiesAndSpecificationId, int projectId, int builderId) {
 		BuildersEstimate buildersEstimate = new BuildersEstimate();
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
 		buildersEstimate.setCustomerRequirementId(customerOpenRequirementId);
 		buildersEstimate.setProjectId(projectId);
 		buildersEstimate.setBuilderId(builderId);
@@ -390,9 +388,9 @@ public class CustomerService {
 		// commit transaction at all
 		entityManager.getTransaction().commit();
 
-		System.out.println("builderEntity.getBuilderId()::::" + buildersEstimate.getBuildersEstimateId());
-		
-		return buildersEstimate;
+		buildersEstimateDTO = setBuilderEstimateDTO(buildersEstimate);
+		entityManager.close();
+		return buildersEstimateDTO;
 	}
 	
 	public CustomerRequirementDTO setCustomerRequirementDTO(CustomerRequirement customerRequirementEntity) {
@@ -466,7 +464,7 @@ public class CustomerService {
 		}
 		
 		if (buildersEstimateEntity.getProjectForBuildersEstimate() != null) {
-			buildersEstimateDTO.setProjectDTO(builderService.setProjectDTO(buildersEstimateEntity.getProjectForBuildersEstimate(), null));
+			buildersEstimateDTO.setProjectDTO(builderService.setProjectDTO(buildersEstimateEntity.getProjectForBuildersEstimate()));
 		}
 		
 		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
@@ -474,6 +472,50 @@ public class CustomerService {
 		}
 		// carDTOList.add(carDTO);
 		return buildersEstimateDTO;
+	}
+	
+	public BuildersEstimateDTO setBuilderEstimateDTObymanualCustomerRequirementPicking(BuildersEstimate buildersEstimateEntity) {
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		this.copyBuildersEstimateBasicEntityToDTO(buildersEstimateEntity, buildersEstimateDTO);
+		
+		
+			buildersEstimateDTO.setCustomerRequirementDTO(getCustomerRequirementById(buildersEstimateEntity.getCustomerRequirementId()));
+		
+		if (buildersEstimateEntity.getProjectForBuildersEstimate() != null) {
+			buildersEstimateDTO.setProjectDTO(builderService.setProjectDTO(buildersEstimateEntity.getProjectForBuildersEstimate()));
+		}
+		
+		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
+			buildersEstimateDTO.setBuilderDTO(builderService.setBuilderDTOWithoutProject(buildersEstimateEntity.getBuilderForBuildersEstimate()));
+		}
+		// carDTOList.add(carDTO);
+		return buildersEstimateDTO;
+	}
+	
+	public CustomerRequirementDTO getCustomerRequirementById(int customerRequirementId) {
+		List<CustomerRequirement> custRequirement = null;
+		CustomerRequirementDTO custRequirementDTO = null;
+		EntityManager entityManager = em.getEntityManager("builder");
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<CustomerRequirement> criteria = builder.createQuery(CustomerRequirement.class);
+		Root<CustomerRequirement> rootBuilder = criteria.from(CustomerRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("customerRequirementId"), customerRequirementId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<CustomerRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		custRequirement = query.getResultList();
+
+		if (custRequirement.isEmpty()) {
+			throw new ResourceNotFoundException("customerRequirementId: " + customerRequirementId + " not Found...");
+		}
+		custRequirementDTO = setCustomerRequirementDTOWithoutBuilderEstimate(custRequirement.get(0));
+		entityManager.close();
+		return custRequirementDTO;
 	}
 	
 	public CustomerRequirementDTO setCustomerRequirementDTOWithoutBuilderEstimate(CustomerRequirement customerRequirementEntity) {

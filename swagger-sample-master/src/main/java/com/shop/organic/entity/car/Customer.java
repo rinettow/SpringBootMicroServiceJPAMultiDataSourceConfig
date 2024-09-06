@@ -35,7 +35,7 @@ public class Customer {
 	@Column(name = "PHONE_CUSTOMER")
 	private String phoneCustomer;
 
-	@OneToMany(mappedBy = "customerForCustomerRequirement")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerForCustomerRequirement")
 	private List<CustomerRequirement> customerRequirement;
 	
 	public int getCustomerId() {

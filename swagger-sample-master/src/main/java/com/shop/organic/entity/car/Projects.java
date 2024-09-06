@@ -44,13 +44,13 @@ public class Projects {
 	@JoinColumn(name = "BUILDER_ID", insertable = false, updatable = false)
 	private Builder builderForProjects;
 
-	@OneToMany(mappedBy = "projectForAmenity")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "projectForAmenity")
 	private List<ProjectsAvailableAmenities> projectsAvailableAmenities;
 
-	@OneToMany(mappedBy = "projectForPicture")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "projectForPicture")
 	private List<Picture> Picture;
 	
-	@OneToMany(mappedBy = "projectForBuildersEstimate")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "projectForBuildersEstimate")
 	private List<BuildersEstimate> buildersEstimate;
 
 	public List<ProjectsAvailableAmenities> getProjectsAvailableAmenities() {

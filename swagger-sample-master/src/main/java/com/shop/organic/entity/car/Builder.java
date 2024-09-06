@@ -60,13 +60,13 @@ public class Builder {
 	private Address address;
 
 	// @JsonManagedReference
-	@OneToMany(mappedBy = "builderForProjects")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "builderForProjects")
 	private List<Projects> projects;
 
-	@OneToMany(mappedBy = "builderForAmenity")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "builderForAmenity")
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
 
-	@OneToMany(mappedBy = "builderForBuildersEstimate")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "builderForBuildersEstimate")
 	private List<BuildersEstimate> buildersEstimate;
 
 	public List<BuildersEstimate> getBuildersEstimate() {

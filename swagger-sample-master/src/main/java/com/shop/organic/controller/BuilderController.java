@@ -105,9 +105,8 @@ public class BuilderController {
 	public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
 		System.out.println("BuilderDirectory" + new Gson().toJson(builderDTO));
 		BuilderDTO registeredBuilder = new BuilderDTO();
-		Builder registeredBuilderEntity = new Builder();
-		registeredBuilderEntity = builderService.registerBuilder(builderDTO);
-		int builderid = registeredBuilderEntity.getBuilderId();
+		registeredBuilder = builderService.registerBuilder(builderDTO);
+		int builderid = registeredBuilder.getBuilderId();
 		List<BuildersAvailableAmenitiesDTO> buildersAvailableAmenitiesDTOWithBuilderId = builderDTO
 				.getBuildersAvailableAmenities().stream()
 				.peek(buildersAvailableAmenitiesDTO -> buildersAvailableAmenitiesDTO.setBuilderId(builderid))
@@ -123,7 +122,6 @@ public class BuilderController {
 		;
 
 		Object uriVariables = null;
-		registeredBuilder = builderService.setBuilderDTO(registeredBuilderEntity);
 		builderService.ceateImageDirectoryForBuilder(registeredBuilder);
 		// throw new RuntimeException("Not Available");
 		// carList = carService.findCarList();
@@ -160,10 +158,9 @@ public class BuilderController {
 		projectDTO = objectMapper.readValue(projectDTOString, ProjectsDTO.class);
 
 		ProjectsDTO newProjectAddded = new ProjectsDTO();
-		Projects newProjectEntity = new Projects();
-		newProjectEntity = builderService.addNewProject(projectDTO);
+		newProjectAddded = builderService.addNewProject(projectDTO);
 
-		int projectid = newProjectEntity.getProjectId();
+		int projectid = newProjectAddded.getProjectId();
 		List<ProjectsAvailableAmenitiesDTO> projectsAvailableAmenitiesDTOWithProjectId = projectDTO
 				.getProjectsAvailableAmenities().stream()
 				.peek(projectsAvailableAmenitiesDTO -> projectsAvailableAmenitiesDTO.setProjectId(projectid))
@@ -179,13 +176,9 @@ public class BuilderController {
 		}
 		;
 		Object uriVariables = null;
-		newProjectAddded = builderService.setProjectDTO(newProjectEntity,
-				builderService.getBuildersById(newProjectEntity.getBuilderId()));
 		builderService.ceateImageDirectoryForProject(newProjectAddded, file);
 		// Save Project Image Directory path in DB
-		newProjectEntity = builderService.addNewProject(newProjectAddded);
-		newProjectAddded = builderService.setProjectDTO(newProjectEntity,
-				builderService.getBuildersById(newProjectEntity.getBuilderId()));
+		newProjectAddded = builderService.addNewProject(newProjectAddded);
 		// throw new RuntimeException("Not Available");
 		// carList = carService.findCarList();
 		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
@@ -218,11 +211,8 @@ public class BuilderController {
 		pictureDTO = objectMapper.readValue(pictureDTOString, PictureDTO.class);
 
 		PictureDTO newPictureAddded = new PictureDTO();
-		Picture newPictureEntity = new Picture();
 		builderService.ceateImageDirectoryForPicture(pictureDTO, Integer.toString(pictureDTO.getBuilderId()), file);
-		newPictureEntity = builderService.addNewPicture(pictureDTO);
-		Object uriVariables = null;
-		newPictureAddded = builderService.setPictureDTO(newPictureEntity);
+		newPictureAddded = builderService.addNewPicture(pictureDTO);
 		return generateResponse("List of Builders!", HttpStatus.OK, newPictureAddded);
 	}
 

@@ -100,7 +100,7 @@ public class CustomerRequirement {
 	@JoinColumn(name = "AMENITIES_AND_SPECIFICATIONS_ID", insertable = false, updatable = false)
 	private AmenitiesAndSpecifications amenitiesAndSpecificationsForCustomerRequirement;
 	
-	@OneToMany(mappedBy = "customerRequirementForBuildersEstimate")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerRequirementForBuildersEstimate")
 	private List<BuildersEstimate> buildersEstimate;
 
 	public int getCustomerRequirementId() {

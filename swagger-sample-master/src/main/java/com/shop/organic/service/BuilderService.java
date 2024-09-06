@@ -60,6 +60,7 @@ import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 import com.shop.organic.entity.car.ProjectsAvailableAmenities;
 import com.shop.organic.entity.car.State;
+import com.shop.organic.entity.car.Test;
 import com.shop.organic.entity.category.category;
 import com.shop.organic.entity.category.price;
 import com.shop.organic.entity.category.product;
@@ -92,10 +93,6 @@ import javax.annotation.PreDestroy;
 //@ConfigurationProperties("application-dev")
 public class BuilderService {
 
-	// @Autowired
-	// private CarRepository carRepository;
-
-	// @Value("${server.port}")
 	private String port;
 
 	@Autowired
@@ -103,6 +100,9 @@ public class BuilderService {
 
 	// @Autowired
 	private ExecutorService threadpoolToGtetAllStates;
+
+	@Autowired
+	private CustomerService customerService;
 
 	private enum ResourceType {
 		FILE_SYSTEM, CLASSPATH
@@ -117,43 +117,45 @@ public class BuilderService {
 	private List<Builder> builderEntityList;
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
 	private List<BuilderDTO> builderDTOList = new ArrayList<BuilderDTO>();
-	// private List<CategoryDTO> catgDTOList;
 
 	// @Async
 	public List<BuilderDTO> findBuildersList(int amenitiesAndSpecificationsId) {
-		// return
-		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
-		// carEntityList=carRepository.findAll();
 		List<BuilderDTO> response = null;
 		EntityManager entityManager = em.getEntityManager("builder");
-
-		builderDTOList.clear();
-		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<BuildersAvailableAmenities> criteria = builder.createQuery(BuildersAvailableAmenities.class);
-		Root<BuildersAvailableAmenities> rootBuilder = criteria.from(BuildersAvailableAmenities.class);
-		criteria.select(rootBuilder);
-
-		List<Predicate> restrictions = new ArrayList<Predicate>();
-		restrictions.add(builder.equal(rootBuilder.get("amenitiesAndSpecificationsId"), amenitiesAndSpecificationsId));
-
-		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
-		TypedQuery<BuildersAvailableAmenities> query = entityManager.createQuery(criteria);
-		query.setHint(QueryHints.HINT_CACHEABLE, true);
-		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
-		buildersAvailableAmenities = query.getResultList();
+		/*
+		 * builderDTOList.clear(); CriteriaBuilder builder =
+		 * entityManager.getCriteriaBuilder(); CriteriaQuery<BuildersAvailableAmenities>
+		 * criteria = builder.createQuery(BuildersAvailableAmenities.class);
+		 * Root<BuildersAvailableAmenities> rootBuilder =
+		 * criteria.from(BuildersAvailableAmenities.class);
+		 * criteria.select(rootBuilder);
+		 * 
+		 * List<Predicate> restrictions = new ArrayList<Predicate>();
+		 * restrictions.add(builder.equal(rootBuilder.get("amenitiesAndSpecificationsId"
+		 * ), amenitiesAndSpecificationsId));
+		 * 
+		 * criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		 * TypedQuery<BuildersAvailableAmenities> query =
+		 * entityManager.createQuery(criteria); query.setHint(QueryHints.HINT_CACHEABLE,
+		 * true); query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		 * buildersAvailableAmenities = query.getResultList();
+		 */
+		Query q = entityManager.createQuery(
+				"SELECT b FROM BuildersAvailableAmenities b WHERE b.amenitiesAndSpecificationsId = :amenitiesAndSpecificationsId",
+				BuildersAvailableAmenities.class);
+		// q.setParameter(1, builderId);
+		q.setParameter("amenitiesAndSpecificationsId", amenitiesAndSpecificationsId);
+		buildersAvailableAmenities = q.getResultList();
 
 		if (buildersAvailableAmenities.isEmpty()) {
 			throw new ResourceNotFoundException("Builder: " + amenitiesAndSpecificationsId + " not Found...");
 		}
 		int i = 0;
-		// response =
-		// builderEntityListAmenities.get(0).getBuilder().stream().map(builders->
-		// setBuilderDTO(builders,
-		// getAmenitiesAndSpecificationsById(builderEntityListAmenities.get(0).getAmenitiesAndSpecificationsId()))).collect(Collectors.toList());
-		response = buildersAvailableAmenities.stream().map(
-				buildersAvailableAmenities -> setBuilderDTO(getBuildersById(buildersAvailableAmenities.getBuilderId())))
+		response = buildersAvailableAmenities.stream()
+				.map(buildersAvailableAmenities -> getBuildersById(buildersAvailableAmenities.getBuilderId()))
 				.collect(Collectors.toList());
-		// entityManager.close();
+		entityManager.close();
+
 		return response;
 	}
 
@@ -176,12 +178,12 @@ public class BuilderService {
 		// entityManager.getTransaction().commit();
 
 		allStatesDTO = allStates.stream().map(state -> setStateDTO(state)).collect(Collectors.toList());
-
+		entityManager.close();
 		return allStatesDTO;
 
 	}
 
-	public Builder registerBuilder(BuilderDTO builderDTO) {
+	public BuilderDTO registerBuilder(BuilderDTO builderDTO) {
 		BuilderDTO responseBuilderDTO = new BuilderDTO();
 
 		Builder builderEntity = setBuilderEntity(builderDTO);
@@ -197,13 +199,10 @@ public class BuilderService {
 		// commit transaction at all
 		entityManager.getTransaction().commit();
 
-		System.out.println("builderEntity.getBuilderId()::::" + builderEntity.getBuilderId());
-		System.out
-				.println("builderEntity.getAddress().getAddressId())::::" + builderEntity.getAddress().getAddressId());
+		responseBuilderDTO = this.setBuilderDTO(builderEntity);
+		entityManager.close();
 
-		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
-
-		return builderEntity;
+		return responseBuilderDTO;
 	}
 
 	public void registerBuildersAvailableAminities(BuildersAvailableAmenities buildersAvailableAmenities) {
@@ -218,12 +217,7 @@ public class BuilderService {
 		// }
 		// commit transaction at all
 		entityManager.getTransaction().commit();
-
-		System.out.println("builderEntity.getBuilderId()::::" + buildersAvailableAmenities.getBuilderId());
-		System.out.println("builderEntity.getAddress().getAddressId())::::"
-				+ buildersAvailableAmenities.getAmenitiesAndSpecificationsId());
-
-		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
+		entityManager.close();
 	}
 
 	public void registerProjectsAvailableAminities(ProjectsAvailableAmenities projectsAvailableAmenities) {
@@ -238,15 +232,10 @@ public class BuilderService {
 		// }
 		// commit transaction at all
 		entityManager.getTransaction().commit();
-
-		System.out.println("builderEntity.getBuilderId()::::" + projectsAvailableAmenities.getProjectId());
-		System.out.println("builderEntity.getAddress().getAddressId())::::"
-				+ projectsAvailableAmenities.getAmenitiesAndSpecificationsId());
-
-		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
+		entityManager.close();
 	}
 
-	public Projects addNewProject(ProjectsDTO projectDTO) {
+	public ProjectsDTO addNewProject(ProjectsDTO projectDTO) {
 		ProjectsDTO responseProjectDTO = new ProjectsDTO();
 
 		Projects projectEntity = setProjectEntity(projectDTO);
@@ -268,40 +257,32 @@ public class BuilderService {
 		// commit transaction at all
 		entityManager.getTransaction().commit();
 
-		System.out.println("builderEntity.getBuilderId()::::" + projectEntity.getProjectId());
-		System.out.println("builderEntity.getAddress().getAddressId())::::" + projectEntity.getBuilderId());
-
-		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
-
-		return projectEntity;
+		responseProjectDTO = this.setProjectDTO(projectEntity);
+		entityManager.close();
+		return responseProjectDTO;
 	}
 
 	public ProjectsDTO getProjectDetailsById(ProjectsDTO projectDTO) {
-		ProjectsDTO responseProjectDTO = new ProjectsDTO();
+		ProjectsDTO projectsDTO = new ProjectsDTO();
 		Projects projectEntityResponse = new Projects();
-		Builder builderEntity = new Builder();
 
 		Projects projectEntity = setProjectEntity(projectDTO);
 		EntityManager entityManager = em.getEntityManager("builder");
 
 		entityManager.getTransaction().begin();
-		// if (entityManager.contains(projectEntity)) {
 		projectEntityResponse = entityManager.find(Projects.class, projectEntity.getProjectId());
-		builderEntity = entityManager.find(Builder.class, projectEntityResponse.getBuilderId());
-		// }
-		// commit transaction at all
 		entityManager.getTransaction().commit();
 
 		System.out.println("builderEntity.getBuilderId()::::" + projectEntity.getProjectId());
 		System.out.println("builderEntity.getAddress().getAddressId())::::" + projectEntity.getBuilderId());
 
-		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
-
-		return setProjectDTO(projectEntityResponse, builderEntity);
+		projectsDTO = setProjectDTO(projectEntityResponse);
+		entityManager.close();
+		return projectsDTO;
 	}
 
-	public Picture addNewPicture(PictureDTO pictureDTO) {
-		ProjectsDTO responseProjectDTO = new ProjectsDTO();
+	public PictureDTO addNewPicture(PictureDTO pictureDTO) {
+		PictureDTO responsePictureDTO = new PictureDTO();
 
 		Picture pictureEntity = setPictureEntity(pictureDTO);
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -322,12 +303,10 @@ public class BuilderService {
 		// commit transaction at all
 		entityManager.getTransaction().commit();
 
-		System.out.println("pictureEntity.getPictureId()::::" + pictureEntity.getPictureId());
-		System.out.println("pictureEntity.getProjectId()::::" + pictureEntity.getProjectId());
+		responsePictureDTO = this.setPictureDTO(pictureEntity);
+		entityManager.close();
 
-		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
-
-		return pictureEntity;
+		return responsePictureDTO;
 	}
 
 	public void ceateImageDirectoryForBuilder(BuilderDTO builderDTO) {
@@ -401,12 +380,10 @@ public class BuilderService {
 		List<Builder> LoginBuilder = new ArrayList<Builder>();
 		EntityManager entityManager = em.getEntityManager("builder");
 
-		Query q = entityManager.createQuery("SELECT b FROM Builder b", Builder.class);
+		Query q = entityManager.createQuery("SELECT b FROM Builder b WHERE b.phone = :phone", Builder.class);
+		q.setParameter("phone", builderDTO.getPhone());
 		// q.setParameter("keyword", keyword); //etc
 		builderEntityList = q.getResultList();
-
-		System.out.println("LoginBuilderDTO" + builderEntityList.get(0).getPhone());
-		System.out.println("builderDTO.getPhone()" + builderDTO.getPhone());
 
 		LoginBuilder = builderEntityList.stream()
 				.filter(builder -> builder.getPhone().equalsIgnoreCase(builderDTO.getPhone()))
@@ -420,6 +397,7 @@ public class BuilderService {
 
 			LoginBuilderDTO = setBuilderDTO(LoginBuilder.get(0));
 		}
+		entityManager.close();
 		// System.out.println("LoginBuilderDTO" +new Gson().toJson(LoginBuilderDTO));
 		return LoginBuilderDTO;
 	}
@@ -435,48 +413,24 @@ public class BuilderService {
 		// commit transaction at all
 		entityManager.getTransaction().commit();
 
+		entityManager.close();
 		return amenitiesAndSpecifications;
 	}
 
-	public Builder getBuildersById(int builderId) {
-		Builder builder = new Builder();
+	public BuilderDTO getBuildersById(int builderId) {
+		Builder builderEntity = new Builder();
+		BuilderDTO builderDTO = new BuilderDTO();
 
 		EntityManager entityManager = em.getEntityManager("builder");
+		Query q = entityManager.createQuery("SELECT b FROM Builder b WHERE b.builderId = :builderId", Builder.class);
+		// q.setParameter(1, builderId);
+		q.setParameter("builderId", builderId);
+		builderEntity = (Builder) q.getSingleResult();
 
-		entityManager.getTransaction().begin();
-		builder = entityManager.find(Builder.class, builderId);
+		builderDTO = setBuilderDTO(builderEntity);
+		entityManager.close();
 
-		// commit transaction at all
-		entityManager.getTransaction().commit();
-
-		return builder;
-	}
-
-	public List<BuilderDTO> getBuilderById(String builderId) {
-		EntityManager entityManager = em.getEntityManager("car");
-
-		builderDTOList.clear();
-		int i = 0;
-
-		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<Builder> criteria = builder.createQuery(Builder.class);
-		Root<Builder> rootBuilder = criteria.from(Builder.class);
-		criteria.select(rootBuilder);
-
-		List<Predicate> restrictions = new ArrayList<Predicate>();
-		restrictions.add(builder.equal(rootBuilder.get("carId"), builderId));
-
-		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
-		TypedQuery<Builder> query = entityManager.createQuery(criteria);
-		query.setHint(QueryHints.HINT_CACHEABLE, true);
-		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
-		builderEntityList = query.getResultList();
-
-		if (builderEntityList.isEmpty()) {
-			throw new ResourceNotFoundException("Builder: " + builderId + " not Found...");
-		}
-		System.out.println("carEntityList.size()::::" + builderEntityList.size());
-		return builderEntityList.stream().map(this::setBuilderDTO).collect(Collectors.toList());
+		return builderDTO;
 	}
 
 	public Builder setBuilderEntity(BuilderDTO builderDTO) {
@@ -542,8 +496,8 @@ public class BuilderService {
 		builderDTO.setAddress(this.copyAddressEntityToDto(builderEntity.getAddress()));
 
 		if (builderEntity.getProjects() != null && !builderEntity.getProjects().isEmpty()) {
-			builderDTO.setProjects(builderEntity.getProjects().stream()
-					.map(project -> setProjectDTO(project, builderEntity)).collect(Collectors.toList()));
+			builderDTO.setProjects(builderEntity.getProjects().stream().map(project -> setProjectDTO(project))
+					.collect(Collectors.toList()));
 		}
 		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
 		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
@@ -552,6 +506,12 @@ public class BuilderService {
 			builderDTO.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
 					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
 							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
+					.collect(Collectors.toList()));
+		}
+
+		if (builderEntity.getBuildersEstimate() != null && !builderEntity.getBuildersEstimate().isEmpty()) {
+			builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
+					.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
 					.collect(Collectors.toList()));
 		}
 
@@ -573,7 +533,7 @@ public class BuilderService {
 	}
 
 	// @Async
-	public ProjectsDTO setProjectDTO(Projects projectEntity, Builder builderEntity) {
+	public ProjectsDTO setProjectDTO(Projects projectEntity) {
 		ProjectsDTO projectDTO = new ProjectsDTO();
 		HttpServletResponse response = null;
 		final Set<String> prop = new HashSet<>(Arrays.asList("projectId", "builderId", "amenitiesAndSpecificationsId",
@@ -601,8 +561,8 @@ public class BuilderService {
 			}
 
 		}
-		if (builderEntity != null) {
-			projectDTO.setBuilder(setBuilderDTOWithoutProject(builderEntity));
+		if (projectEntity.getBuilderForProjects() != null) {
+			projectDTO.setBuilder(setBuilderDTOWithoutProject(projectEntity.getBuilderForProjects()));
 		}
 		if (projectEntity.getPicture() != null && !projectEntity.getPicture().isEmpty()) {
 			projectDTO.setPicture(

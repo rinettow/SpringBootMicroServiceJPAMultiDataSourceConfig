@@ -25,13 +25,13 @@ public class AmenitiesAndSpecifications {
 	@Column(name = "AMENITIES_AND_SPECIFICATIONS_NAME")
 	private String amenitiesAndSpecificationsName;
 
-	@OneToMany(mappedBy = "amenitiesAndSpecificationsForBuilders")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "amenitiesAndSpecificationsForBuilders")
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
 
-	@OneToMany(mappedBy = "amenitiesAndSpecificationsForProjects")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "amenitiesAndSpecificationsForProjects")
 	private List<ProjectsAvailableAmenities> projectsAvailableAmenities;
 
-	@OneToMany(mappedBy = "amenitiesAndSpecificationsForCustomerRequirement")
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "amenitiesAndSpecificationsForCustomerRequirement")
 	private List<CustomerRequirement> customerRequirement;
 
 	
