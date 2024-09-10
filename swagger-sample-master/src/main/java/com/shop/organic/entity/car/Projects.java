@@ -39,6 +39,9 @@ public class Projects {
 
 	@Column(name = "PROJ_MAIN_PIC_FILE_PATH")
 	private String projMainPicFilePath;
+	
+	@Column(name = "PROJ_MAIN_VIDEO_FILE_PATH")
+	private String projMainVideoFilePath;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "BUILDER_ID", insertable = false, updatable = false)
@@ -64,6 +67,15 @@ public class Projects {
 	public String getProjMainPicFilePath() {
 		return projMainPicFilePath;
 	}
+	
+	public String getProjMainVideoFilePath() {
+		return projMainVideoFilePath;
+	}
+
+	public void setProjMainVideoFilePath(String projMainVideoFilePath) {
+		this.projMainVideoFilePath = projMainVideoFilePath;
+	}
+
 
 	public void setProjMainPicFilePath(String projMainPicFilePath) {
 		this.projMainPicFilePath = projMainPicFilePath;

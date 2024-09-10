@@ -2,6 +2,7 @@ package com.shop.organic.service;
 
 import java.beans.PropertyDescriptor;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -46,6 +47,7 @@ import com.shop.organic.dto.AddressDTO;
 import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
+import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.DistrictDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
@@ -55,6 +57,7 @@ import com.shop.organic.entity.car.Address;
 import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
+import com.shop.organic.entity.car.BuildersEstimate;
 import com.shop.organic.entity.car.District;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
@@ -69,6 +72,7 @@ import com.shop.organic.util.CreateEntityManager;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.FileSystemUtils;
 
@@ -308,6 +312,40 @@ public class BuilderService {
 
 		return responsePictureDTO;
 	}
+	
+	public BuildersEstimateDTO uploadBuildersEstimatePDF(BuildersEstimateDTO buildersEstimateDTO) {
+		BuildersEstimate buildersEstimate = new BuildersEstimate();
+		BuildersEstimateDTO responseBuildersEstimateDTO = new BuildersEstimateDTO();
+		buildersEstimate.setBuildersEstimateId(buildersEstimateDTO.getBuildersEstimateId());
+		buildersEstimate.setCustomerRequirementId(buildersEstimateDTO.getCustomerRequirementId());
+		buildersEstimate.setProjectId(buildersEstimateDTO.getProjectId());
+		buildersEstimate.setBuilderId(buildersEstimateDTO.getBuilderId());
+		buildersEstimate.setPerSquareFeetCost(buildersEstimateDTO.getPerSquareFeetCost());
+		buildersEstimate.setDetailedEstimateFilePath(buildersEstimateDTO.getDetailedEstimateFilePath());
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		if (!entityManager.contains(buildersEstimate)) {
+			BuildersEstimate entityAvailableOrNot = entityManager.find(BuildersEstimate.class, buildersEstimate.getBuildersEstimateId());
+			if (entityAvailableOrNot == null) {
+				// persist object - add to entity manager
+				entityManager.persist(buildersEstimate);
+				// flush em - save to DB
+				entityManager.flush();
+			} else {
+				entityManager.merge(buildersEstimate);
+			}
+
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		responseBuildersEstimateDTO = customerService.setBuilderEstimateDTO(buildersEstimate);
+		entityManager.close();
+		return responseBuildersEstimateDTO;
+		
+
+	}
 
 	public void ceateImageDirectoryForBuilder(BuilderDTO builderDTO) {
 		System.out.println("ceateImageDirectoryForBuilder");
@@ -333,7 +371,13 @@ public class BuilderService {
 			try {
 				String fileName = multipartFile.getOriginalFilename();
 				multipartFile.transferTo(new File(finalPath.concat("/").concat(fileName)));
-				projectDTO.setProjMainPicFilePath(finalPath.concat("/").concat(fileName));
+			    String extension = fileName.substring(fileName.lastIndexOf("."));
+			    if(extension.equalsIgnoreCase("mp4")) {
+			    	projectDTO.setProjMainVideoFilePath(finalPath.concat("/").concat(fileName));
+			    }else {
+			    	projectDTO.setProjMainPicFilePath(finalPath.concat("/").concat(fileName));
+			    }
+				
 			} catch (IllegalStateException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -364,6 +408,30 @@ public class BuilderService {
 				String fileName = multipartFile.getOriginalFilename();
 				multipartFile.transferTo(new File(finalPath.concat("/").concat(fileName)));
 				pictureDTO.setPictureFilePath(finalPath.concat("/").concat(fileName));
+			} catch (IllegalStateException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+	}
+	
+	public void ceateImageDirectoryForBuildersEstimate(BuildersEstimateDTO buildersEstimateDTO, MultipartFile multipartFile) {
+		System.out.println("ceateImageDirectoryForBuilder");
+
+		String path = "C:/Users/User/GitHub Repository/CustomersImage/";
+		String finalPath = path.concat("Customer").concat(Integer.toString(buildersEstimateDTO.getCustomerRequirementDTO().getCustomerId())).concat("/")
+				.concat("CustomerRequirement").concat(Integer.toString(buildersEstimateDTO.getCustomerRequirementId()));
+		
+		if (new File(finalPath).exists()) {
+			System.out.println("ceateImageDirectoryForBuilder2");
+			try {
+				String fileName = multipartFile.getOriginalFilename();
+				multipartFile.transferTo(new File(finalPath.concat("/").concat(fileName)));
+				buildersEstimateDTO.setDetailedEstimateFilePath(finalPath.concat("/").concat(fileName));
 			} catch (IllegalStateException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -455,7 +523,7 @@ public class BuilderService {
 		// -> copyProjectsBasicAvailableAmenitiesDTOToEntity(proJAvailAnemity, new
 		// ProjectsAvailableAmenities())).collect(Collectors.toList()));
 		final Set<String> prop = new HashSet<>(
-				Arrays.asList("projectId", "builderId", "estimateCost", "areaInSquareFeet", "projMainPicFilePath"));
+				Arrays.asList("projectId", "builderId", "estimateCost", "areaInSquareFeet", "projMainPicFilePath", "projMainVideoFilePath"));
 		this.copyProjectsBasicDTOToEntity(projectDTO, projectEntity, prop);
 
 		return projectEntity;
@@ -537,7 +605,7 @@ public class BuilderService {
 		ProjectsDTO projectDTO = new ProjectsDTO();
 		HttpServletResponse response = null;
 		final Set<String> prop = new HashSet<>(Arrays.asList("projectId", "builderId", "amenitiesAndSpecificationsId",
-				"estimateCost", "areaInSquareFeet", "projMainPicFilePath"));
+				"estimateCost", "areaInSquareFeet", "projMainPicFilePath", "projMainVideoFilePath"));
 		this.copyProjectsBasicEntityToDTO(projectEntity, projectDTO, prop);
 		if (projectEntity.getProjMainPicFilePath() != null) {
 			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
@@ -548,6 +616,28 @@ public class BuilderService {
 			InputStream in = null;
 			try {
 				in = this.getFileSystem(projectEntity.getProjMainPicFilePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				projectDTO.setImage(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		if (projectEntity.getProjMainVideoFilePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(projectEntity.getProjMainVideoFilePath(), response).getInputStream();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -774,6 +864,7 @@ public class BuilderService {
 	public BuildersAvailableAmenitiesDTO copyBuildersBasicAvailableAmenitiesEntityToDTO(
 			BuildersAvailableAmenities BuildersAvailableAmenitiesEntity,
 			BuildersAvailableAmenitiesDTO BuildersAvailableAmenitiesDTO) throws BeansException {
+		BuildersAvailableAmenitiesDTO.setAmenitiesAndSpecifications(copyAmenityAndSpecificationsEntityToDTO(BuildersAvailableAmenitiesEntity.getAmenitiesAndSpecificationsForBuilders()));
 		final Set<String> prop = new HashSet<>(Arrays.asList("builderId", "amenitiesAndSpecificationsId"));
 
 		/*

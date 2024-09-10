@@ -1,5 +1,6 @@
 package com.shop.organic.dto;
 
+import java.io.File;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -24,9 +25,11 @@ public class ProjectsDTO {
 	private int estimateCost;
 	private int areaInSquareFeet;
 	private String projMainPicFilePath;
+	private String projMainVideoFilePath;
 	private BuilderDTO builder;
 	private List<PictureDTO> Picture;
 	private byte[] image;
+	private File videoFile;
 	private List<ProjectsAvailableAmenitiesDTO> projectsAvailableAmenities;
 	private List<BuildersEstimateDTO> buildersEstimate;
 
@@ -38,6 +41,23 @@ public class ProjectsDTO {
 	public void setBuildersEstimate(List<BuildersEstimateDTO> buildersEstimate) {
 		this.buildersEstimate = buildersEstimate;
 	}
+
+	public String getProjMainVideoFilePath() {
+		return projMainVideoFilePath;
+	}
+
+	public void setProjMainVideoFilePath(String projMainVideoFilePath) {
+		this.projMainVideoFilePath = projMainVideoFilePath;
+	}
+	
+	public File getVideoFile() {
+		return videoFile;
+	}
+
+	public void setVideoFile(File videoFile) {
+		this.videoFile = videoFile;
+	}
+
 
 	public byte[] getImage() {
 		return image;

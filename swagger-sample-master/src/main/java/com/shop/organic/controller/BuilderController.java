@@ -38,6 +38,7 @@ import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
+import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
@@ -214,6 +215,21 @@ public class BuilderController {
 		builderService.ceateImageDirectoryForPicture(pictureDTO, Integer.toString(pictureDTO.getBuilderId()), file);
 		newPictureAddded = builderService.addNewPicture(pictureDTO);
 		return generateResponse("List of Builders!", HttpStatus.OK, newPictureAddded);
+	}
+	
+	@PostMapping(value = "/UploadBuildersEstimatePDF")
+	public ResponseEntity<Object> UploadBuildersEstimatePDF(@RequestParam("uploadBuildersEstimatePDF") MultipartFile file,
+			@RequestParam("buildersEstimate") String buildersEstimateString) throws IOException {
+		System.out.println("pictureDTO" + new Gson().toJson(buildersEstimateString));
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		buildersEstimateDTO = objectMapper.readValue(buildersEstimateString, BuildersEstimateDTO.class);
+
+		BuildersEstimateDTO uploadedEstimate = new BuildersEstimateDTO();
+		builderService.ceateImageDirectoryForBuildersEstimate(buildersEstimateDTO, file);
+		uploadedEstimate = builderService.uploadBuildersEstimatePDF(buildersEstimateDTO);
+		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
 	}
 
 	@PostMapping(value = "/SendOTP")
