@@ -334,9 +334,43 @@ public class CustomerService {
 			}
 			
 		}
-		customerRequirementDTOOpenStatus = customerRequirementEntityOpenStatus.stream().map(require ->setCustomerRequirementDTO(require)).collect(Collectors.toList());
+		if(customerRequirementEntityOpenStatus != null && !customerRequirementEntityOpenStatus.isEmpty()) {
+			customerRequirementDTOOpenStatus = customerRequirementEntityOpenStatus.stream().map(require ->setCustomerRequirementDTO(require)).collect(Collectors.toList());
+		}
+		
 		entityManager.close();
 		return customerRequirementDTOOpenStatus;
+	}
+	
+	public boolean validateIfQouteAlreadyRequestedToBuilder(int customerRequirementId,  int builderId) {
+		// return
+		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
+		// carEntityList=carRepository.findAll();
+		List<BuildersEstimate> buildersEstimate;
+		boolean isQouteAlreadyRequestedToBuilder = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<BuildersEstimate> criteria = builder.createQuery(BuildersEstimate.class);
+		Root<BuildersEstimate> rootBuilder = criteria.from(BuildersEstimate.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("customerRequirementId"), customerRequirementId));
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<BuildersEstimate> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		buildersEstimate = query.getResultList();
+
+		if (!buildersEstimate.isEmpty()) {
+			isQouteAlreadyRequestedToBuilder= true;	
+		}else {
+			isQouteAlreadyRequestedToBuilder = false;
+		}
+		return isQouteAlreadyRequestedToBuilder;
 	}
 	
 	
@@ -371,7 +405,6 @@ public class CustomerService {
 		BuildersEstimate buildersEstimate = new BuildersEstimate();
 		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
 		buildersEstimate.setCustomerRequirementId(customerOpenRequirementId);
-		buildersEstimate.setProjectId(projectId);
 		buildersEstimate.setBuilderId(builderId);
 		EntityManager entityManager = em.getEntityManager("builder");
 
@@ -463,9 +496,9 @@ public class CustomerService {
 			buildersEstimateDTO.setCustomerRequirementDTO(setCustomerRequirementDTOWithoutBuilderEstimate(buildersEstimateEntity.getCustomerRequirementForBuildersEstimate()));
 		}
 		
-		if (buildersEstimateEntity.getProjectForBuildersEstimate() != null) {
+		/*if (buildersEstimateEntity.getProjectForBuildersEstimate() != null) {
 			buildersEstimateDTO.setProjectDTO(builderService.setProjectDTO(buildersEstimateEntity.getProjectForBuildersEstimate()));
-		}
+		}*/
 		
 		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
 			buildersEstimateDTO.setBuilderDTO(builderService.setBuilderDTO(buildersEstimateEntity.getBuilderForBuildersEstimate()));
@@ -481,9 +514,9 @@ public class CustomerService {
 		
 			buildersEstimateDTO.setCustomerRequirementDTO(getCustomerRequirementById(buildersEstimateEntity.getCustomerRequirementId()));
 		
-		if (buildersEstimateEntity.getProjectForBuildersEstimate() != null) {
+		/*if (buildersEstimateEntity.getProjectForBuildersEstimate() != null) {
 			buildersEstimateDTO.setProjectDTO(builderService.setProjectDTO(buildersEstimateEntity.getProjectForBuildersEstimate()));
-		}
+		}*/
 		
 		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
 			buildersEstimateDTO.setBuilderDTO(builderService.setBuilderDTOWithoutProject(buildersEstimateEntity.getBuilderForBuildersEstimate()));
@@ -580,10 +613,9 @@ public class CustomerService {
 	public static void copyBuildersEstimateBasicEntityToDTO(BuildersEstimate buildersEstimatetEntity, BuildersEstimateDTO buildersEstimateDTO) {
 		final Set<String> prop = new HashSet<>(Arrays.asList("buildersEstimateId",
 				"customerRequirementId",
-				"projectId",
 				"builderId",
 				"perSquareFeetCost",
-				"detailedEstimateFilePath"));
+				"detailedEstimateFilePath", "customerAcceptedDeclined"));
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(buildersEstimateDTO.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
 

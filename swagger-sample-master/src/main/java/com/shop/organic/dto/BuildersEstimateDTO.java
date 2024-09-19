@@ -28,6 +28,7 @@ public class BuildersEstimateDTO {
 	private int builderId;
 	private float perSquareFeetCost;
 	private String detailedEstimateFilePath;
+	private String customerAcceptedDeclined;
 	private CustomerRequirementDTO customerRequirementDTO;
 	private ProjectsDTO projectDTO;
 	private BuilderDTO builderDTO;
@@ -41,6 +42,12 @@ public class BuildersEstimateDTO {
 	}
 	public int getBuildersEstimateId() {
 		return buildersEstimateId;
+	}
+	public String getCustomerAcceptedDeclined() {
+		return customerAcceptedDeclined;
+	}
+	public void setCustomerAcceptedDeclined(String customerAcceptedDeclined) {
+		this.customerAcceptedDeclined = customerAcceptedDeclined;
 	}
 	public void setBuildersEstimateId(int buildersEstimateId) {
 		this.buildersEstimateId = buildersEstimateId;

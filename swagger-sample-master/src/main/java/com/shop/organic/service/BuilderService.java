@@ -48,6 +48,7 @@ import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.BuildersEstimateDTO;
+import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.DistrictDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
@@ -58,6 +59,7 @@ import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.BuildersEstimate;
+import com.shop.organic.entity.car.CustomerRequirement;
 import com.shop.organic.entity.car.District;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
@@ -318,10 +320,10 @@ public class BuilderService {
 		BuildersEstimateDTO responseBuildersEstimateDTO = new BuildersEstimateDTO();
 		buildersEstimate.setBuildersEstimateId(buildersEstimateDTO.getBuildersEstimateId());
 		buildersEstimate.setCustomerRequirementId(buildersEstimateDTO.getCustomerRequirementId());
-		buildersEstimate.setProjectId(buildersEstimateDTO.getProjectId());
 		buildersEstimate.setBuilderId(buildersEstimateDTO.getBuilderId());
 		buildersEstimate.setPerSquareFeetCost(buildersEstimateDTO.getPerSquareFeetCost());
 		buildersEstimate.setDetailedEstimateFilePath(buildersEstimateDTO.getDetailedEstimateFilePath());
+		buildersEstimate.setCustomerAcceptedDeclined("ON_HOLD");
 		EntityManager entityManager = em.getEntityManager("builder");
 
 		entityManager.getTransaction().begin();
@@ -345,6 +347,111 @@ public class BuilderService {
 		return responseBuildersEstimateDTO;
 		
 
+	}
+	
+	public BuildersEstimateDTO AcceptDeclineQuotation(BuildersEstimateDTO buildersEstimateDTO) {
+		BuildersEstimate buildersEstimate = new BuildersEstimate();
+		BuildersEstimateDTO responseBuildersEstimateDTO = new BuildersEstimateDTO();
+		buildersEstimate.setBuildersEstimateId(buildersEstimateDTO.getBuildersEstimateId());
+		buildersEstimate.setCustomerRequirementId(buildersEstimateDTO.getCustomerRequirementId());
+		buildersEstimate.setBuilderId(buildersEstimateDTO.getBuilderId());
+		buildersEstimate.setPerSquareFeetCost(buildersEstimateDTO.getPerSquareFeetCost());
+		buildersEstimate.setDetailedEstimateFilePath(buildersEstimateDTO.getDetailedEstimateFilePath());
+		buildersEstimate.setCustomerAcceptedDeclined(buildersEstimateDTO.getCustomerAcceptedDeclined());
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		if (!entityManager.contains(buildersEstimate)) {
+			BuildersEstimate entityAvailableOrNot = entityManager.find(BuildersEstimate.class, buildersEstimate.getBuildersEstimateId());
+			if (entityAvailableOrNot == null) {
+				// persist object - add to entity manager
+				entityManager.persist(buildersEstimate);
+				// flush em - save to DB
+				entityManager.flush();
+			} else {
+				entityManager.merge(buildersEstimate);
+			}
+
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		responseBuildersEstimateDTO = customerService.setBuilderEstimateDTO(buildersEstimate);
+		entityManager.close();
+		return responseBuildersEstimateDTO;
+		
+
+	}
+	
+	public List<CustomerRequirementDTO> getAllOpenTenders(BuilderDTO builderDTO) {
+		// return
+		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
+		// carEntityList=carRepository.findAll();
+		List<CustomerRequirement> allOpenRequirements;
+		List<CustomerRequirement> allOpenRequirementsEstimateNotYetProvided = null;
+		List<CustomerRequirementDTO> allOpenRequirementsDTO = null;
+		boolean isQouteAlreadyRequestedToBuilder = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<CustomerRequirement> criteria = builder.createQuery(CustomerRequirement.class);
+		Root<CustomerRequirement> rootBuilder = criteria.from(CustomerRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		for (BuildersAvailableAmenitiesDTO availAmenity : builderDTO.getBuildersAvailableAmenities()) {
+			restrictions.add(rootBuilder.get("amenityAndSpecifiactionId").in(availAmenity.getAmenitiesAndSpecificationsId()));
+		    }
+		//restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<CustomerRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+	    allOpenRequirements = query.getResultList();
+
+		if (!allOpenRequirements.isEmpty()) {
+			allOpenRequirementsEstimateNotYetProvided = allOpenRequirements.stream().filter(requirement-> !validateIfEstimateAlreadyProvidedByBuilder(requirement.getCustomerRequirementId(), builderDTO.getBuilderId())).collect(Collectors.toList());
+			
+		}
+		
+		if(allOpenRequirementsEstimateNotYetProvided != null) {
+			allOpenRequirementsDTO = allOpenRequirementsEstimateNotYetProvided.stream().map(req->customerService.setCustomerRequirementDTO(req) ).collect(Collectors.toList());
+		}
+		
+		entityManager.close();
+		return allOpenRequirementsDTO;
+	}
+	
+	public boolean validateIfEstimateAlreadyProvidedByBuilder(int customerRequirementId,  int builderId) {
+		// return
+		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
+		// carEntityList=carRepository.findAll();
+		List<BuildersEstimate> buildersEstimate;
+		boolean isEstimateAlreadyProvidedByBuilder = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<BuildersEstimate> criteria = builder.createQuery(BuildersEstimate.class);
+		Root<BuildersEstimate> rootBuilder = criteria.from(BuildersEstimate.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("customerRequirementId"), customerRequirementId));
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<BuildersEstimate> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		buildersEstimate = query.getResultList();
+
+		if (!buildersEstimate.isEmpty()) {
+			isEstimateAlreadyProvidedByBuilder= true;	
+		}else {
+			isEstimateAlreadyProvidedByBuilder = false;
+		}
+		return isEstimateAlreadyProvidedByBuilder;
 	}
 
 	public void ceateImageDirectoryForBuilder(BuilderDTO builderDTO) {
@@ -419,11 +526,11 @@ public class BuilderService {
 		}
 	}
 	
-	public void ceateImageDirectoryForBuildersEstimate(BuildersEstimateDTO buildersEstimateDTO, MultipartFile multipartFile) {
+	public void ceateImageDirectoryForBuildersEstimate(BuildersEstimateDTO buildersEstimateDTO, MultipartFile multipartFile, String customerId) {
 		System.out.println("ceateImageDirectoryForBuilder");
 
 		String path = "C:/Users/User/GitHub Repository/CustomersImage/";
-		String finalPath = path.concat("Customer").concat(Integer.toString(buildersEstimateDTO.getCustomerRequirementDTO().getCustomerId())).concat("/")
+		String finalPath = path.concat("Customer").concat(customerId).concat("/")
 				.concat("CustomerRequirement").concat(Integer.toString(buildersEstimateDTO.getCustomerRequirementId()));
 		
 		if (new File(finalPath).exists()) {
@@ -629,7 +736,7 @@ public class BuilderService {
 			}
 
 		}
-		if (projectEntity.getProjMainVideoFilePath() != null) {
+		/*if (projectEntity.getProjMainVideoFilePath() != null) {
 			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
 			// response));
 			ServletContext sc = null;
@@ -650,7 +757,7 @@ public class BuilderService {
 				e.printStackTrace();
 			}
 
-		}
+		}*/
 		if (projectEntity.getBuilderForProjects() != null) {
 			projectDTO.setBuilder(setBuilderDTOWithoutProject(projectEntity.getBuilderForProjects()));
 		}

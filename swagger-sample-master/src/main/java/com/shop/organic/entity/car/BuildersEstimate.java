@@ -32,8 +32,8 @@ public class BuildersEstimate {
 	@Column(name = "CUSTOMER_REQUIREMENT_ID")
 	private int customerRequirementId;
 	
-	@Column(name = "PROJECT_ID")
-	private int projectId;
+	//@Column(name = "PROJECT_ID")
+	//private int projectId;
 	
 	@Column(name = "BUILDER_ID")
 	private int builderId;
@@ -44,13 +44,17 @@ public class BuildersEstimate {
 	@Column(name = "DETAILED_ESTIMATE_FILEPATH")
 	private String detailedEstimateFilePath;
 	
+	@Column(name = "CUSTOMER_ACCEPTED_DECLINED")
+	private String customerAcceptedDeclined;
+	
+	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "CUSTOMER_REQUIREMENT_ID", insertable = false, updatable = false)
 	private CustomerRequirement customerRequirementForBuildersEstimate;
 	
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "PROJECT_ID", insertable = false, updatable = false)
-	private Projects projectForBuildersEstimate;
+	//@ManyToOne(fetch = FetchType.LAZY)
+	//@JoinColumn(name = "PROJECT_ID", insertable = false, updatable = false)
+	//private Projects projectForBuildersEstimate;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "BUILDER_ID", insertable = false, updatable = false)
@@ -64,20 +68,20 @@ public class BuildersEstimate {
 		this.buildersEstimateId = buildersEstimateId;
 	}
 
+	public String getCustomerAcceptedDeclined() {
+		return customerAcceptedDeclined;
+	}
+
+	public void setCustomerAcceptedDeclined(String customerAcceptedDeclined) {
+		this.customerAcceptedDeclined = customerAcceptedDeclined;
+	}
+
 	public int getCustomerRequirementId() {
 		return customerRequirementId;
 	}
 
 	public void setCustomerRequirementId(int customerRequirementId) {
 		this.customerRequirementId = customerRequirementId;
-	}
-
-	public int getProjectId() {
-		return projectId;
-	}
-
-	public void setProjectId(int projectId) {
-		this.projectId = projectId;
 	}
 
 	public int getBuilderId() {
@@ -110,14 +114,6 @@ public class BuildersEstimate {
 
 	public void setCustomerRequirementForBuildersEstimate(CustomerRequirement customerRequirementForBuildersEstimate) {
 		this.customerRequirementForBuildersEstimate = customerRequirementForBuildersEstimate;
-	}
-
-	public Projects getProjectForBuildersEstimate() {
-		return projectForBuildersEstimate;
-	}
-
-	public void setProjectForBuildersEstimate(Projects projectForBuildersEstimate) {
-		this.projectForBuildersEstimate = projectForBuildersEstimate;
 	}
 
 	public Builder getBuilderForBuildersEstimate() {

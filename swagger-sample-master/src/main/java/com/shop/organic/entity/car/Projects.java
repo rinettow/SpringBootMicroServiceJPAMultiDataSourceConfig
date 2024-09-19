@@ -53,8 +53,8 @@ public class Projects {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "projectForPicture")
 	private List<Picture> Picture;
 	
-	@OneToMany(fetch = FetchType.LAZY, mappedBy = "projectForBuildersEstimate")
-	private List<BuildersEstimate> buildersEstimate;
+	//@OneToMany(fetch = FetchType.LAZY, mappedBy = "projectForBuildersEstimate")
+	//private List<BuildersEstimate> buildersEstimate;
 
 	public List<ProjectsAvailableAmenities> getProjectsAvailableAmenities() {
 		return projectsAvailableAmenities;
@@ -83,14 +83,6 @@ public class Projects {
 
 	public List<Picture> getPicture() {
 		return Picture;
-	}
-
-	public List<BuildersEstimate> getBuildersEstimate() {
-		return buildersEstimate;
-	}
-
-	public void setBuildersEstimate(List<BuildersEstimate> buildersEstimate) {
-		this.buildersEstimate = buildersEstimate;
 	}
 
 	public void setPicture(List<Picture> picture) {

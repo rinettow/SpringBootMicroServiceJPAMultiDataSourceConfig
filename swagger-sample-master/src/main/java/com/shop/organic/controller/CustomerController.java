@@ -135,13 +135,32 @@ public class CustomerController {
 		AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsDTO = new AmenitiesAndSpecificationsDTO();
 		amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecifications, AmenitiesAndSpecificationsDTO.class);
 		List<CustomerRequirementDTO> customerOpenRequirement= customerService.getCustomersOpenRequirement(Integer.parseInt(customerId), amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId());
-		if(!customerOpenRequirement.isEmpty() && customerOpenRequirement.size() == 1) {
-			buildersEstimateDTO =	customerService.addBuildersEstimateEntry(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(customerId), 
-					amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId(), Integer.parseInt(projectsId), Integer.parseInt(builderId));
+		if(customerOpenRequirement != null && customerOpenRequirement.size() == 1) {
+			if(!customerService.validateIfQouteAlreadyRequestedToBuilder(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(builderId))) {
+				buildersEstimateDTO =	customerService.addBuildersEstimateEntry(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(customerId), 
+						amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId(), Integer.parseInt(projectsId), Integer.parseInt(builderId));
+			}else {
+				return generateResponse("Get Quote was already requested to this Builder ", HttpStatus.ALREADY_REPORTED, null);
+			}
+			
 		}else {
 			return generateResponse("Open Requirement is not available , Please create Requirement", HttpStatus.NOT_FOUND, null);
 		}
 		return generateResponse("List of Builders!", HttpStatus.OK, buildersEstimateDTO);
+	}
+	
+	@PostMapping(value = "/AcceptDeclineQuotation")
+	public ResponseEntity<Object> AcceptDeclineQuotation(
+			@RequestParam("buildersEstimate") String buildersEstimateString) throws IOException {
+		System.out.println("pictureDTO" + new Gson().toJson(buildersEstimateString));
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		buildersEstimateDTO = objectMapper.readValue(buildersEstimateString, BuildersEstimateDTO.class);
+
+		BuildersEstimateDTO uploadedEstimate = new BuildersEstimateDTO();
+		uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
+		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
 	}
 
 	@GetMapping(value = "/AllStates")

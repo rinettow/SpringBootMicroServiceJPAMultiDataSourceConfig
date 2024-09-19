@@ -39,6 +39,8 @@ import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.BuildersEstimateDTO;
+import com.shop.organic.dto.CustomerDTO;
+import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
@@ -227,9 +229,34 @@ public class BuilderController {
 		buildersEstimateDTO = objectMapper.readValue(buildersEstimateString, BuildersEstimateDTO.class);
 
 		BuildersEstimateDTO uploadedEstimate = new BuildersEstimateDTO();
-		builderService.ceateImageDirectoryForBuildersEstimate(buildersEstimateDTO, file);
+		builderService.ceateImageDirectoryForBuildersEstimate(buildersEstimateDTO, file, null);
 		uploadedEstimate = builderService.uploadBuildersEstimatePDF(buildersEstimateDTO);
 		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
+	}
+	
+	
+	@PostMapping(value = "/ProvideBuildersEstimate")
+	public ResponseEntity<Object> ProvideBuildersEstimate(@RequestParam("uploadBuildersEstimatePDF") MultipartFile file,
+			@RequestParam("buildersEstimate") String buildersEstimateString, @RequestParam("customerId") String customerId ) throws IOException {
+		System.out.println("pictureDTO" + new Gson().toJson(buildersEstimateString));
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		buildersEstimateDTO = objectMapper.readValue(buildersEstimateString, BuildersEstimateDTO.class);
+
+		BuildersEstimateDTO uploadedEstimate = new BuildersEstimateDTO();
+		builderService.ceateImageDirectoryForBuildersEstimate(buildersEstimateDTO, file, customerId);
+		uploadedEstimate = builderService.uploadBuildersEstimatePDF(buildersEstimateDTO);
+		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
+	}
+	
+	@PostMapping(value = "/GetAllOpenReqirements")
+	public ResponseEntity<Object> GetAllOpenReqirements(@RequestBody BuilderDTO builderDTO) throws IOException {
+		List<CustomerRequirementDTO> openCustomerRequirementDTO = new ArrayList<CustomerRequirementDTO>();
+		CustomerDTO allCustomerRequirements = new CustomerDTO();
+		openCustomerRequirementDTO = builderService.getAllOpenTenders(builderDTO);
+		allCustomerRequirements.setCustomerRequirement(openCustomerRequirementDTO);
+		return generateResponse("List of Builders!", HttpStatus.OK, allCustomerRequirements);
 	}
 
 	@PostMapping(value = "/SendOTP")
