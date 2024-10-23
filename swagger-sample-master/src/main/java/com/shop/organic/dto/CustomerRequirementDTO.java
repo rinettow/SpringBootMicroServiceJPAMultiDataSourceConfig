@@ -52,7 +52,26 @@ public class CustomerRequirementDTO {
 	private List<BuildersEstimateDTO> buildersEstimate;
 	private byte[] planPDFFileFormat;
 	private byte[] landImagePNGorJPGFileFormat;
+    private String state;
+	private String district;
 	
+	
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	public String getDistrict() {
+		return district;
+	}
+
+	public void setDistrict(String district) {
+		this.district = district;
+	}
+
 	public AmenitiesAndSpecificationsDTO getAmenitiesAndSpecificationsForCustomerRequirement() {
 		return amenitiesAndSpecificationsForCustomerRequirement;
 	}

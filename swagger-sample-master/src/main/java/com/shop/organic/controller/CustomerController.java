@@ -125,6 +125,7 @@ public class CustomerController {
 		return generateResponse("List of Builders!", HttpStatus.OK, newCustomerRequirementDTOAddded);
 	}
 	
+	
 	@PostMapping(value = "/getEstimate")
 	public ResponseEntity<Object> getEstimate(@RequestParam("builderId") String builderId,
 			@RequestParam("projectsId") String projectsId,
@@ -136,17 +137,18 @@ public class CustomerController {
 		amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecifications, AmenitiesAndSpecificationsDTO.class);
 		List<CustomerRequirementDTO> customerOpenRequirement= customerService.getCustomersOpenRequirement(Integer.parseInt(customerId), amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId());
 		if(customerOpenRequirement != null && customerOpenRequirement.size() == 1) {
-			if(!customerService.validateIfQouteAlreadyRequestedToBuilder(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(builderId))) {
+			/*if(!customerService.validateIfQouteAlreadyRequestedToBuilder(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(builderId))) {
 				buildersEstimateDTO =	customerService.addBuildersEstimateEntry(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(customerId), 
 						amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId(), Integer.parseInt(projectsId), Integer.parseInt(builderId));
 			}else {
 				return generateResponse("Get Quote was already requested to this Builder ", HttpStatus.ALREADY_REPORTED, null);
-			}
+			}*/
+			return generateResponse("Open Requirement already Available, and quoation request sent to builders, please check the quoatations in View Estimate tab ", HttpStatus.OK, null);
 			
 		}else {
 			return generateResponse("Open Requirement is not available , Please create Requirement", HttpStatus.NOT_FOUND, null);
 		}
-		return generateResponse("List of Builders!", HttpStatus.OK, buildersEstimateDTO);
+		
 	}
 	
 	@PostMapping(value = "/AcceptDeclineQuotation")
@@ -159,8 +161,36 @@ public class CustomerController {
 		buildersEstimateDTO = objectMapper.readValue(buildersEstimateString, BuildersEstimateDTO.class);
 
 		BuildersEstimateDTO uploadedEstimate = new BuildersEstimateDTO();
-		uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
+		if(buildersEstimateDTO.getCustomerAcceptedDeclined().equals("ACCEPT")) {
+			boolean isAnyQuotationAcceptedForRequirement = builderService.VerifyIfAnyQuotationAcceptedForRequirement(buildersEstimateDTO);
+			if(isAnyQuotationAcceptedForRequirement) {
+				return generateResponse("Quotation Already Accepted!", HttpStatus.ALREADY_REPORTED, uploadedEstimate);
+			}else {
+				uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
+				builderService.DeclineRestAllQuotationsExceptApprovedQuote(buildersEstimateDTO);
+			}
+		}else if(buildersEstimateDTO.getCustomerAcceptedDeclined().equals("DECLINE")) {
+			uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
+		}
+		
+		
 		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
+	}
+	
+	@PostMapping(value = "/SubmitReview")
+	public ResponseEntity<Object> SubmitReview(
+			@RequestParam("buildersEstimate") String buildersEstimateString) throws IOException {
+		System.out.println("pictureDTO" + new Gson().toJson(buildersEstimateString));
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		buildersEstimateDTO = objectMapper.readValue(buildersEstimateString, BuildersEstimateDTO.class);
+
+		BuildersEstimateDTO submitedReview = new BuildersEstimateDTO();
+		submitedReview = builderService.SubmitReview(buildersEstimateDTO);
+		
+		
+		return generateResponse("List of Builders!", HttpStatus.OK, submitedReview);
 	}
 
 	@GetMapping(value = "/AllStates")

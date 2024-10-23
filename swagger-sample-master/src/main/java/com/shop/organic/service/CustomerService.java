@@ -489,8 +489,32 @@ public class CustomerService {
 	}
 	
 	public BuildersEstimateDTO setBuilderEstimateDTO(BuildersEstimate buildersEstimateEntity) {
+		HttpServletResponse response = null;
 		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
 		this.copyBuildersEstimateBasicEntityToDTO(buildersEstimateEntity, buildersEstimateDTO);
+		
+		if (buildersEstimateEntity.getDetailedEstimateFilePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(buildersEstimateEntity.getDetailedEstimateFilePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				buildersEstimateDTO.setDetailedEstimateFile(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
 		
 		if (buildersEstimateEntity.getCustomerRequirementForBuildersEstimate() != null) {
 			buildersEstimateDTO.setCustomerRequirementDTO(setCustomerRequirementDTOWithoutBuilderEstimate(buildersEstimateEntity.getCustomerRequirementForBuildersEstimate()));
@@ -615,7 +639,7 @@ public class CustomerService {
 				"customerRequirementId",
 				"builderId",
 				"perSquareFeetCost",
-				"detailedEstimateFilePath", "customerAcceptedDeclined"));
+				"detailedEstimateFilePath", "customerAcceptedDeclined", "customerReview", "customerReviewStarRating"));
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(buildersEstimateDTO.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
 
@@ -639,7 +663,7 @@ public class CustomerService {
 	public static void copyCustomerRequirementBasicDTOToEntity(CustomerRequirementDTO customerRequirementDTO, CustomerRequirement CustomerRequirementEntity) {
 		final Set<String> prop = new HashSet<>(Arrays.asList("customerRequirementId", "customerId", "amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet", 
 				"planImagePath", "landImagePath", "brickType", "pillerBeamRequired", "floorType", "woodType", "paintCoatCount", "paintWallPuttyCount",
-				"paintBrand", "paintQuality", "plumbingBrand", "electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand"));
+				"paintBrand", "paintQuality", "plumbingBrand", "electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand", "state", "district"));
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(CustomerRequirementEntity.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
 
@@ -649,7 +673,7 @@ public class CustomerService {
 	public static void copyCustomerRequirementBasicEntityToDTO(CustomerRequirement CustomerRequirementEntity, CustomerRequirementDTO customerRequirementDTO) {
 		final Set<String> prop = new HashSet<>(Arrays.asList("customerRequirementId", "customerId", "amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet", 
 				"planImagePath", "landImagePath", "brickType", "pillerBeamRequired", "floorType", "woodType", "paintCoatCount", "paintWallPuttyCount",
-				"paintBrand", "paintQuality", "plumbingBrand", "electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand"));
+				"paintBrand", "paintQuality", "plumbingBrand", "electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand", "state", "district"));
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(customerRequirementDTO.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
 

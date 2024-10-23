@@ -29,16 +29,33 @@ public class BuildersEstimateDTO {
 	private float perSquareFeetCost;
 	private String detailedEstimateFilePath;
 	private String customerAcceptedDeclined;
+	private String customerReview;
+	private int customerReviewStarRating;
 	private CustomerRequirementDTO customerRequirementDTO;
 	private ProjectsDTO projectDTO;
 	private BuilderDTO builderDTO;
 	private byte[] detailedEstimateFile;
 	
+	
+	
+	public int getCustomerReviewStarRating() {
+		return customerReviewStarRating;
+	}
+	public void setCustomerReviewStarRating(int customerReviewStarRating) {
+		this.customerReviewStarRating = customerReviewStarRating;
+	}
 	public byte[] getDetailedEstimateFile() {
 		return detailedEstimateFile;
 	}
 	public void setDetailedEstimateFile(byte[] detailedEstimateFile) {
 		this.detailedEstimateFile = detailedEstimateFile;
+	}
+	
+	public String getCustomerReview() {
+		return customerReview;
+	}
+	public void setCustomerReview(String customerReview) {
+		this.customerReview = customerReview;
 	}
 	public int getBuildersEstimateId() {
 		return buildersEstimateId;

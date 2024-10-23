@@ -70,13 +70,66 @@ public class BuilderController {
 	List<BuilderDTO> buildersList = null;
 
 	@PostMapping(value = "/Builders")
-	@HystrixCommand(fallbackMethod = "fallbackRetrieveAllBuilders")
+	// @HystrixCommand(fallbackMethod = "fallbackRetrieveAllBuilders")
 	public ResponseEntity<Object> getAllBuilders(
-			@RequestParam("amenitiesAndSpecificationsId") String amenitiesAndSpecificationsId) {
-		throw new RuntimeException("Not Available");
-		// carList = carService.findCarList();
+			@RequestParam("amenitiesAndSpecificationsId") String amenitiesAndSpecificationsId)
+			throws JsonMappingException, JsonProcessingException {
+		// throw new RuntimeException("Not Available");
+
+		AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsDTO = new AmenitiesAndSpecificationsDTO();
+		List<BuilderDTO> buildersList = null;
+		List<BuilderDTO> interiorDesignersList = null;
+		List<BuilderDTO> electriciansList = null;
+		List<BuilderDTO> plumbersList = null;
+		List<BuilderDTO> paintersList = null;
+		List<BuilderDTO> solarPlantersList = null;
+		Map<String, List<BuilderDTO>> responseBuildersMap = new HashMap<String, List<BuilderDTO>>();
+		ObjectMapper objectMapper = new ObjectMapper();
+		amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecificationsId,
+				AmenitiesAndSpecificationsDTO.class);
+		for (int i = 1; i <= 6; i++) {
+			if (i == 1) {
+				buildersList = builderService.findBuildersList(1);
+				responseBuildersMap.put("buildersList", buildersList);
+			}
+			if (i == 2) {
+				interiorDesignersList = builderService.findBuildersList(2);
+				responseBuildersMap.put("interiorDesignersList", interiorDesignersList);
+			}
+			if (i == 3) {
+				electriciansList = builderService.findBuildersList(3);
+				responseBuildersMap.put("electriciansList", electriciansList);
+			}
+			if (i == 4) {
+				plumbersList = builderService.findBuildersList(4);
+				responseBuildersMap.put("plumbersList", plumbersList);
+			}
+			if (i == 5) {
+				paintersList = builderService.findBuildersList(5);
+				responseBuildersMap.put("paintersList", paintersList);
+			}
+			/*if (i == 6) {
+				solarPlantersList = builderService.findBuildersList(6);
+				responseBuildersMap.put("solarPlantersList", solarPlantersList);
+			}*/
+		}
+
+		Object uriVariables = null;
+		final HttpHeaders headers = new HttpHeaders();
+		headers.setCacheControl(CacheControl.noCache().getHeaderValue());
+		// headers.setContentType(MediaType.valueOf(myFileData.getContentType()));
+		// headers.setContentType(MediaType.IMAGE_JPEG);
 		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
-		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
+		/*
+		 * ResponseEntity<String> responseEntity=new RestTemplate().getForEntity(
+		 * "http://localhost:8888/Car/RibbonLoadbalancedController", String.class,
+		 * uriVariables); String response=responseEntity.getBody();
+		 */
+
+		return generateResponse("List of Builders!", HttpStatus.OK, responseBuildersMap);
+		// return (ResponseEntity<List<BuilderDTO>>)
+		// ResponseEntity.ok().headers(headers).body(buildersList);
+
 	}
 
 	// @Async
@@ -218,9 +271,10 @@ public class BuilderController {
 		newPictureAddded = builderService.addNewPicture(pictureDTO);
 		return generateResponse("List of Builders!", HttpStatus.OK, newPictureAddded);
 	}
-	
+
 	@PostMapping(value = "/UploadBuildersEstimatePDF")
-	public ResponseEntity<Object> UploadBuildersEstimatePDF(@RequestParam("uploadBuildersEstimatePDF") MultipartFile file,
+	public ResponseEntity<Object> UploadBuildersEstimatePDF(
+			@RequestParam("uploadBuildersEstimatePDF") MultipartFile file,
 			@RequestParam("buildersEstimate") String buildersEstimateString) throws IOException {
 		System.out.println("pictureDTO" + new Gson().toJson(buildersEstimateString));
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -233,11 +287,11 @@ public class BuilderController {
 		uploadedEstimate = builderService.uploadBuildersEstimatePDF(buildersEstimateDTO);
 		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
 	}
-	
-	
+
 	@PostMapping(value = "/ProvideBuildersEstimate")
 	public ResponseEntity<Object> ProvideBuildersEstimate(@RequestParam("uploadBuildersEstimatePDF") MultipartFile file,
-			@RequestParam("buildersEstimate") String buildersEstimateString, @RequestParam("customerId") String customerId ) throws IOException {
+			@RequestParam("buildersEstimate") String buildersEstimateString,
+			@RequestParam("customerId") String customerId) throws IOException {
 		System.out.println("pictureDTO" + new Gson().toJson(buildersEstimateString));
 		ObjectMapper objectMapper = new ObjectMapper();
 
@@ -249,7 +303,7 @@ public class BuilderController {
 		uploadedEstimate = builderService.uploadBuildersEstimatePDF(buildersEstimateDTO);
 		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
 	}
-	
+
 	@PostMapping(value = "/GetAllOpenReqirements")
 	public ResponseEntity<Object> GetAllOpenReqirements(@RequestBody BuilderDTO builderDTO) throws IOException {
 		List<CustomerRequirementDTO> openCustomerRequirementDTO = new ArrayList<CustomerRequirementDTO>();

@@ -102,6 +102,30 @@ public class CustomerRequirement {
 	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerRequirementForBuildersEstimate")
 	private List<BuildersEstimate> buildersEstimate;
+	
+	@Column(name = "STATE")
+	private String state;
+	
+	@Column(name = "DISTRICT")
+	private String district;
+	
+	
+	
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	public String getDistrict() {
+		return district;
+	}
+
+	public void setDistrict(String district) {
+		this.district = district;
+	}
 
 	public int getCustomerRequirementId() {
 		return customerRequirementId;

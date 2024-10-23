@@ -47,6 +47,12 @@ public class BuildersEstimate {
 	@Column(name = "CUSTOMER_ACCEPTED_DECLINED")
 	private String customerAcceptedDeclined;
 	
+	@Column(name = "CUSTOMER_REVIEW")
+	private String customerReview;
+	
+	@Column(name = "CUSTOMER_REVIEW_STAR_RATING")
+	private int customerReviewStarRating;
+	
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "CUSTOMER_REQUIREMENT_ID", insertable = false, updatable = false)
@@ -60,8 +66,27 @@ public class BuildersEstimate {
 	@JoinColumn(name = "BUILDER_ID", insertable = false, updatable = false)
 	private Builder builderForBuildersEstimate;
 
+	
+	
+
+	public int getCustomerReviewStarRating() {
+		return customerReviewStarRating;
+	}
+
+	public void setCustomerReviewStarRating(int customerReviewStarRating) {
+		this.customerReviewStarRating = customerReviewStarRating;
+	}
+
 	public int getBuildersEstimateId() {
 		return buildersEstimateId;
+	}
+
+	public String getCustomerReview() {
+		return customerReview;
+	}
+
+	public void setCustomerReview(String customerReview) {
+		this.customerReview = customerReview;
 	}
 
 	public void setBuildersEstimateId(int buildersEstimateId) {
