@@ -34,10 +34,34 @@ public class Customer {
 
 	@Column(name = "PHONE_CUSTOMER")
 	private String phoneCustomer;
+	
+	@Column(name = "PASSWORD_CUSTOMER")
+	private String passwordCustomer;
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerForCustomerRequirement")
 	private List<CustomerRequirement> customerRequirement;
 	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerForCustomerRedQuotationsId")
+	private List<CustomerRedQuotations> customerRedQuotations;
+	
+	
+	
+	public List<CustomerRedQuotations> getCustomerRedQuotations() {
+		return customerRedQuotations;
+	}
+
+	public void setCustomerRedQuotations(List<CustomerRedQuotations> customerRedQuotations) {
+		this.customerRedQuotations = customerRedQuotations;
+	}
+
+	public String getPasswordCustomer() {
+		return passwordCustomer;
+	}
+
+	public void setPasswordCustomer(String passwordCustomer) {
+		this.passwordCustomer = passwordCustomer;
+	}
+
 	public int getCustomerId() {
 		return customerId;
 	}

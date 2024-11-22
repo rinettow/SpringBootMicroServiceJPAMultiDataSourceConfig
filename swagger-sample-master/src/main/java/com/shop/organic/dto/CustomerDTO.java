@@ -22,8 +22,18 @@ public class CustomerDTO {
 	private int customerId;
 	private String customerName;
 	private String phoneCustomer;
+	private String passwordCustomer;
 	private List<CustomerRequirementDTO> customerRequirement;
 	
+	
+	public String getPasswordCustomer() {
+		return passwordCustomer;
+	}
+
+	public void setPasswordCustomer(String passwordCustomer) {
+		this.passwordCustomer = passwordCustomer;
+	}
+
 	public List<CustomerRequirementDTO> getCustomerRequirement() {
 		return customerRequirement;
 	}

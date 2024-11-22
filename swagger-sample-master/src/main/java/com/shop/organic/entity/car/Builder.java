@@ -68,6 +68,19 @@ public class Builder {
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "builderForBuildersEstimate")
 	private List<BuildersEstimate> buildersEstimate;
+	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "builderForBuilderRedRequirements")
+	private List<BuilderRedRequirements> builderRedRequirements;
+	
+	
+
+	public List<BuilderRedRequirements> getBuilderRedRequirements() {
+		return builderRedRequirements;
+	}
+
+	public void setBuilderRedRequirements(List<BuilderRedRequirements> builderRedRequirements) {
+		this.builderRedRequirements = builderRedRequirements;
+	}
 
 	public List<BuildersEstimate> getBuildersEstimate() {
 		return buildersEstimate;

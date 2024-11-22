@@ -103,6 +103,29 @@ public class CustomerRequirement {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerRequirementForBuildersEstimate")
 	private List<BuildersEstimate> buildersEstimate;
 	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerRequirementForBuilderRedRequirements")
+	private List<BuilderRedRequirements> builderRedRequirements;
+	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerRequirementForSiteLocation")
+	private List<SiteLocation> siteLocations;
+	
+
+	public List<BuilderRedRequirements> getBuilderRedRequirements() {
+		return builderRedRequirements;
+	}
+
+	public void setBuilderRedRequirements(List<BuilderRedRequirements> builderRedRequirements) {
+		this.builderRedRequirements = builderRedRequirements;
+	}
+
+	public List<SiteLocation> getSiteLocations() {
+		return siteLocations;
+	}
+
+	public void setSiteLocations(List<SiteLocation> siteLocations) {
+		this.siteLocations = siteLocations;
+	}
+
 	@Column(name = "STATE")
 	private String state;
 	

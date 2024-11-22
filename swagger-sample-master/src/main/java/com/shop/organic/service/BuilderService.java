@@ -13,8 +13,11 @@ import org.springframework.core.io.Resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -57,8 +60,12 @@ import com.shop.organic.dto.StateDTO;
 import com.shop.organic.entity.car.Address;
 import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.Builder;
+import com.shop.organic.entity.car.BuilderOtp;
+import com.shop.organic.entity.car.BuilderRedRequirements;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.BuildersEstimate;
+import com.shop.organic.entity.car.Customer;
+import com.shop.organic.entity.car.CustomerOtp;
 import com.shop.organic.entity.car.CustomerRequirement;
 import com.shop.organic.entity.car.District;
 import com.shop.organic.entity.car.Picture;
@@ -123,6 +130,7 @@ public class BuilderService {
 	private List<Builder> builderEntityList;
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
 	private List<BuilderDTO> builderDTOList = new ArrayList<BuilderDTO>();
+	List<String> builderViewedCustomerRequirementIds = null;
 
 	// @Async
 	public List<BuilderDTO> findBuildersList(int amenitiesAndSpecificationsId) {
@@ -215,6 +223,45 @@ public class BuilderService {
 		entityManager.close();
 
 		return responseBuilderDTO;
+	}
+	
+	public void ResetBuilderPassword(BuilderDTO builderDTO) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<Builder> builderEntity = new ArrayList<Builder>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Builder> criteria = builder.createQuery(Builder.class);
+		Root<Builder> rootBuilder = criteria.from(Builder.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("phone"), builderDTO.getPhone()));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Builder> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		builderEntity = query.getResultList();
+
+		// commit transaction at all
+		// entityManager.getTransaction().commit();
+		
+		Builder builerToChangePasword = builderEntity.get(0);
+		builerToChangePasword.setPassword(builderDTO.getPassword());
+
+		entityManager.getTransaction().begin();
+		// if (!entityManager.contains(builderEntity)) {
+		// persist object - add to entity manager
+		entityManager.merge(builerToChangePasword);
+		// flush em - save to DB
+		entityManager.flush();
+		// }
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+		entityManager.close();
+
 	}
 
 	public void registerBuildersAvailableAminities(BuildersAvailableAmenities buildersAvailableAmenities) {
@@ -330,6 +377,7 @@ public class BuilderService {
 		buildersEstimate.setPerSquareFeetCost(buildersEstimateDTO.getPerSquareFeetCost());
 		buildersEstimate.setDetailedEstimateFilePath(buildersEstimateDTO.getDetailedEstimateFilePath());
 		buildersEstimate.setCustomerAcceptedDeclined("ON_HOLD");
+		buildersEstimate.setProjectCompletionDurationInDays(buildersEstimateDTO.getProjectCompletionDurationInDays());
 		EntityManager entityManager = em.getEntityManager("builder");
 
 		entityManager.getTransaction().begin();
@@ -348,7 +396,7 @@ public class BuilderService {
 		// commit transaction at all
 		entityManager.getTransaction().commit();
 
-		responseBuildersEstimateDTO = customerService.setBuilderEstimateDTO(buildersEstimate);
+		//responseBuildersEstimateDTO = customerService.setBuilderEstimateDTO(buildersEstimate);
 		entityManager.close();
 		return responseBuildersEstimateDTO;
 		
@@ -578,7 +626,10 @@ public class BuilderService {
 		List<CustomerRequirement> allOpenRequirementsEstimateNotYetProvided = null;
 		List<CustomerRequirement> allOpenRequirementsEstimateNotYetApproved = null;
 		List<CustomerRequirementDTO> allOpenRequirementsDTO = null;
+		List<CustomerRequirementDTO> allViewedAndUnViewedOpenRequirementsDTO = null;
 		boolean isQouteAlreadyRequestedToBuilder = false;
+		
+		
 		EntityManager entityManager = em.getEntityManager("builder");
 
 		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
@@ -604,11 +655,14 @@ public class BuilderService {
 	    	allOpenRequirementsFilteredBasedLocation = allOpenRequirements.stream().filter(opnReq-> opnReq.getState().equals(buildersState)).collect(Collectors.toList());
 	    }
 	    
+	    // Verify if Builder provided estimate for this requirement
 
 	    if (allOpenRequirementsFilteredBasedLocation != null && !allOpenRequirementsFilteredBasedLocation.isEmpty()) {
 			allOpenRequirementsEstimateNotYetProvided = allOpenRequirementsFilteredBasedLocation.stream().filter(requirement-> !validateIfEstimateAlreadyProvidedByBuilder(requirement.getCustomerRequirementId(), builderDTO.getBuilderId())).collect(Collectors.toList());
 			
 		}
+	    
+	    // Verify if any esimate approved for this requirement...
 		
 	    if (allOpenRequirementsEstimateNotYetProvided != null && !allOpenRequirementsEstimateNotYetProvided.isEmpty()) {
 	    	allOpenRequirementsEstimateNotYetApproved = allOpenRequirementsEstimateNotYetProvided.stream().filter(estNotProv->!VerifyIfAnyQuotationAcceptedForRequirement(estNotProv.getCustomerRequirementId())).collect(Collectors.toList());
@@ -620,8 +674,64 @@ public class BuilderService {
 			allOpenRequirementsDTO = allOpenRequirementsEstimateNotYetApproved.stream().map(req->customerService.setCustomerRequirementDTO(req) ).collect(Collectors.toList());
 		}
 		
+		
+		if (allOpenRequirementsDTO != null && !allOpenRequirementsDTO.isEmpty()) {
+			int buildersId = builderDTO.getBuilderId();
+			List<BuilderRedRequirements> builderRedRequirements = this.getAllViewedRequirementsForBuilder(builderDTO);
+			
+		      builderViewedCustomerRequirementIds = builderRedRequirements.stream().map(buldRedReq->this.getBuilderViewedCustomerRequirementId(buldRedReq)).collect(Collectors.toList());
+		      
+		    	  allViewedAndUnViewedOpenRequirementsDTO = allOpenRequirementsDTO.stream().map(opnReqDTO->this.markCustomerRequirementViewedOrnot(opnReqDTO, builderViewedCustomerRequirementIds)).collect(Collectors.toList());
+		      
+		}
+		
+		
 		entityManager.close();
-		return allOpenRequirementsDTO;
+		return allViewedAndUnViewedOpenRequirementsDTO;
+	}
+	
+	public String getBuilderViewedCustomerRequirementId(BuilderRedRequirements builderRedRequirements) {
+			return String.valueOf(builderRedRequirements.getCustomerRequirementId());
+	}
+	
+	public CustomerRequirementDTO markCustomerRequirementViewedOrnot(CustomerRequirementDTO customerRequirementDTO, List<String> builderViewedCustomerRequirementIds) {
+		// List<String> builderViewedCustomerRequirementIds = null;
+		if(builderViewedCustomerRequirementIds != null) {
+			if(builderViewedCustomerRequirementIds.contains(String.valueOf(customerRequirementDTO.getCustomerRequirementId()))) {
+				customerRequirementDTO.setIsRequirementViewedByBuilder("Viewed");
+			}else {
+				customerRequirementDTO.setIsRequirementViewedByBuilder("New");
+			}
+		}else {
+			customerRequirementDTO.setIsRequirementViewedByBuilder("New");
+		}
+		
+		return customerRequirementDTO;
+	}
+	
+	public List<BuilderRedRequirements> getAllViewedRequirementsForBuilder(BuilderDTO builderDTO) {
+		// return
+		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
+		// carEntityList=carRepository.findAll();
+		List<BuilderRedRequirements> builderRedRequirements;
+		String isBuilderRedCustomerRequirementAlready = "New";
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<BuilderRedRequirements> criteria = builder.createQuery(BuilderRedRequirements.class);
+		Root<BuilderRedRequirements> rootBuilder = criteria.from(BuilderRedRequirements.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderDTO.getBuilderId()));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<BuilderRedRequirements> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		builderRedRequirements = query.getResultList();
+
+		return builderRedRequirements;
 	}
 	
 	public boolean validateIfEstimateAlreadyProvidedByBuilder(int customerRequirementId,  int builderId) {
@@ -653,6 +763,59 @@ public class BuilderService {
 			isEstimateAlreadyProvidedByBuilder = false;
 		}
 		return isEstimateAlreadyProvidedByBuilder;
+	}
+	
+	public boolean VerifyIfBuilderRedCustomerRequirementAlready(int customerRequirementId,  int builderId) {
+		// return
+		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
+		// carEntityList=carRepository.findAll();
+		List<BuilderRedRequirements> builderRedRequirements;
+		boolean isBuilderRedCustomerRequirementAlready = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<BuilderRedRequirements> criteria = builder.createQuery(BuilderRedRequirements.class);
+		Root<BuilderRedRequirements> rootBuilder = criteria.from(BuilderRedRequirements.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("customerRequirementId"), customerRequirementId));
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<BuilderRedRequirements> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		builderRedRequirements = query.getResultList();
+
+		if (!builderRedRequirements.isEmpty()) {
+			isBuilderRedCustomerRequirementAlready= true;	
+		}else {
+			isBuilderRedCustomerRequirementAlready = false;
+		}
+		return isBuilderRedCustomerRequirementAlready;
+	}
+	
+	public void builderRedCustomerRequirementEntry(int customerRequirementId,  int builderId) {
+		BuilderRedRequirements builderRedRequirements = new BuilderRedRequirements();
+		builderRedRequirements.setBuilderId(builderId);
+		builderRedRequirements.setCustomerRequirementId(customerRequirementId);
+		
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		if (!entityManager.contains(builderRedRequirements)) {
+				// persist object - add to entity manager
+				entityManager.persist(builderRedRequirements);
+				// flush em - save to DB
+				entityManager.flush();
+			
+
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		entityManager.close();
 	}
 
 	public void ceateImageDirectoryForBuilder(BuilderDTO builderDTO) {
@@ -751,9 +914,11 @@ public class BuilderService {
 		}
 	}
 
-	public BuilderDTO sendOTP(BuilderDTO builderDTO) {
+	public Map<String, Object> sendOTP(BuilderDTO builderDTO) {
 		BuilderDTO LoginBuilderDTO = new BuilderDTO();
+		Map<String, Object> response = new HashMap<String, Object>();
 		List<Builder> LoginBuilder = new ArrayList<Builder>();
+		String responseStatus= null;
 		EntityManager entityManager = em.getEntityManager("builder");
 
 		Query q = entityManager.createQuery("SELECT b FROM Builder b WHERE b.phone = :phone", Builder.class);
@@ -769,16 +934,33 @@ public class BuilderService {
 		
 
 		if (LoginBuilder.isEmpty() && LoginBuilder.size() == 0) {
-			throw new ResourceNotFoundException("Mobile Number: " + builderDTO.getPhone() + " not Registered...");
+			//throw new ResourceNotFoundException("Mobile Number: " + builderDTO.getPhone() + " not Registered...");
+			responseStatus = "Builder Mobile Not Registered";
 		}
 
 		if (!LoginBuilder.isEmpty()) {
 
-			LoginBuilderDTO = setBuilderDTO(LoginBuilder.get(0));
+			if(verifyBuilderPassword(LoginBuilder.get(0), builderDTO.getPassword())) {
+				responseStatus = "Success";
+				LoginBuilderDTO = setBuilderDTO(LoginBuilder.get(0));
+			}else {
+				responseStatus = "Incorrect Password";
+			}	
 		}
 		entityManager.close();
+		response.put("responseStatus", responseStatus);
+		response.put("loggedinBuilder", LoginBuilderDTO);
 		// System.out.println("LoginBuilderDTO" +new Gson().toJson(LoginBuilderDTO));
-		return LoginBuilderDTO;
+		return response;
+	}
+	
+	public boolean verifyBuilderPassword(Builder loggedinBuilder, String password) {
+		if(loggedinBuilder.getPassword().equals(password)) {
+			return true;
+		}else {
+			return false;
+		}
+		
 	}
 
 	public AmenitiesAndSpecifications getAmenitiesAndSpecificationsById(int amenitiesAndSpecificationsId) {
@@ -1317,5 +1499,181 @@ public class BuilderService {
 
 		return resource;
 	}
+	
+	public char[] GenerateBuildersOTP(int len) 
+    { 
+        System.out.println("Generating OTP using random() : "); 
+        System.out.print("You OTP is : "); 
+  
+        // Using numeric values 
+        String numbers = "0123456789"; 
+  
+        // Using random method 
+        Random rndm_method = new Random(); 
+  
+        char[] otp = new char[len]; 
+  
+        for (int i = 0; i < len; i++) 
+        { 
+            // Use of charAt() method : to get character value 
+            // Use of nextInt() as it is scanning the value as int 
+            otp[i] = 
+             numbers.charAt(rndm_method.nextInt(numbers.length())); 
+        } 
+        return otp; 
+    } 
+	
+	
+	public void saveBuilderOTP(BuilderDTO builderDTO) {
+		BuildersEstimateDTO responseBuildersEstimateDTO = new BuildersEstimateDTO();
+		
+		BuilderOtp builderOtp =new BuilderOtp();
+		
+		int otpDigits =4;
+		char[] otpGeneratedForBuilder = GenerateBuildersOTP(otpDigits);
+        System.out.println(otpGeneratedForBuilder); 
+		//String[] otpGeneratedForBuilderStringArr = new String[otpGeneratedForBuilder.length];
+		String otpGeneratedForBuilderConcated = null;
+		for (int i = 0; i < otpGeneratedForBuilder.length; i++) {
+	        //ints[i] = Character.getNumericValue(otpGeneratedForBuilder[i]);
+			System.out.println(String.valueOf(otpGeneratedForBuilder[i])); 
+			otpGeneratedForBuilderConcated = otpGeneratedForBuilderConcated + String.valueOf(otpGeneratedForBuilder[i]);
+			//otpGeneratedForBuilderConcated.concat(String.valueOf(otpGeneratedForBuilder[i]));
+			//otpGeneratedForBuilderStringArr[i] = String.valueOf(otpGeneratedForBuilder[i]);
+	    }
+		
+		System.out.println(otpGeneratedForBuilderConcated.substring(4)); 
+		
+		builderOtp.setBuilderPhoneNumber(builderDTO.getPhone());
+		builderOtp.setBuildersOtpNumber(Integer.parseInt(otpGeneratedForBuilderConcated.substring(4)));
+		
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		if (!entityManager.contains(builderOtp)) {
+			//BuilderOtp entityAvailableOrNot = entityManager.find(BuilderOtp.class, builderOtp.getBuilderPhoneNumber());
+			//EntityManager entityManager = em.getEntityManager("builder");
+			List<BuilderOtp> builderOtps = new ArrayList<BuilderOtp>();
+
+			CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+			CriteriaQuery<BuilderOtp> criteria = builder.createQuery(BuilderOtp.class);
+			Root<BuilderOtp> rootBuilder = criteria.from(BuilderOtp.class);
+			criteria.select(rootBuilder);
+
+			List<Predicate> restrictions = new ArrayList<Predicate>();
+			restrictions.add(builder.equal(rootBuilder.get("builderPhoneNumber"), builderOtp.getBuilderPhoneNumber()));
+
+			criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+			TypedQuery<BuilderOtp> query = entityManager.createQuery(criteria);
+			query.setHint(QueryHints.HINT_CACHEABLE, true);
+			query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+			builderOtps = query.getResultList();
+			if (builderOtps.isEmpty()) {
+				//if (1 == 1) {
+				// persist object - add to entity manager
+				entityManager.persist(builderOtp);
+				// flush em - save to DB
+				entityManager.flush();
+			} else {
+				builderOtp.setBuilderOtpId(builderOtps.get(0).getBuilderOtpId());
+				entityManager.merge(builderOtp);
+			}
+
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		entityManager.close();
+		
+
+	}
+	
+	
+	public boolean VerifyBuildersOTP(BuilderDTO builderDTO, String otp) {
+		EntityManager entityManager = em.getEntityManager("builder");
+		List<BuilderOtp> builderOtp = new ArrayList<BuilderOtp>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<BuilderOtp> criteria = builder.createQuery(BuilderOtp.class);
+		Root<BuilderOtp> rootBuilder = criteria.from(BuilderOtp.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("builderPhoneNumber"), builderDTO.getPhone()));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<BuilderOtp> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		builderOtp = query.getResultList();
+		
+		int otpDB= builderOtp.get(0).getBuildersOtpNumber();
+		int otpCustomerEnered = Integer.parseInt(otp.replace("\"",""));
+		
+		if(otpDB == otpCustomerEnered) {
+			return true;
+		}else {
+			return false;
+		}
+
+		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
+	}
+
+	
+	public boolean VerifyAlreadyRegisteredBuilder(BuilderDTO builderDTO) {
+		EntityManager entityManager = em.getEntityManager("builder");
+		List<Builder> builderEntity = new ArrayList<Builder>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Builder> criteria = builder.createQuery(Builder.class);
+		Root<Builder> rootBuilder = criteria.from(Builder.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("phone"), builderDTO.getPhone()));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Builder> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		builderEntity = query.getResultList();
+		
+		if(!builderEntity.isEmpty()) {
+			return true;
+		}else {
+			return false;
+		}
+
+		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
+	}
+	
+	public boolean VerifyIfMobileAlreadyRegisteredAsCustomer(BuilderDTO builderDTO) {
+		EntityManager entityManager = em.getEntityManager("builder");
+		List<Customer> customerEntity = new ArrayList<Customer>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Customer> criteria = builder.createQuery(Customer.class);
+		Root<Customer> rootBuilder = criteria.from(Customer.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("phoneCustomer"), builderDTO.getPhone()));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Customer> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		customerEntity = query.getResultList();
+		
+		if(!customerEntity.isEmpty()) {
+			return true;
+		}else {
+			return false;
+		}
+
+		// responseBuilderDTO= this.setBuilderDTO(builderEntity);
+	}
+
+
 
 }

@@ -53,6 +53,8 @@ public class BuildersEstimate {
 	@Column(name = "CUSTOMER_REVIEW_STAR_RATING")
 	private int customerReviewStarRating;
 	
+	@Column(name = "PROJECT_COMPLETION_DURATION_IN_DAYS")
+	private int projectCompletionDurationInDays;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "CUSTOMER_REQUIREMENT_ID", insertable = false, updatable = false)
@@ -68,6 +70,14 @@ public class BuildersEstimate {
 
 	
 	
+
+	public int getProjectCompletionDurationInDays() {
+		return projectCompletionDurationInDays;
+	}
+
+	public void setProjectCompletionDurationInDays(int projectCompletionDurationInDays) {
+		this.projectCompletionDurationInDays = projectCompletionDurationInDays;
+	}
 
 	public int getCustomerReviewStarRating() {
 		return customerReviewStarRating;

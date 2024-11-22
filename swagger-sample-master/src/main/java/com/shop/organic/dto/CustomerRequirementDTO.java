@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.BuildersEstimate;
 import com.shop.organic.entity.car.Customer;
+import com.shop.organic.entity.car.SiteLocation;
 
 public class CustomerRequirementDTO {
 
@@ -54,8 +55,29 @@ public class CustomerRequirementDTO {
 	private byte[] landImagePNGorJPGFileFormat;
     private String state;
 	private String district;
+	private List<SiteLocationDTO> siteLocations;
+	private String isRequirementViewedByBuilder;
 	
 	
+
+	
+
+	public String getIsRequirementViewedByBuilder() {
+		return isRequirementViewedByBuilder;
+	}
+
+	public void setIsRequirementViewedByBuilder(String isRequirementViewedByBuilder) {
+		this.isRequirementViewedByBuilder = isRequirementViewedByBuilder;
+	}
+
+	public List<SiteLocationDTO> getSiteLocations() {
+		return siteLocations;
+	}
+
+	public void setSiteLocations(List<SiteLocationDTO> siteLocations) {
+		this.siteLocations = siteLocations;
+	}
+
 	public String getState() {
 		return state;
 	}

@@ -46,6 +46,7 @@ import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.dto.StateDTO;
 import com.shop.organic.entity.car.Builder;
+import com.shop.organic.entity.car.BuilderRedRequirements;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
@@ -72,10 +73,15 @@ public class BuilderController {
 	@PostMapping(value = "/Builders")
 	// @HystrixCommand(fallbackMethod = "fallbackRetrieveAllBuilders")
 	public ResponseEntity<Object> getAllBuilders(
-			@RequestParam("amenitiesAndSpecificationsId") String amenitiesAndSpecificationsId)
+			@RequestParam("amenitiesAndSpecificationsId") String amenitiesAndSpecificationsId, 
+			@RequestParam("selectedLocation") String selectedLocation)
 			throws JsonMappingException, JsonProcessingException {
 		// throw new RuntimeException("Not Available");
-
+		String selectedLocationQuotesRemoved =selectedLocation.replace("\"","");
+		String[] locationArray = selectedLocationQuotesRemoved.split(",");
+        String state = locationArray[0];
+        String districtWithSpace = locationArray[1];
+        String district = districtWithSpace.substring(1);
 		AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsDTO = new AmenitiesAndSpecificationsDTO();
 		List<BuilderDTO> buildersList = null;
 		List<BuilderDTO> interiorDesignersList = null;
@@ -83,6 +89,13 @@ public class BuilderController {
 		List<BuilderDTO> plumbersList = null;
 		List<BuilderDTO> paintersList = null;
 		List<BuilderDTO> solarPlantersList = null;
+		
+		List<BuilderDTO> filterdbuildersList = null;
+		List<BuilderDTO> filterdinteriorDesignersList = null;
+		List<BuilderDTO> filterdelectriciansList = null;
+		List<BuilderDTO> filterdplumbersList = null;
+		List<BuilderDTO> filterdpaintersList = null;
+		List<BuilderDTO> filterdsolarPlantersList = null;
 		Map<String, List<BuilderDTO>> responseBuildersMap = new HashMap<String, List<BuilderDTO>>();
 		ObjectMapper objectMapper = new ObjectMapper();
 		amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecificationsId,
@@ -90,23 +103,33 @@ public class BuilderController {
 		for (int i = 1; i <= 6; i++) {
 			if (i == 1) {
 				buildersList = builderService.findBuildersList(1);
-				responseBuildersMap.put("buildersList", buildersList);
+				filterdbuildersList = buildersList.stream().filter(builder-> builder.getAddress().getState().equals(state) && 
+						builder.getAddress().getDistrict().equals(district)).collect(Collectors.toList());
+				responseBuildersMap.put("buildersList", filterdbuildersList);
 			}
 			if (i == 2) {
 				interiorDesignersList = builderService.findBuildersList(2);
-				responseBuildersMap.put("interiorDesignersList", interiorDesignersList);
+				filterdinteriorDesignersList = interiorDesignersList.stream().filter(builder-> builder.getAddress().getState().equals(state) && 
+						builder.getAddress().getDistrict().equals(district)).collect(Collectors.toList());
+				responseBuildersMap.put("interiorDesignersList", filterdinteriorDesignersList);
 			}
 			if (i == 3) {
 				electriciansList = builderService.findBuildersList(3);
-				responseBuildersMap.put("electriciansList", electriciansList);
+				filterdelectriciansList = electriciansList.stream().filter(builder-> builder.getAddress().getState().equals(state) && 
+						builder.getAddress().getDistrict().equals(district)).collect(Collectors.toList());
+				responseBuildersMap.put("electriciansList", filterdelectriciansList);
 			}
 			if (i == 4) {
 				plumbersList = builderService.findBuildersList(4);
-				responseBuildersMap.put("plumbersList", plumbersList);
+				filterdplumbersList = plumbersList.stream().filter(builder-> builder.getAddress().getState().equals(state) && 
+						builder.getAddress().getDistrict().equals(district)).collect(Collectors.toList());
+				responseBuildersMap.put("plumbersList", filterdplumbersList);
 			}
 			if (i == 5) {
 				paintersList = builderService.findBuildersList(5);
-				responseBuildersMap.put("paintersList", paintersList);
+				filterdpaintersList = paintersList.stream().filter(builder-> builder.getAddress().getState().equals(state) && 
+						builder.getAddress().getDistrict().equals(district)).collect(Collectors.toList());
+				responseBuildersMap.put("paintersList", filterdpaintersList);
 			}
 			/*if (i == 6) {
 				solarPlantersList = builderService.findBuildersList(6);
@@ -158,32 +181,88 @@ public class BuilderController {
 	}
 
 	@PostMapping(value = "/RegisterBuilder")
-	public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
-		System.out.println("BuilderDirectory" + new Gson().toJson(builderDTO));
+	//public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
+	public ResponseEntity<Object> registerBuilder(@RequestParam("otp") String otp, @RequestParam("builderDTO") String builderDTOString) throws JsonMappingException, JsonProcessingException {
+		System.out.println("BuilderDirectory" + new Gson().toJson(builderDTOString));
 		BuilderDTO registeredBuilder = new BuilderDTO();
-		registeredBuilder = builderService.registerBuilder(builderDTO);
-		int builderid = registeredBuilder.getBuilderId();
-		List<BuildersAvailableAmenitiesDTO> buildersAvailableAmenitiesDTOWithBuilderId = builderDTO
-				.getBuildersAvailableAmenities().stream()
-				.peek(buildersAvailableAmenitiesDTO -> buildersAvailableAmenitiesDTO.setBuilderId(builderid))
-				.collect(Collectors.toList());
-		List<BuildersAvailableAmenities> buildersAvailableAmenities = buildersAvailableAmenitiesDTOWithBuilderId
-				.stream()
-				.map(buildersAvailableAmenitiesDTO -> builderService.copyBuildersBasicAvailableAmenitiesDTOToEntity(
-						buildersAvailableAmenitiesDTO, new BuildersAvailableAmenities()))
-				.collect(Collectors.toList());
-		for (BuildersAvailableAmenities availavleAmenities : buildersAvailableAmenities) {
-			builderService.registerBuildersAvailableAminities(availavleAmenities);
-		}
-		;
+		
+		ObjectMapper objectMapper = new ObjectMapper();
 
-		Object uriVariables = null;
-		builderService.ceateImageDirectoryForBuilder(registeredBuilder);
-		// throw new RuntimeException("Not Available");
-		// carList = carService.findCarList();
-		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
-		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
-		return generateResponse("List of Builders!", HttpStatus.OK, registeredBuilder);
+		BuilderDTO builderDTO = new BuilderDTO();
+		builderDTO = objectMapper.readValue(builderDTOString, BuilderDTO.class);
+		
+		if(builderService.VerifyBuildersOTP(builderDTO, otp)) {
+			if(!builderService.VerifyAlreadyRegisteredBuilder(builderDTO)) {
+				if(!builderService.VerifyIfMobileAlreadyRegisteredAsCustomer(builderDTO)) {
+					registeredBuilder = builderService.registerBuilder(builderDTO);
+					int builderid = registeredBuilder.getBuilderId();
+					List<BuildersAvailableAmenitiesDTO> buildersAvailableAmenitiesDTOWithBuilderId = builderDTO
+							.getBuildersAvailableAmenities().stream()
+							.peek(buildersAvailableAmenitiesDTO -> buildersAvailableAmenitiesDTO.setBuilderId(builderid))
+							.collect(Collectors.toList());
+					List<BuildersAvailableAmenities> buildersAvailableAmenities = buildersAvailableAmenitiesDTOWithBuilderId
+							.stream()
+							.map(buildersAvailableAmenitiesDTO -> builderService.copyBuildersBasicAvailableAmenitiesDTOToEntity(
+									buildersAvailableAmenitiesDTO, new BuildersAvailableAmenities()))
+							.collect(Collectors.toList());
+					for (BuildersAvailableAmenities availavleAmenities : buildersAvailableAmenities) {
+						builderService.registerBuildersAvailableAminities(availavleAmenities);
+					}
+					;
+
+					Object uriVariables = null;
+					builderService.ceateImageDirectoryForBuilder(registeredBuilder);
+					// throw new RuntimeException("Not Available");
+					// carList = carService.findCarList();
+					// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+					// return generateResponse("List of Cars!", HttpStatus.OK, carList);
+					return generateResponse("Builder Registered Successful!", HttpStatus.OK, registeredBuilder);
+				}else {
+					return generateResponse("Mobile Already registered as Customer!", HttpStatus.CONFLICT, null);
+				}
+				
+				
+			}else {
+				return generateResponse("Already registered Builder!", HttpStatus.ALREADY_REPORTED, null);
+			}
+		}else {
+			return generateResponse("Incorrect OTP!", HttpStatus.NOT_FOUND, null);
+		}
+		//return null;
+		
+	}
+	
+	
+	@PostMapping(value = "/ResetBuilderPassword")
+	//public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
+	public ResponseEntity<Object> ResetBuilderPassword(@RequestParam("otp") String otp, @RequestParam("builderDTO") String builderDTOString) throws JsonMappingException, JsonProcessingException {
+		System.out.println("BuilderDirectory" + new Gson().toJson(builderDTOString));
+		BuilderDTO registeredBuilder = new BuilderDTO();
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		BuilderDTO builderDTO = new BuilderDTO();
+		builderDTO = objectMapper.readValue(builderDTOString, BuilderDTO.class);
+		
+		if(builderService.VerifyBuildersOTP(builderDTO, otp)) {
+			if(builderService.VerifyAlreadyRegisteredBuilder(builderDTO)) {
+				builderService.ResetBuilderPassword(builderDTO);
+				return generateResponse("Password changed!", HttpStatus.OK, null);
+			}else {
+				return generateResponse("Mobile Number not Registered!", HttpStatus.ALREADY_REPORTED, null);
+			}
+		}else {
+			return generateResponse("Incorrect OTP!", HttpStatus.NOT_FOUND, null);
+		}
+		//return null;
+		
+	}
+	
+	@PostMapping(value = "/GenerateBuildersOTP")
+	public ResponseEntity<Object> GenerateBuildersOTP(@RequestBody BuilderDTO builderDTO) {
+		BuilderDTO loginBuilder = new BuilderDTO();
+		builderService.saveBuilderOTP(builderDTO);
+		return generateResponse("OTP generated!", HttpStatus.OK, null);
 	}
 
 	@GetMapping(value = "/AllStates")
@@ -303,6 +382,20 @@ public class BuilderController {
 		uploadedEstimate = builderService.uploadBuildersEstimatePDF(buildersEstimateDTO);
 		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
 	}
+	
+	@PostMapping(value = "/BuilderRedCustomerRequirement")
+	public ResponseEntity<Object> BuilderRedCustomerRequirement(@RequestParam("builderId") String builderId,
+			@RequestParam("customerRequirementId") String customerRequirementId) throws IOException {
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		BuilderRedRequirements builderRedRequirements = new BuilderRedRequirements();
+		if(!builderService.VerifyIfBuilderRedCustomerRequirementAlready(Integer.parseInt(customerRequirementId), Integer.parseInt(builderId))) {
+			builderService.builderRedCustomerRequirementEntry(Integer.parseInt(customerRequirementId), Integer.parseInt(builderId));
+		}
+		
+		return generateResponse("List of Builders!", HttpStatus.OK, builderRedRequirements);
+	}
+		
 
 	@PostMapping(value = "/GetAllOpenReqirements")
 	public ResponseEntity<Object> GetAllOpenReqirements(@RequestBody BuilderDTO builderDTO) throws IOException {
@@ -316,15 +409,26 @@ public class BuilderController {
 	@PostMapping(value = "/SendOTP")
 	public ResponseEntity<Object> SendOTP(@RequestBody BuilderDTO builderDTO) {
 		BuilderDTO loginBuilder = new BuilderDTO();
+		Map<String, Object> response = null;
 		System.out.println("builderDTO:::::Test" + new Gson().toJson(builderDTO));
-		loginBuilder = builderService.sendOTP(builderDTO);
-		Object uriVariables = null;
+		response = builderService.sendOTP(builderDTO);
+		if(response.get("responseStatus").equals("Builder Mobile Not Registered")) {
+			return generateResponse("Builder Mobile Not Registered", HttpStatus.NOT_FOUND, null);
+		}else if(response.get("responseStatus").equals("Incorrect Password")){
+			return generateResponse("Incorrect Password", HttpStatus.UNAUTHORIZED, null);
+		}else {
+			loginBuilder = (BuilderDTO) response.get("loggedinBuilder");
+			return generateResponse("Builder details!", HttpStatus.OK, loginBuilder);
+		}
+		//Object uriVariables = null;
 		// throw new RuntimeException("Not Available");
 		// carList = carService.findCarList();
 		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
-		return generateResponse("List of Builders!", HttpStatus.OK, loginBuilder);
+		//return generateResponse("List of Builders!", HttpStatus.OK, loginBuilder);
 	}
+	
+	
 
 	@PostMapping(value = "/getProjectDetailsById")
 	public ResponseEntity<Object> getProjectDetailsById(@RequestBody ProjectsDTO projectsDTO) {

@@ -19,6 +19,8 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.shop.organic.entity.car.Builder;
+import com.shop.organic.entity.car.CustomerRequirement;
 
 public class BuildersEstimateDTO {
 
@@ -35,9 +37,30 @@ public class BuildersEstimateDTO {
 	private ProjectsDTO projectDTO;
 	private BuilderDTO builderDTO;
 	private byte[] detailedEstimateFile;
+	private String isEstimateRedByCustomer;
+	private Builder builderForBuildersEstimate;
+	private int projectCompletionDurationInDays;
 	
 	
+	public int getProjectCompletionDurationInDays() {
+		return projectCompletionDurationInDays;
+	}
+	public void setProjectCompletionDurationInDays(int projectCompletionDurationInDays) {
+		this.projectCompletionDurationInDays = projectCompletionDurationInDays;
+	}
 	
+	public Builder getBuilderForBuildersEstimate() {
+		return builderForBuildersEstimate;
+	}
+	public void setBuilderForBuildersEstimate(Builder builderForBuildersEstimate) {
+		this.builderForBuildersEstimate = builderForBuildersEstimate;
+	}
+	public String getIsEstimateRedByCustomer() {
+		return isEstimateRedByCustomer;
+	}
+	public void setIsEstimateRedByCustomer(String isEstimateRedByCustomer) {
+		this.isEstimateRedByCustomer = isEstimateRedByCustomer;
+	}
 	public int getCustomerReviewStarRating() {
 		return customerReviewStarRating;
 	}

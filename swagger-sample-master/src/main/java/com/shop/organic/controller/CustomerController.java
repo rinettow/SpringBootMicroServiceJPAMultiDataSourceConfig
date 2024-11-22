@@ -31,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -44,8 +45,10 @@ import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
+import com.shop.organic.dto.SiteLocationDTO;
 import com.shop.organic.dto.StateDTO;
 import com.shop.organic.entity.car.Builder;
+import com.shop.organic.entity.car.BuilderRedRequirements;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.BuildersEstimate;
 import com.shop.organic.entity.car.Customer;
@@ -78,79 +81,150 @@ public class CustomerController {
 	List<BuilderDTO> buildersList = null;
 
 	@PostMapping(value = "/RegisterCustomer")
-	public ResponseEntity<Object> registerBuilder(@RequestBody CustomerDTO customerDTO) {
-		System.out.println("BuilderDirectory" + new Gson().toJson(customerDTO));
+	public ResponseEntity<Object> registerBuilder(@RequestParam("otp") String otp, @RequestParam("customerDTO") String customerDTOString) throws JsonMappingException, JsonProcessingException {
+		System.out.println("BuilderDirectory" + new Gson().toJson(customerDTOString));
 		CustomerDTO registeredCustomerDTO = new CustomerDTO();
-		registeredCustomerDTO = customerService.registerCustomer(customerDTO);
+		
+		ObjectMapper objectMapper = new ObjectMapper();
 
-		customerService.ceateImageDirectoryForCustomer(registeredCustomerDTO);
-		return generateResponse("Customer Registered Successful!", HttpStatus.OK, registeredCustomerDTO);
+		CustomerDTO customerDTO = new CustomerDTO();
+		customerDTO = objectMapper.readValue(customerDTOString, CustomerDTO.class);
+
+		if (customerService.VerifyCustomersOTP(customerDTO, otp)) {
+			if (!customerService.VerifyAlreadyRegisteredCustomer(customerDTO)) {
+				if (!customerService.VerifyMobileAlreadyRegisteredAsBuilder(customerDTO)) {
+					registeredCustomerDTO = customerService.registerCustomer(customerDTO);
+
+					customerService.ceateImageDirectoryForCustomer(registeredCustomerDTO);
+					return generateResponse("Customer Registered Successful!", HttpStatus.OK, registeredCustomerDTO);
+				}else {
+					return generateResponse("Mobile Number Already registered as Builder!", HttpStatus.CONFLICT, null);
+				}
+				
+			} else {
+				return generateResponse("Already registered Customer!", HttpStatus.ALREADY_REPORTED, null);
+			}
+		} else {
+			return generateResponse("Incorrect OTP!", HttpStatus.NOT_FOUND, null);
+		}
+
+		
+	}
+	
+	
+	@PostMapping(value = "/ResetCustomerPassword")
+	public ResponseEntity<Object> ResetCustomerPassword(@RequestParam("otp") String otp, @RequestParam("customerDTO") String customerDTOString) throws JsonMappingException, JsonProcessingException {
+		System.out.println("BuilderDirectory" + new Gson().toJson(customerDTOString));
+		CustomerDTO registeredCustomerDTO = new CustomerDTO();
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		CustomerDTO customerDTO = new CustomerDTO();
+		customerDTO = objectMapper.readValue(customerDTOString, CustomerDTO.class);
+
+		if (customerService.VerifyCustomersOTP(customerDTO, otp)) {
+			if (customerService.VerifyAlreadyRegisteredCustomer(customerDTO)) {
+				customerService.ResetCustomerPassword(customerDTO);
+
+				return generateResponse("Password changed!", HttpStatus.OK, null);
+			} else {
+				return generateResponse("Mobile Number Not Registered!", HttpStatus.ALREADY_REPORTED, null);
+			}
+		} else {
+			return generateResponse("Incorrect OTP!", HttpStatus.NOT_FOUND, null);
+		}
+
+		
+	}
+
+	@PostMapping(value = "/GenerateCustomersOTP")
+	public ResponseEntity<Object> GenerateCustomersOTP(@RequestBody CustomerDTO customerDTO) {
+		// BuilderDTO loginBuilder = new BuilderDTO();
+		customerService.saveCustomerOTP(customerDTO);
+		return generateResponse("OTP generated!", HttpStatus.OK, null);
 	}
 
 	@PostMapping(value = "/CreateCustomerRequirement")
-	public ResponseEntity<Object> CreateCustomerRequirement(@RequestParam("planPDFFileFormat") MultipartFile planPDFFileFormat,
-			@RequestParam("landImagePNGorJPGFileFormat") MultipartFile landImagePNGorJPGFileFormat,
-			@RequestParam("customerRequirementDTO") String createRequirementDTO) throws JsonMappingException, JsonProcessingException {
+	public ResponseEntity<Object> CreateCustomerRequirement(
+			@RequestParam("planPDFFileFormat") MultipartFile planPDFFileFormat,
+			//@RequestParam("landImagePNGorJPGFileFormat") MultipartFile landImagePNGorJPGFileFormat,
+			@RequestParam("files[]") MultipartFile[] landImagePNGorJPGFileFormat,
+			@RequestParam("customerRequirementDTO") String createRequirementDTO)
+			throws JsonMappingException, JsonProcessingException {
 		System.out.println("ProjectDetails" + new Gson().toJson(createRequirementDTO));
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
 		customerRequirementDTO = objectMapper.readValue(createRequirementDTO, CustomerRequirementDTO.class);
 		boolean isOpenRequirementAvailable = customerService.validateCustomersOpenRequirement(customerRequirementDTO);
-		if(isOpenRequirementAvailable) {
+		if (isOpenRequirementAvailable) {
 			String amenityName = null;
-			if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 1) {
+			if (customerRequirementDTO.getAmenityAndSpecifiactionId() == 1) {
 				amenityName = "Full House/Flat Construction";
-			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 2) {
+			} else if (customerRequirementDTO.getAmenityAndSpecifiactionId() == 2) {
 				amenityName = "Interior House Design";
-			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 3) {
+			} else if (customerRequirementDTO.getAmenityAndSpecifiactionId() == 3) {
 				amenityName = "Electrical Work";
-			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 4) {
+			} else if (customerRequirementDTO.getAmenityAndSpecifiactionId() == 4) {
 				amenityName = "Plumbing Work";
-			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 5) {
+			} else if (customerRequirementDTO.getAmenityAndSpecifiactionId() == 5) {
 				amenityName = "Painting";
-			}else if(customerRequirementDTO.getAmenityAndSpecifiactionId() == 6) {
+			} else if (customerRequirementDTO.getAmenityAndSpecifiactionId() == 6) {
 				amenityName = "Solar Planting";
 			}
-			return generateResponse("Open Requirement is already available for " +amenityName+ "Please close the existing requirement", HttpStatus.NOT_FOUND, null);
+			return generateResponse("Open Requirement is already available for " + amenityName
+					+ "Please close the existing requirement", HttpStatus.NOT_FOUND, null);
 		}
 		CustomerRequirementDTO newCustomerRequirementDTOAddded = new CustomerRequirementDTO();
-		   /*Add new Customer Requirement entry with new requirement id created*/
+		/* Add new Customer Requirement entry with new requirement id created */
 		newCustomerRequirementDTOAddded = customerService.CreateCustomerRequirement(customerRequirementDTO);
-		/*Set the newly created customer requirement id to DTO object*/
-		/*Based on the Newly created Custmer requirement id create the image directory for Customer requirement and save the multipart files in the directory*/
-		customerService.ceateImageDirectoryForCustomerRequirement(newCustomerRequirementDTOAddded, planPDFFileFormat, landImagePNGorJPGFileFormat);
-		/*Now again add the image path in customer requirement table*/
+		/* Set the newly created customer requirement id to DTO object */
+		/*
+		 * Based on the Newly created Custmer requirement id create the image directory
+		 * for Customer requirement and save the multipart files in the directory
+		 */
+		customerService.ceateImageDirectoryForCustomerRequirement(newCustomerRequirementDTOAddded, planPDFFileFormat,
+				landImagePNGorJPGFileFormat);
+		/* Now again add the image path in customer requirement table */
 		newCustomerRequirementDTOAddded = customerService.CreateCustomerRequirement(newCustomerRequirementDTOAddded);
 		return generateResponse("List of Builders!", HttpStatus.OK, newCustomerRequirementDTOAddded);
 	}
-	
-	
+
 	@PostMapping(value = "/getEstimate")
 	public ResponseEntity<Object> getEstimate(@RequestParam("builderId") String builderId,
-			@RequestParam("projectsId") String projectsId,
-			@RequestParam("customerId") String customerId,
-			@RequestParam("amenitiesAndSpecificationsDTO") String amenitiesAndSpecifications) throws JsonMappingException, JsonProcessingException {
+			@RequestParam("projectsId") String projectsId, @RequestParam("customerId") String customerId,
+			@RequestParam("amenitiesAndSpecificationsDTO") String amenitiesAndSpecifications)
+			throws JsonMappingException, JsonProcessingException {
 		BuildersEstimateDTO buildersEstimateDTO;
 		ObjectMapper objectMapper = new ObjectMapper();
 		AmenitiesAndSpecificationsDTO amenitiesAndSpecificationsDTO = new AmenitiesAndSpecificationsDTO();
-		amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecifications, AmenitiesAndSpecificationsDTO.class);
-		List<CustomerRequirementDTO> customerOpenRequirement= customerService.getCustomersOpenRequirement(Integer.parseInt(customerId), amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId());
-		if(customerOpenRequirement != null && customerOpenRequirement.size() == 1) {
-			/*if(!customerService.validateIfQouteAlreadyRequestedToBuilder(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(builderId))) {
-				buildersEstimateDTO =	customerService.addBuildersEstimateEntry(customerOpenRequirement.get(0).getCustomerRequirementId(), Integer.parseInt(customerId), 
-						amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId(), Integer.parseInt(projectsId), Integer.parseInt(builderId));
-			}else {
-				return generateResponse("Get Quote was already requested to this Builder ", HttpStatus.ALREADY_REPORTED, null);
-			}*/
-			return generateResponse("Open Requirement already Available, and quoation request sent to builders, please check the quoatations in View Estimate tab ", HttpStatus.OK, null);
-			
-		}else {
-			return generateResponse("Open Requirement is not available , Please create Requirement", HttpStatus.NOT_FOUND, null);
+		amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecifications,
+				AmenitiesAndSpecificationsDTO.class);
+		List<CustomerRequirementDTO> customerOpenRequirement = customerService.getCustomersOpenRequirement(
+				Integer.parseInt(customerId), amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId());
+		if (customerOpenRequirement != null && customerOpenRequirement.size() == 1) {
+			/*
+			 * if(!customerService.validateIfQouteAlreadyRequestedToBuilder(
+			 * customerOpenRequirement.get(0).getCustomerRequirementId(),
+			 * Integer.parseInt(builderId))) { buildersEstimateDTO =
+			 * customerService.addBuildersEstimateEntry(customerOpenRequirement.get(0).
+			 * getCustomerRequirementId(), Integer.parseInt(customerId),
+			 * amenitiesAndSpecificationsDTO.getAmenitiesAndSpecificationsId(),
+			 * Integer.parseInt(projectsId), Integer.parseInt(builderId)); }else { return
+			 * generateResponse("Get Quote was already requested to this Builder ",
+			 * HttpStatus.ALREADY_REPORTED, null); }
+			 */
+			return generateResponse(
+					"Open Requirement already Available, and quoation request sent to builders, please check the quoatations in View Estimate tab ",
+					HttpStatus.OK, null);
+
+		} else {
+			return generateResponse("Open Requirement is not available , Please create Requirement",
+					HttpStatus.NOT_FOUND, null);
 		}
-		
+
 	}
-	
+
 	@PostMapping(value = "/AcceptDeclineQuotation")
 	public ResponseEntity<Object> AcceptDeclineQuotation(
 			@RequestParam("buildersEstimate") String buildersEstimateString) throws IOException {
@@ -161,25 +235,25 @@ public class CustomerController {
 		buildersEstimateDTO = objectMapper.readValue(buildersEstimateString, BuildersEstimateDTO.class);
 
 		BuildersEstimateDTO uploadedEstimate = new BuildersEstimateDTO();
-		if(buildersEstimateDTO.getCustomerAcceptedDeclined().equals("ACCEPT")) {
-			boolean isAnyQuotationAcceptedForRequirement = builderService.VerifyIfAnyQuotationAcceptedForRequirement(buildersEstimateDTO);
-			if(isAnyQuotationAcceptedForRequirement) {
+		if (buildersEstimateDTO.getCustomerAcceptedDeclined().equals("ACCEPT")) {
+			boolean isAnyQuotationAcceptedForRequirement = builderService
+					.VerifyIfAnyQuotationAcceptedForRequirement(buildersEstimateDTO);
+			if (isAnyQuotationAcceptedForRequirement) {
 				return generateResponse("Quotation Already Accepted!", HttpStatus.ALREADY_REPORTED, uploadedEstimate);
-			}else {
+			} else {
 				uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
 				builderService.DeclineRestAllQuotationsExceptApprovedQuote(buildersEstimateDTO);
 			}
-		}else if(buildersEstimateDTO.getCustomerAcceptedDeclined().equals("DECLINE")) {
+		} else if (buildersEstimateDTO.getCustomerAcceptedDeclined().equals("DECLINE")) {
 			uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
 		}
-		
-		
+
 		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
 	}
-	
+
 	@PostMapping(value = "/SubmitReview")
-	public ResponseEntity<Object> SubmitReview(
-			@RequestParam("buildersEstimate") String buildersEstimateString) throws IOException {
+	public ResponseEntity<Object> SubmitReview(@RequestParam("buildersEstimate") String buildersEstimateString)
+			throws IOException {
 		System.out.println("pictureDTO" + new Gson().toJson(buildersEstimateString));
 		ObjectMapper objectMapper = new ObjectMapper();
 
@@ -188,8 +262,7 @@ public class CustomerController {
 
 		BuildersEstimateDTO submitedReview = new BuildersEstimateDTO();
 		submitedReview = builderService.SubmitReview(buildersEstimateDTO);
-		
-		
+
 		return generateResponse("List of Builders!", HttpStatus.OK, submitedReview);
 	}
 
@@ -205,14 +278,41 @@ public class CustomerController {
 	@PostMapping(value = "/SendOTPCustomerLogin")
 	public ResponseEntity<Object> SendOTPCustomerLogin(@RequestBody CustomerDTO customerDTO) {
 		CustomerDTO loginCustomer = new CustomerDTO();
+		Map<String, Object> response = null;
 		System.out.println("builderDTO:::::Test" + new Gson().toJson(customerDTO));
-		loginCustomer = customerService.sendOTPForCustomerLogin(customerDTO);
-		Object uriVariables = null;
+		response = customerService.sendOTPForCustomerLogin(customerDTO);
+		if (response.get("responseStatus").equals("Customer Mobile Not Registered")) {
+			return generateResponse("Customer Mobile Not Registered!", HttpStatus.NOT_FOUND, null);
+		} else if (response.get("responseStatus").equals("Incorrect Password")) {
+			return generateResponse("Incorrect Password!", HttpStatus.UNAUTHORIZED, null);
+		} else {
+			loginCustomer = (CustomerDTO) response.get("loggedinCustomer");
+			return generateResponse("List of Builders!", HttpStatus.OK, loginCustomer);
+		}
+		// Object uriVariables = null;
 		// throw new RuntimeException("Not Available");
 		// carList = carService.findCarList();
 		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
-		return generateResponse("List of Builders!", HttpStatus.OK, loginCustomer);
+
+	}
+	
+	
+	@PostMapping(value = "/CustomerRedQuotation")
+	public ResponseEntity<Object> CustomerRedQuotation(@RequestParam("customerId") String customerId,
+			@RequestParam("customerRedQuotations") String customerRedQuotations) throws IOException {
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<String> customerRedEstimates = new ArrayList<String>();
+		//buildersEstimatesDTO = objectMapper.readValue(builderEstimates, new TypeReference<List<BuildersEstimateDTO.class>>(){});
+		customerRedEstimates = objectMapper.readValue(customerRedQuotations, new TypeReference<List<String>>(){});
+		
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		//customerRequirementDTO = objectMapper.readValue(customerRedQuotations, CustomerRequirementDTO.class);
+
+		List<BuildersEstimateDTO> buildersEstimatesDTOResponse = customerRedEstimates.stream().map(estimateId-> customerService.customerRedQuotations(Integer.parseInt(estimateId), Integer.parseInt(customerId))).collect(Collectors.toList());
+		
+		
+		return generateResponse("List of Builders!", HttpStatus.OK, buildersEstimatesDTOResponse);
 	}
 
 	@PostMapping(value = "/getProjectDetailsById")
@@ -227,7 +327,18 @@ public class CustomerController {
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
 		return generateResponse("List of Builders!", HttpStatus.OK, selectedProject.getPicture());
 	}
-
+	
+	@PostMapping(value = "/getCustomerSiteLocationByRequirmentId")
+	public ResponseEntity<Object> getCustomerSiteLocationByRequirmentId(@RequestBody CustomerRequirementDTO customerRequirementDTO) {
+		List<SiteLocationDTO> siteLocationDTO;
+		siteLocationDTO = customerService.getCustomerSiteLocationByRequirmentId(customerRequirementDTO);
+		Object uriVariables = null;
+		// throw new RuntimeException("Not Available");
+		// carList = carService.findCarList();
+		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
+		return generateResponse("List of Builders!", HttpStatus.OK, siteLocationDTO	);
+	}
 
 	public static ResponseEntity<Object> generateResponse(String message, HttpStatus status, Object responseObj) {
 		Map<String, Object> map = new HashMap<String, Object>();
