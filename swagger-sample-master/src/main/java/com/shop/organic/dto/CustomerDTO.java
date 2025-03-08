@@ -14,6 +14,7 @@ import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.BuildersEstimate;
 import com.shop.organic.entity.car.CustomerRequirement;
+import com.shop.organic.entity.car.MaterialRequirement;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 
@@ -24,8 +25,18 @@ public class CustomerDTO {
 	private String phoneCustomer;
 	private String passwordCustomer;
 	private List<CustomerRequirementDTO> customerRequirement;
+	private List<MaterialRequirement> materialRequirement;
 	
 	
+	
+	public List<MaterialRequirement> getMaterialRequirement() {
+		return materialRequirement;
+	}
+
+	public void setMaterialRequirement(List<MaterialRequirement> materialRequirement) {
+		this.materialRequirement = materialRequirement;
+	}
+
 	public String getPasswordCustomer() {
 		return passwordCustomer;
 	}

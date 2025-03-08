@@ -788,25 +788,27 @@ public class CustomerService {
 					builderService.setBuilderDTO(buildersEstimateEntity.getBuilderForBuildersEstimate()));
 		}
 
-		List<CustomerRedQuotations> customerRedQuotations = this.getAllViewedQuotationsbyCustomer(String.valueOf(buildersEstimateEntity.getCustomerRequirementForBuildersEstimate().getCustomerId()));
-		List<String> customerViewedQuotationIds = null;
-		if (customerRedQuotations != null && !customerRedQuotations.isEmpty()) {
-			customerViewedQuotationIds = customerRedQuotations.stream()
-					.map(custReqQuote -> this.getCustomerViewedBuilderEstimateId(custReqQuote))
-					.collect(Collectors.toList());
+		
+		if(buildersEstimateEntity.getCustomerRequirementForBuildersEstimate() != null) {
+			List<CustomerRedQuotations> customerRedQuotations = this.getAllViewedQuotationsbyCustomer(String.valueOf(buildersEstimateEntity.getCustomerRequirementForBuildersEstimate().getCustomerId()));
+			List<String> customerViewedQuotationIds = null;
+			if (customerRedQuotations != null && !customerRedQuotations.isEmpty()) {
+				customerViewedQuotationIds = customerRedQuotations.stream()
+						.map(custReqQuote -> this.getCustomerViewedBuilderEstimateId(custReqQuote))
+						.collect(Collectors.toList());
 
-		}
+			}
 
-		if(customerViewedQuotationIds != null && !customerViewedQuotationIds.isEmpty()) {
-			if(customerViewedQuotationIds.contains(String.valueOf(buildersEstimateEntity.getBuildersEstimateId()))) {
-				buildersEstimateDTO.setIsEstimateRedByCustomer("Viewed");
+			if(customerViewedQuotationIds != null && !customerViewedQuotationIds.isEmpty()) {
+				if(customerViewedQuotationIds.contains(String.valueOf(buildersEstimateEntity.getBuildersEstimateId()))) {
+					buildersEstimateDTO.setIsEstimateRedByCustomer("Viewed");
+				}else {
+					buildersEstimateDTO.setIsEstimateRedByCustomer("New");
+				}
 			}else {
 				buildersEstimateDTO.setIsEstimateRedByCustomer("New");
 			}
-		}else {
-			buildersEstimateDTO.setIsEstimateRedByCustomer("New");
-		}
-			
+		}	
 		
 		// carDTOList.add(carDTO);
 		return buildersEstimateDTO;

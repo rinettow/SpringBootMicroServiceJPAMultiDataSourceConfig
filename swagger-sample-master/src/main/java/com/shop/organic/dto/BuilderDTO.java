@@ -12,6 +12,7 @@ import javax.persistence.OneToOne;
 import com.shop.organic.entity.car.Address;
 import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
+import com.shop.organic.entity.car.MaterialRequirement;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 
@@ -28,7 +29,16 @@ public class BuilderDTO {
 	private String userName;
 	private String password;
 	private List<BuildersEstimateDTO> buildersEstimate;
+	List<MaterialRequirement> materialRequirement;
 
+
+	public List<MaterialRequirement> getMaterialRequirement() {
+		return materialRequirement;
+	}
+
+	public void setMaterialRequirement(List<MaterialRequirement> materialRequirement) {
+		this.materialRequirement = materialRequirement;
+	}
 
 	public List<BuildersEstimateDTO> getBuildersEstimate() {
 		return buildersEstimate;

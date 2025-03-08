@@ -62,6 +62,20 @@ public class MaterialSupplier {
 	@OneToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "MATERIAL_SUPPLIER_ADDRESS_ID", referencedColumnName = "MATERIAL_SUPPLIER_ADDRESS_ID")
 	private MaterialSupplierAddress materialSupplierAddress;
+	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "materialSupplierForMaterialRequirementItemsEstimate")
+	private List<MaterialRequirementItemsEstimate> materialRequirementItemsEstimate;
+	
+	
+
+	public List<MaterialRequirementItemsEstimate> getMaterialRequirementItemsEstimate() {
+		return materialRequirementItemsEstimate;
+	}
+
+	public void setMaterialRequirementItemsEstimate(
+			List<MaterialRequirementItemsEstimate> materialRequirementItemsEstimate) {
+		this.materialRequirementItemsEstimate = materialRequirementItemsEstimate;
+	}
 
 	public int getMaterialSupplierBuilderId() {
 		return materialSupplierBuilderId;

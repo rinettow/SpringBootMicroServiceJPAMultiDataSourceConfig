@@ -19,10 +19,12 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.shop.organic.entity.car.MaterialRequirementItems;
 
 public class ProductDTO {
 
 	private int productId;
+	private int productSubcategoryId;
 	private String productName;
 	private String productDescription;
 	private String measuremmentUnit;
@@ -31,9 +33,25 @@ public class ProductDTO {
 	private String brandName;
 	private String productImagePath;
 	private byte[] productImage;
-
+	private List<MaterialRequirementItems> materialRequirementItems;
 
 	
+	public int getProductSubcategoryId() {
+		return productSubcategoryId;
+	}
+
+	public void setProductSubcategoryId(int productSubcategoryId) {
+		this.productSubcategoryId = productSubcategoryId;
+	}
+
+	public List<MaterialRequirementItems> getMaterialRequirementItems() {
+		return materialRequirementItems;
+	}
+
+	public void setMaterialRequirementItems(List<MaterialRequirementItems> materialRequirementItems) {
+		this.materialRequirementItems = materialRequirementItems;
+	}
+
 	public byte[] getProductImage() {
 		return productImage;
 	}

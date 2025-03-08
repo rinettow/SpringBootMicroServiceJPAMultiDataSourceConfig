@@ -51,6 +51,7 @@ import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.MaterialSupplierDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProductCategoryDTO;
+import com.shop.organic.dto.ProductDTO;
 import com.shop.organic.dto.ProductSubCategoryDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
@@ -58,6 +59,8 @@ import com.shop.organic.dto.StateDTO;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuilderRedRequirements;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
+import com.shop.organic.entity.car.MaterialRequirement;
+import com.shop.organic.entity.car.MaterialRequirementItems;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 import com.shop.organic.entity.car.ProjectsAvailableAmenities;
@@ -93,6 +96,62 @@ public class ProductController {
 		productCategoryDTO = productService.getAllProductsBasedOnCategory(Integer.parseInt(productCategoryId.replace("\"", "")));
 		responseProductSubCategory.put("productSubCategory", productCategoryDTO.getProductSubCategory());
 		return generateResponse("List of Product Category!", HttpStatus.OK, responseProductSubCategory);
+		//return productCategoryDTO.getProductSubCategory();
+		
+	}
+	
+	@PostMapping(value = "/addProductToCart")
+	//public ResponseEntity<Object> registerBuilder(@RequestBody ProductDTO ProductDTO) {
+	public ResponseEntity<Object> addProductToCart(@RequestParam("ProductId") String ProductId, 
+			@RequestParam("customerOrBuilderId") String customerOrBuilderId,
+			@RequestParam("isCustomerOrBuilder") String isCustomerOrBuilder,
+			@RequestParam("productCategoryId") String productCategoryId,
+			@RequestParam("productSubCategoryId") String productSubCategoryId,
+			@RequestParam("quantity") String quantity) throws JsonMappingException, JsonProcessingException {
+		System.out.println("BuilderDirectory" + new Gson().toJson(productCategoryId));
+		MaterialRequirement materialRequirement = new MaterialRequirement();
+		MaterialRequirementItems materialRequirementItems = new MaterialRequirementItems();
+		
+		ProductId = ProductId.replace("\"", "");
+		customerOrBuilderId = customerOrBuilderId.replace("\"", "");
+		isCustomerOrBuilder = isCustomerOrBuilder.replace("\"", "");
+		productCategoryId = productCategoryId.replace("\"", "");
+		productSubCategoryId = productSubCategoryId.replace("\"", "");
+		quantity = quantity.replace("\"", "");
+		
+		if(!productService.checkIfOpenMaterialRequirementAvailable(customerOrBuilderId, isCustomerOrBuilder, productCategoryId)) {
+			if(!productService.CheckIfCartAvailableAlready(customerOrBuilderId, isCustomerOrBuilder, productCategoryId)) {
+				/*Create New cart..*/
+				materialRequirement = productService.createMaterialRequirement(customerOrBuilderId, isCustomerOrBuilder, productCategoryId);
+				materialRequirementItems = productService.addItemsToMaterialRequirement(materialRequirement.getMaterialRequirementId(), ProductId, productSubCategoryId, quantity);
+				
+			}else {
+				/*Add product to the existing cart..*/
+				materialRequirement = productService.getExistingCartMaterialRequirementId(customerOrBuilderId, isCustomerOrBuilder, productCategoryId);
+				materialRequirementItems = productService.addItemsToMaterialRequirement(materialRequirement.getMaterialRequirementId(), ProductId, productSubCategoryId, quantity);
+			}
+			
+		}else {
+			System.out.println("Requirement already created for category, please wait for suppliers quotations or if and additional products needed edit the cart");
+		}
+		
+		return generateResponse("Product added to cart Successfully!", HttpStatus.OK, null);
+		//return productCategoryDTO.getProductSubCategory();
+		
+	}
+	
+	@PostMapping(value = "/fetchCart")
+	//public ResponseEntity<Object> registerBuilder(@RequestBody ProductDTO ProductDTO) {
+	public ResponseEntity<Object> fetchCart( 
+			@RequestParam("customerOrBuilderId") String customerOrBuilderId,
+			@RequestParam("isCustomerOrBuilder") String isCustomerOrBuilder,
+			@RequestParam("productCategoryId") String productCategoryId) throws JsonMappingException, JsonProcessingException {
+		System.out.println("BuilderDirectory" + new Gson().toJson(productCategoryId));
+		MaterialRequirement materialRequirement = new MaterialRequirement();
+		
+		
+		materialRequirement = productService.fetchCart(customerOrBuilderId, isCustomerOrBuilder, productCategoryId);
+		return generateResponse("Product added to cart Successfully!", HttpStatus.OK, materialRequirement);
 		//return productCategoryDTO.getProductSubCategory();
 		
 	}

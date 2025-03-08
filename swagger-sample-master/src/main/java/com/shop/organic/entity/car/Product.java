@@ -28,6 +28,9 @@ public class Product {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "PRODUCT_ID")
 	private int productId;
+	
+	@Column(name = "PRODUCT_SUB_CATEGORY_ID")
+	private int productSubcategoryId;
 
 	@Column(name = "PRODUCT_NAME")
 	private String productName;
@@ -45,6 +48,8 @@ public class Product {
 	@JoinColumn(name = "PRODUCT_SUB_CATEGORY_ID", insertable = false, updatable = false)
 	private ProductSubCategory subCategoryForProduct;
 	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "productForMaterialRequirementItems")
+	private List<MaterialRequirementItems> materialRequirementItems;
 	
 	
 	@Column(name = "BRAND_NAME")
@@ -55,6 +60,22 @@ public class Product {
 
 	
 	
+	public int getProductSubcategoryId() {
+		return productSubcategoryId;
+	}
+
+	public void setProductSubcategoryId(int productSubcategoryId) {
+		this.productSubcategoryId = productSubcategoryId;
+	}
+
+	public List<MaterialRequirementItems> getMaterialRequirementItems() {
+		return materialRequirementItems;
+	}
+
+	public void setMaterialRequirementItems(List<MaterialRequirementItems> materialRequirementItems) {
+		this.materialRequirementItems = materialRequirementItems;
+	}
+
 	public ProductSubCategory getSubCategoryForProduct() {
 		return subCategoryForProduct;
 	}

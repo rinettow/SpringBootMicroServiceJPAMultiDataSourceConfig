@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.google.gson.Gson;
@@ -51,8 +52,12 @@ import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
 import com.shop.organic.dto.BuilderDTO;
 import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.BuildersEstimateDTO;
+import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.DistrictDTO;
+import com.shop.organic.dto.MaterialRequirementDTO;
+import com.shop.organic.dto.MaterialRequirementItemsDTO;
+import com.shop.organic.dto.MaterialRequirementItemsEstimateDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProductCategoryDTO;
 import com.shop.organic.dto.ProductDTO;
@@ -71,6 +76,8 @@ import com.shop.organic.entity.car.Customer;
 import com.shop.organic.entity.car.CustomerOtp;
 import com.shop.organic.entity.car.CustomerRequirement;
 import com.shop.organic.entity.car.District;
+import com.shop.organic.entity.car.MaterialRequirement;
+import com.shop.organic.entity.car.MaterialRequirementItems;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Product;
 import com.shop.organic.entity.car.ProductCategory;
@@ -164,6 +171,269 @@ public class ProductService {
 	}
 	
 	
+	public MaterialRequirement createMaterialRequirement(String customerOrBuilderId,
+			String isCustomerOrBuilder,
+			String productCategoryId) {
+		MaterialRequirement materialRequirement = new MaterialRequirement();
+
+		if(isCustomerOrBuilder.equals("Customer")) {
+			materialRequirement.setCustomerId(Integer.parseInt(customerOrBuilderId));
+		}else if(isCustomerOrBuilder.equals("Builder")) {
+			materialRequirement.setBuilderId(Integer.parseInt(customerOrBuilderId));
+		}
+		//materialRequirement.setCustomerId(1);
+		materialRequirement.setProductCategoryId(Integer.parseInt(productCategoryId));
+		materialRequirement.setRequirementStatus("IN_CART");
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		if (!entityManager.contains(materialRequirement)) {
+			// persist object - add to entity manager
+			entityManager.persist(materialRequirement);
+			// flush em - save to DB
+			entityManager.flush();
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		entityManager.close();
+
+		return materialRequirement;
+	}
+	
+	public MaterialRequirementItems addItemsToMaterialRequirement(int materialRequirementId, String ProductId, 
+			String productSubCategoryId,
+			String quantity) {
+		MaterialRequirementItems materialRequirementItems = new MaterialRequirementItems();
+		
+		materialRequirementItems.setMaterialRequirementId(materialRequirementId);
+		materialRequirementItems.setProductId(Integer.parseInt(ProductId));
+		materialRequirementItems.setProductSubcategoryId(Integer.parseInt(productSubCategoryId));
+		materialRequirementItems.setQuantity(Integer.parseInt(quantity));
+
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		if (!entityManager.contains(materialRequirementItems)) {
+			// persist object - add to entity manager
+			entityManager.persist(materialRequirementItems);
+			// flush em - save to DB
+			entityManager.flush();
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		entityManager.close();
+
+		return materialRequirementItems;
+	}
+	
+	public MaterialRequirement fetchCart(String customerOrBuilderId,
+			String isCustomerOrBuilder, String productCategoryId) {
+		boolean isCartAlreadyAvailable = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
+		Root<MaterialRequirement> rootBuilder = criteria.from(MaterialRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		if(isCustomerOrBuilder.equals("Customer")) {
+			restrictions.add(builder.equal(rootBuilder.get("customerId"), Integer.parseInt(customerOrBuilderId)));
+		}else if(isCustomerOrBuilder.equals("Builder")) {
+			restrictions.add(builder.equal(rootBuilder.get("builderId"), Integer.parseInt(customerOrBuilderId)));
+		}
+		restrictions.add(builder.equal(rootBuilder.get("productCategoryId"), Integer.parseInt(productCategoryId)));
+		restrictions.add(builder.equal(rootBuilder.get("requirementStatus"), "IN_CART"));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirement = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!materialRequirement.isEmpty()) {
+			isCartAlreadyAvailable = true;
+			return materialRequirement.get(0);
+		}
+
+		return null;
+	}
+	
+	public boolean CheckIfCartAvailableAlready(String customerOrBuilderId,
+			String isCustomerOrBuilder, String productCategoryId) {
+		boolean isCartAlreadyAvailable = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
+		Root<MaterialRequirement> rootBuilder = criteria.from(MaterialRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		if(isCustomerOrBuilder.equals("Customer")) {
+			restrictions.add(builder.equal(rootBuilder.get("customerId"), Integer.parseInt(customerOrBuilderId)));
+		}else if(isCustomerOrBuilder.equals("Builder")) {
+			restrictions.add(builder.equal(rootBuilder.get("builderId"), Integer.parseInt(customerOrBuilderId)));
+		}
+		restrictions.add(builder.equal(rootBuilder.get("productCategoryId"), Integer.parseInt(productCategoryId)));
+		restrictions.add(builder.equal(rootBuilder.get("requirementStatus"), "IN_CART"));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirement = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!materialRequirement.isEmpty()) {
+			isCartAlreadyAvailable = true;
+		}
+
+		return isCartAlreadyAvailable;
+	}
+	
+	public boolean checkIfOpenMaterialRequirementAvailable(String customerOrBuilderId,
+			String isCustomerOrBuilder, String productCategoryId) {
+		boolean isOpenRequirementAlreadyAvailable = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
+		Root<MaterialRequirement> rootBuilder = criteria.from(MaterialRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		if(isCustomerOrBuilder.equals("Customer")) {
+			restrictions.add(builder.equal(rootBuilder.get("customerId"), Integer.parseInt(customerOrBuilderId)));
+		}else if(isCustomerOrBuilder.equals("Builder")) {
+			restrictions.add(builder.equal(rootBuilder.get("builderId"), Integer.parseInt(customerOrBuilderId)));
+		}
+		restrictions.add(builder.equal(rootBuilder.get("productCategoryId"), Integer.parseInt(productCategoryId)));
+		restrictions.add(builder.equal(rootBuilder.get("requirementStatus"), "OPEN"));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirement = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!materialRequirement.isEmpty()) {
+			isOpenRequirementAlreadyAvailable = true;
+		}
+
+		return isOpenRequirementAlreadyAvailable;
+	}
+	
+	
+	public MaterialRequirement getExistingCartMaterialRequirementId(String customerOrBuilderId,
+			String isCustomerOrBuilder, String productCategoryId) {
+		boolean isCartAlreadyAvailable = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
+		Root<MaterialRequirement> rootBuilder = criteria.from(MaterialRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		if(isCustomerOrBuilder.equals("Customer")) {
+			restrictions.add(builder.equal(rootBuilder.get("customerId"), Integer.parseInt(customerOrBuilderId)));
+		}else if(isCustomerOrBuilder.equals("Builder")) {
+			restrictions.add(builder.equal(rootBuilder.get("builderId"), Integer.parseInt(customerOrBuilderId)));
+		}
+		restrictions.add(builder.equal(rootBuilder.get("productCategoryId"), Integer.parseInt(productCategoryId)));
+		restrictions.add(builder.equal(rootBuilder.get("requirementStatus"), "IN_CART"));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirement = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!materialRequirement.isEmpty()) {
+			isCartAlreadyAvailable = true;
+		}
+
+		return materialRequirement.get(0);
+	}
+	
+	public MaterialRequirementDTO setMaterialRequirementDTO(MaterialRequirement materialRequirement) {
+		MaterialRequirementDTO materialRequirementDTO = new MaterialRequirementDTO();
+		
+		if (materialRequirement.getMaterialRequirementItems() != null && !materialRequirement.getMaterialRequirementItems().isEmpty()) {
+			materialRequirementDTO.setMaterialRequirementItems(materialRequirement.getMaterialRequirementItems().stream().map(item -> setMaterialRequirementItemsDTO(item))
+					.collect(Collectors.toList()));
+		}
+		
+		final Set<String> prop = new HashSet<>(Arrays.asList("materialRequirementId", "customerId", "builderId", "productCategoryId", "requirementStatus", "state", "district"));
+		this.copyMaterialRequirementBasicEntityToDTO(materialRequirement, materialRequirementDTO, prop);
+		// carDTOList.add(carDTO);
+		return materialRequirementDTO;
+	}
+	
+	public MaterialRequirementItemsDTO setMaterialRequirementItemsDTO(MaterialRequirementItems materialRequirementItems) {
+		MaterialRequirementItemsDTO materialRequirementItemsDTO = new MaterialRequirementItemsDTO();
+		
+		materialRequirementItemsDTO.setProductForMaterialRequirementItems(this.setProductDTO(materialRequirementItems.getProductForMaterialRequirementItems()));
+		
+		final Set<String> prop = new HashSet<>(Arrays.asList("materialRequirementItemsId", "materialRequirementId", "productId", 
+				"productSubcategoryId", "quantity"));
+		this.copyMaterialRequirementItemsBasicEntityToDTO(materialRequirementItems, materialRequirementItemsDTO, prop);
+		// carDTOList.add(carDTO);
+		return materialRequirementItemsDTO;
+	}
+	
+	
+	
+	
+	public static void copyMaterialRequirementBasicEntityToDTO(MaterialRequirement materialRequirement, MaterialRequirementDTO materialRequirementDTO, Set<String> props) {
+		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(materialRequirement.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
+
+		BeanUtils.copyProperties(materialRequirement, materialRequirementDTO, excludedProperties);
+	}
+	
+	public static void copyMaterialRequirementItemsBasicEntityToDTO(MaterialRequirementItems materialRequirementItems, MaterialRequirementItemsDTO materialRequirementItemsDTO, Set<String> props) {
+		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(materialRequirementItems.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
+
+		BeanUtils.copyProperties(materialRequirementItems, materialRequirementItemsDTO, excludedProperties);
+	}
+	
+	
 	public ProductCategoryDTO setProductCategoryDTO(ProductCategory productCategory) {
 		ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
 		
@@ -187,7 +457,18 @@ public class ProductService {
 					.collect(Collectors.toList()));
 		}
 		
-		productSubCategoryDTO.getProduct().subList(1, productSubCategoryDTO.getProduct().size()).clear();
+		//productSubCategoryDTO.getProduct().subList(1, productSubCategoryDTO.getProduct().size()).clear();
+		
+		final Set<String> prop = new HashSet<>(Arrays.asList("productSubCategoryId", "productSubCategoryName"));
+		this.copyProductSubCategoryBasicEntityToDTO(productSubCategory, productSubCategoryDTO, prop);
+		// carDTOList.add(carDTO);
+		return productSubCategoryDTO;
+	}
+	
+	public ProductSubCategoryDTO setProductSubCategoryDTOWithoutProduct(ProductSubCategory productSubCategory) {
+		ProductSubCategoryDTO productSubCategoryDTO = new ProductSubCategoryDTO();
+		
+		//productSubCategoryDTO.getProduct().subList(1, productSubCategoryDTO.getProduct().size()).clear();
 		
 		final Set<String> prop = new HashSet<>(Arrays.asList("productSubCategoryId", "productSubCategoryName"));
 		this.copyProductSubCategoryBasicEntityToDTO(productSubCategory, productSubCategoryDTO, prop);
@@ -198,10 +479,10 @@ public class ProductService {
 	public ProductDTO setProductDTO(Product product) {
 		ProductDTO ProductDTO = new ProductDTO();
 		HttpServletResponse response = null;
-		final Set<String> prop = new HashSet<>(Arrays.asList("productId", "productName", "productDescription", "measuremmentUnit", "quantity", "brandName", "productImagePath"));
+		final Set<String> prop = new HashSet<>(Arrays.asList("productId", "productSubcategoryId", "productName", "productDescription", "measuremmentUnit", "quantity", "brandName", "productImagePath"));
 		this.copyProductBasicEntityToDTO(product, ProductDTO, prop);
 		
-		/*if (product.getProductImagePath() != null) {
+		if (product.getProductImagePath() != null) {
 			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
 			// response));
 			ServletContext sc = null;
@@ -222,7 +503,8 @@ public class ProductService {
 				e.printStackTrace();
 			}
 
-		}*/
+		}
+		ProductDTO.setSubCategoryForProduct(this.setProductSubCategoryDTOWithoutProduct(product.getSubCategoryForProduct()));
 		// carDTOList.add(carDTO);
 		return ProductDTO;
 	}

@@ -44,8 +44,19 @@ public class Customer {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerForCustomerRedQuotationsId")
 	private List<CustomerRedQuotations> customerRedQuotations;
 	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerForMaterialRequirement")
+	private List<MaterialRequirement> materialRequirement;
 	
 	
+	
+	public List<MaterialRequirement> getMaterialRequirement() {
+		return materialRequirement;
+	}
+
+	public void setMaterialRequirement(List<MaterialRequirement> materialRequirement) {
+		this.materialRequirement = materialRequirement;
+	}
+
 	public List<CustomerRedQuotations> getCustomerRedQuotations() {
 		return customerRedQuotations;
 	}

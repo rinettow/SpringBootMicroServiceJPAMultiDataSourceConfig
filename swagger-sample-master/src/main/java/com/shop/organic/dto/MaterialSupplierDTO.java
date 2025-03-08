@@ -29,6 +29,16 @@ public class MaterialSupplierDTO {
 	private String materialSupplierUserName;
 	private String materialSupplierPassword;
 	private MaterialSupplierAddressDTO materialSupplierAddress;
+	private List<MaterialRequirementItemsEstimateDTO> materialRequirementItemsEstimate;
+	
+	
+	public List<MaterialRequirementItemsEstimateDTO> getMaterialRequirementItemsEstimate() {
+		return materialRequirementItemsEstimate;
+	}
+	public void setMaterialRequirementItemsEstimate(
+			List<MaterialRequirementItemsEstimateDTO> materialRequirementItemsEstimate) {
+		this.materialRequirementItemsEstimate = materialRequirementItemsEstimate;
+	}
 	public int getMaterialSupplierBuilderId() {
 		return materialSupplierBuilderId;
 	}
