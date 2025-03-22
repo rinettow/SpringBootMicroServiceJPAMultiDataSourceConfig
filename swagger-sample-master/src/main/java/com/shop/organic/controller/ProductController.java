@@ -48,6 +48,7 @@ import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
+import com.shop.organic.dto.MaterialRequirementDTO;
 import com.shop.organic.dto.MaterialSupplierDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProductCategoryDTO;
@@ -148,10 +149,16 @@ public class ProductController {
 			@RequestParam("productCategoryId") String productCategoryId) throws JsonMappingException, JsonProcessingException {
 		System.out.println("BuilderDirectory" + new Gson().toJson(productCategoryId));
 		MaterialRequirement materialRequirement = new MaterialRequirement();
+		MaterialRequirementDTO materialRequirementDTO = new MaterialRequirementDTO();
 		
+		customerOrBuilderId = customerOrBuilderId.replace("\"", "");
+		isCustomerOrBuilder = isCustomerOrBuilder.replace("\"", "");
+		productCategoryId = productCategoryId.replace("\"", "");
+
 		
 		materialRequirement = productService.fetchCart(customerOrBuilderId, isCustomerOrBuilder, productCategoryId);
-		return generateResponse("Product added to cart Successfully!", HttpStatus.OK, materialRequirement);
+		materialRequirementDTO = productService.setMaterialRequirementDTO(materialRequirement, isCustomerOrBuilder);
+		return generateResponse("Product added to cart Successfully!", HttpStatus.OK, materialRequirementDTO);
 		//return productCategoryDTO.getProductSubCategory();
 		
 	}
