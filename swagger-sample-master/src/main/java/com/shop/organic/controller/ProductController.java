@@ -157,10 +157,22 @@ public class ProductController {
 
 		
 		materialRequirement = productService.fetchCart(customerOrBuilderId, isCustomerOrBuilder, productCategoryId);
-		materialRequirementDTO = productService.setMaterialRequirementDTO(materialRequirement, isCustomerOrBuilder);
+		if(materialRequirement != null) {
+			materialRequirementDTO = productService.setMaterialRequirementDTO(materialRequirement);
+		}
+		
 		return generateResponse("Product added to cart Successfully!", HttpStatus.OK, materialRequirementDTO);
 		//return productCategoryDTO.getProductSubCategory();
 		
+	}
+	
+	@PostMapping(value = "/CheckOut")
+	public ResponseEntity<Object> CheckOut(@RequestBody MaterialRequirementDTO materialRequirementDTO) {
+		MaterialRequirementDTO materialRequirementDTOResponse = new MaterialRequirementDTO();
+		MaterialRequirement materialRequirementEntity = productService.checkOut(materialRequirementDTO);
+		
+		
+		return generateResponse("Checked out Successfull, New requirement created!", HttpStatus.OK, null);
 	}
 	
 	

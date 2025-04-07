@@ -251,14 +251,16 @@ public class BuilderService {
 		Builder builerToChangePasword = builderEntity.get(0);
 		builerToChangePasword.setPassword(builderDTO.getPassword());
 
-		entityManager.getTransaction().begin();
-		// if (!entityManager.contains(builderEntity)) {
-		// persist object - add to entity manager
-		entityManager.merge(builerToChangePasword);
-		// flush em - save to DB
-		entityManager.flush();
-		// }
-		// commit transaction at all
+		if (!entityManager.contains(builerToChangePasword)) {
+			// persist object - add to entity manager
+			entityManager.persist(builerToChangePasword);
+			// flush em - save to DB
+			entityManager.flush();
+		} else {
+			entityManager.merge(builerToChangePasword);
+			entityManager.flush();
+		}
+		
 		entityManager.getTransaction().commit();
 		entityManager.close();
 

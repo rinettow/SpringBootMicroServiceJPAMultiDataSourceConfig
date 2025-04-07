@@ -21,8 +21,8 @@ import org.hibernate.annotations.Parameter;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 @Entity
-@Table(name = "MATERIAL_SUPPLIERS_OTP")
-public class MaterialSuppliersOtp {
+@Table(name = "SUPPLIERS_OTP")
+public class SupplierOtp {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,39 +40,37 @@ public class MaterialSuppliersOtp {
 	 * 
 	 * @Parameter(name = "increment_size", value = "1") } )
 	 */
-	@Column(name = "MATERIAL_SUPPLIERS_OTP_ID")
-	private int materialSuppliersOtpId;
+	@Column(name = "SUPPLIERS_OTP_ID")
+	private int suplierOtpId;
 
-	@Column(name = "MATERIAL_SUPPLIERS_PHONE_NUMBER")
-	private String materialSupplierPhone;
+	@Column(name = "SUPPLIERS_PHONE_NUMBER")
+	private String suplierPhoneNumber;
 
-	@Column(name = "MATERIAL_SUPPLIERS_OTP_NUMBER")
-	private int materialSuppliersOtpNumber;
+	@Column(name = "SUPPLIERS_OTP_NUMBER")
+	private int suplierOtpNumber;
 
-	public int getMaterialSuppliersOtpId() {
-		return materialSuppliersOtpId;
+	public int getSuplierOtpId() {
+		return suplierOtpId;
 	}
 
-	public void setMaterialSuppliersOtpId(int materialSuppliersOtpId) {
-		this.materialSuppliersOtpId = materialSuppliersOtpId;
+	public void setSuplierOtpId(int suplierOtpId) {
+		this.suplierOtpId = suplierOtpId;
 	}
 
-	
-
-	public String getMaterialSupplierPhone() {
-		return materialSupplierPhone;
+	public String getSuplierPhoneNumber() {
+		return suplierPhoneNumber;
 	}
 
-	public void setMaterialSupplierPhone(String materialSupplierPhone) {
-		this.materialSupplierPhone = materialSupplierPhone;
+	public void setSuplierPhoneNumber(String suplierPhoneNumber) {
+		this.suplierPhoneNumber = suplierPhoneNumber;
 	}
 
-	public int getMaterialSuppliersOtpNumber() {
-		return materialSuppliersOtpNumber;
+	public int getSuplierOtpNumber() {
+		return suplierOtpNumber;
 	}
 
-	public void setMaterialSuppliersOtpNumber(int materialSuppliersOtpNumber) {
-		this.materialSuppliersOtpNumber = materialSuppliersOtpNumber;
+	public void setSuplierOtpNumber(int suplierOtpNumber) {
+		this.suplierOtpNumber = suplierOtpNumber;
 	}
 	
 	

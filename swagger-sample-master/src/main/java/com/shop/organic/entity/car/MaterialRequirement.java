@@ -44,10 +44,10 @@ public class MaterialRequirement {
 	private int materialRequirementId;
 	
 	@Column(name = "CUSTOMER_ID", nullable = true)
-	private Integer customerId;
+	private Integer customerId= null;
 	
 	@Column(name = "BUILDER_ID", nullable = true)
-	private Integer builderId;
+	private Integer builderId= null;
 	
 	@Column(name = "PRODUCT_CATEGORY_ID")
 	private int productCategoryId;
@@ -92,21 +92,27 @@ public class MaterialRequirement {
 		this.productCategoryId = productCategoryId;
 	}
 
-	public int getCustomerId() {
+	
+
+	public Integer getCustomerId() {
 		return customerId;
 	}
 
-	public void setCustomerId(int customerId) {
+	public void setCustomerId(Integer customerId) {
 		this.customerId = customerId;
 	}
 
-	public int getBuilderId() {
+	
+
+	public Integer getBuilderId() {
 		return builderId;
 	}
 
-	public void setBuilderId(int builderId) {
+	public void setBuilderId(Integer builderId) {
 		this.builderId = builderId;
 	}
+
+	
 
 	public List<MaterialRequirementItemsEstimate> getMaterialRequirementItemsEstimate() {
 		return materialRequirementItemsEstimate;

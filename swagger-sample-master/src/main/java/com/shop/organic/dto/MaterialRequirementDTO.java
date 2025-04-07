@@ -25,8 +25,8 @@ public class MaterialRequirementDTO {
 
 	
 	private int materialRequirementId;
-    private int customerId;
-	private int builderId;
+    private Integer customerId= null;
+	private Integer builderId= null;
 	private int productCategoryId;
 	private CustomerDTO customerForMaterialRequirement;
 	private BuilderDTO builderForMaterialRequirement;
@@ -39,16 +39,17 @@ public class MaterialRequirementDTO {
 	
 	
 	
-	public int getCustomerId() {
+	
+	public Integer getCustomerId() {
 		return customerId;
 	}
-	public void setCustomerId(int customerId) {
+	public void setCustomerId(Integer customerId) {
 		this.customerId = customerId;
 	}
-	public int getBuilderId() {
+	public Integer getBuilderId() {
 		return builderId;
 	}
-	public void setBuilderId(int builderId) {
+	public void setBuilderId(Integer builderId) {
 		this.builderId = builderId;
 	}
 	public int getProductCategoryId() {

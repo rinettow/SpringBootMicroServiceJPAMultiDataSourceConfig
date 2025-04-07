@@ -3,9 +3,12 @@ package com.shop.organic.controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,21 +44,26 @@ import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
+import com.shop.organic.dto.MaterialRequirementDTO;
 import com.shop.organic.dto.MaterialSupplierDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.dto.StateDTO;
+import com.shop.organic.dto.SupplierAvailableCategoriesDTO;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuilderRedRequirements;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
+import com.shop.organic.entity.car.MaterialRequirement;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 import com.shop.organic.entity.car.ProjectsAvailableAmenities;
 import com.shop.organic.entity.car.State;
+import com.shop.organic.entity.car.SupplierAvailableCategories;
 import com.shop.organic.exception.ResourceNotFoundException;
 import com.shop.organic.service.BuilderService;
 import com.shop.organic.service.MaterialSupplierService;
+import com.shop.organic.service.ProductService;
 
 import org.springframework.scheduling.annotation.Async;
 
@@ -67,13 +75,153 @@ public class MaterialSupplierController {
 
 	@Autowired
 	private MaterialSupplierService materialSupplierService;
-
+	
+	@Autowired
+	private ProductService productService;
+	
 	@Autowired
 	private HttpServletRequest request;
 
 	List<BuilderDTO> buildersList = null;
+	
+	
+	@PostMapping(value = "/RegisterSupplier")
+	//public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
+	public ResponseEntity<Object> registerSupplier(@RequestParam("otp") String otp, @RequestParam("supplierDTO") String supplierDTOString) throws JsonMappingException, JsonProcessingException {
+		System.out.println("supplierDTOString" + new Gson().toJson(supplierDTOString));
+		MaterialSupplierDTO registeredSupplier = new MaterialSupplierDTO();
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		MaterialSupplierDTO materialSupplierDTO = new MaterialSupplierDTO();
+		materialSupplierDTO = objectMapper.readValue(supplierDTOString, MaterialSupplierDTO.class);
+		
+		if(materialSupplierService.VerifyMaterialSuppliersOTP(materialSupplierDTO, otp)) {
+			if(!materialSupplierService.VerifyAlreadyRegisteredMaterialSuplier(materialSupplierDTO)) {
+				if(!materialSupplierService.VerifyIfMobileAlreadyRegisteredAsCustomer(materialSupplierDTO) 
+						&& !materialSupplierService.VerifyIfMobileAlreadyRegisteredAsBuilder(materialSupplierDTO)) {
+					registeredSupplier = materialSupplierService.registerMaterialSupplier(materialSupplierDTO);
+					int supplierid = registeredSupplier.getMaterialSupplierBuilderId();
+					List<SupplierAvailableCategoriesDTO> supplierAvailableCategoriesDTOWithSupplierId = materialSupplierDTO
+							.getMaterialSupplierAvailableCategories().stream()
+							.peek(supplierAvailableCatgDTO -> supplierAvailableCatgDTO.setMaterialSupplierId(supplierid))
+							.collect(Collectors.toList());
+				
+					
+					List<SupplierAvailableCategories> supplierAvailableCategories = supplierAvailableCategoriesDTOWithSupplierId
+							.stream()
+							.map(supplierAvailableCatgDTO -> materialSupplierService.copySupplierBasicAvailableCategoriesDTOToEntity(
+									supplierAvailableCatgDTO, new SupplierAvailableCategories()))
+							.collect(Collectors.toList());
+					
+					
+					for (SupplierAvailableCategories supplierAvailableCategoriesToRegister : supplierAvailableCategories) {
+						materialSupplierService.registerSupplierAvailableCategories(supplierAvailableCategoriesToRegister);
+					}
+					;
+
+					Object uriVariables = null;
+					//builderService.ceateImageDirectoryForBuilder(registeredBuilder);
+					// throw new RuntimeException("Not Available");
+					// carList = carService.findCarList();
+					// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+					// return generateResponse("List of Cars!", HttpStatus.OK, carList);
+					return generateResponse("Supplier Registered Successful!", HttpStatus.OK, registeredSupplier);
+				}else {
+					return generateResponse("Mobile Already registered as Customer or Builder!", HttpStatus.CONFLICT, null);
+				}
+				
+				
+			}else {
+				return generateResponse("Already registered Supplier!", HttpStatus.ALREADY_REPORTED, null);
+			}
+		}else {
+			return generateResponse("Incorrect OTP!", HttpStatus.NOT_FOUND, null);
+		}
+		//return null;
+		
+	}
+	
+	@PostMapping(value = "/sendOTPSupplierLogin")
+	public ResponseEntity<Object> sendOTPSupplierLogin(@RequestBody MaterialSupplierDTO materialSupplierDTO) {
+		MaterialSupplierDTO loginSupplier = new MaterialSupplierDTO();
+		Map<String, Object> response = null;
+		System.out.println("materialSupplierDTO:::::Test" + new Gson().toJson(materialSupplierDTO));
+		response = materialSupplierService.sendOTPSupplierLogin(materialSupplierDTO);
+		if(response.get("responseStatus").equals("Supplier Mobile Not Registered")) {
+			return generateResponse("Supplier Mobile Not Registered", HttpStatus.NOT_FOUND, null);
+		}else if(response.get("responseStatus").equals("Incorrect Password")){
+			return generateResponse("Incorrect Password", HttpStatus.UNAUTHORIZED, null);
+		}else {
+			loginSupplier = (MaterialSupplierDTO) response.get("loggedinSupplier");
+			return generateResponse("Builder details!", HttpStatus.OK, loginSupplier);
+		}
+		
+	}
+	
+	
+	@PostMapping(value = "/ResetSupplierPassword")
+	//public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
+	public ResponseEntity<Object> ResetSupplierPassword(@RequestParam("otp") String otp, 
+			@RequestParam("supplierDTO") String supplierDTOString) throws JsonMappingException, JsonProcessingException {
+		System.out.println("supplierDTOtring" + new Gson().toJson(supplierDTOString));
+		BuilderDTO registeredBuilder = new BuilderDTO();
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		MaterialSupplierDTO materialSupplierDTO = new MaterialSupplierDTO();
+		materialSupplierDTO = objectMapper.readValue(supplierDTOString, MaterialSupplierDTO.class);
+		
+		if(materialSupplierService.VerifyMaterialSuppliersOTP(materialSupplierDTO, otp)) {
+			if(materialSupplierService.VerifyAlreadyRegisteredMaterialSuplier(materialSupplierDTO)) {
+				materialSupplierService.ResetSupplierPassword(materialSupplierDTO);
+				return generateResponse("Password changed!", HttpStatus.OK, null);
+			}else {
+				return generateResponse("Mobile Number not Registered!", HttpStatus.ALREADY_REPORTED, null);
+			}
+		}else {
+			return generateResponse("Incorrect OTP!", HttpStatus.NOT_FOUND, null);
+		}
+		//return null;
+		
+	}
+	
+	
+	@PostMapping(value = "/GenerateSuppliersOTP")
+	public ResponseEntity<Object> GenerateSuppliersOTP(@RequestBody MaterialSupplierDTO materialSupplierDTO) {
+		MaterialSupplierDTO loginMaterialSupplier = new MaterialSupplierDTO();
+		materialSupplierService.saveSupplierOTP(materialSupplierDTO);
+		return generateResponse("OTP generated!", HttpStatus.OK, null);
+	}
+	
+	@PostMapping(value = "/GetAllOpenMaterialReqirements")
+	//public ResponseEntity<Object> registerBuilder(@RequestBody ProductDTO ProductDTO) {
+	public ResponseEntity<Object> GetAllOpenMaterialReqirements(@RequestBody MaterialSupplierDTO materialSupplierDTO) throws JsonMappingException, JsonProcessingException {
+		System.out.println("materialSupplierDTO" + new Gson().toJson(materialSupplierDTO));
+		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+		List<MaterialRequirementDTO> materialRequirementDTO = new ArrayList<MaterialRequirementDTO>();
+		BuilderDTO builderDTO = new BuilderDTO();
+		materialRequirement = materialSupplierService.GetAllOpenMaterialReqirements(materialSupplierDTO);
+		if(materialRequirement != null) {
+			materialRequirementDTO = materialRequirement.stream().map(matReq->productService.setMaterialRequirementDTO(matReq)).collect(Collectors.toList());
+		}
+		builderDTO.setMaterialRequirement(materialRequirementDTO);
+		
+		return generateResponse("Get All Material Open Requirements!", HttpStatus.OK, builderDTO);
+		//return productCategoryDTO.getProductSubCategory();
+		
+	}
 
 	
+	
+	public static ResponseEntity<Object> generateResponse(String message, HttpStatus status, Object responseObj) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("message", message);
+		map.put("status", status.value());
+		map.put("data", responseObj);
+
+		return new ResponseEntity<Object>(map, status);
+	}
 	
 	
 

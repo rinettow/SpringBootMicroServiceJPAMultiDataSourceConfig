@@ -228,6 +228,47 @@ public class ProductService {
 		return materialRequirementItems;
 	}
 	
+	public MaterialRequirement checkOut(MaterialRequirementDTO materialRequirementDTO) {
+		
+		MaterialRequirement materialRequirementEntity = new MaterialRequirement();
+		/*final Set<String> prop = new HashSet<>(Arrays.asList("materialRequirementId", "customerId", "builderId", 
+				"productCategoryId", "requirementStatus", "state", "district"));
+		this.copyPicturesBasicDTOToEntity(materialRequirementDTO, materialRequirementEntity, prop);*/
+		
+		materialRequirementEntity.setMaterialRequirementId(materialRequirementDTO.getMaterialRequirementId());
+		if(materialRequirementDTO.getBuilderId() !=null) {
+			materialRequirementEntity.setBuilderId(materialRequirementDTO.getBuilderId());
+		}
+		if(materialRequirementDTO.getCustomerId() !=null) {
+			materialRequirementEntity.setCustomerId(materialRequirementDTO.getCustomerId());
+		}
+		
+		materialRequirementEntity.setProductCategoryId(materialRequirementDTO.getProductCategoryId());
+		materialRequirementEntity.setState(materialRequirementDTO.getState());
+		materialRequirementEntity.setDistrict(materialRequirementDTO.getDistrict());
+		materialRequirementEntity.setRequirementStatus("OPEN");
+		
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		
+		entityManager.merge(materialRequirementEntity);
+		entityManager.flush();
+		// }
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+		entityManager.close();
+
+		return materialRequirementEntity;
+	}
+	
+	public static void copyPicturesBasicDTOToEntity(MaterialRequirementDTO materialRequirementDTO, MaterialRequirement materialRequirementEntity, Set<String> props) {
+		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(materialRequirementEntity.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
+
+		BeanUtils.copyProperties(materialRequirementDTO, materialRequirementEntity, excludedProperties);
+	}
+	
 	public MaterialRequirement fetchCart(String customerOrBuilderId,
 			String isCustomerOrBuilder, String productCategoryId) {
 		boolean isCartAlreadyAvailable = false;
@@ -424,6 +465,40 @@ public class ProductService {
 		return materialRequirementItems;
 	}
 	
+	public List<ProductCategory> getCategoryByProductCategoryId(int productCategoryId) {
+		boolean isCategoryAvailableForCatgId = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<ProductCategory> productCategory = new ArrayList<ProductCategory>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<ProductCategory> criteria = builder.createQuery(ProductCategory.class);
+		Root<ProductCategory> rootBuilder = criteria.from(ProductCategory.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("productCategoryId"), productCategoryId));
+		
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<ProductCategory> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		productCategory = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!productCategory.isEmpty()) {
+			isCategoryAvailableForCatgId = true;
+		}
+
+		return productCategory;
+	}
+	
 	public List<Product> getProductInfoByProducttId(int productId) {
 		boolean isProductAvailable = false;
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -458,10 +533,14 @@ public class ProductService {
 		return product;
 	}
 	
-	public MaterialRequirementDTO setMaterialRequirementDTO(MaterialRequirement materialRequirement, String isCustomerOrBuilder) {
+	public MaterialRequirementDTO setMaterialRequirementDTO(MaterialRequirement materialRequirement) {
 		MaterialRequirementDTO materialRequirementDTO = new MaterialRequirementDTO();
 		List<MaterialRequirementItems> materialRequirementItems = new ArrayList<MaterialRequirementItems>();
 		
+		ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
+		final Set<String> propCatg = new HashSet<>(Arrays.asList("productCategoryId", "productCategoryName"));
+		this.copyProductCategoryBasicEntityToDTO(this.getCategoryByProductCategoryId(materialRequirement.getProductCategoryId()).get(0), productCategoryDTO, propCatg);
+		materialRequirementDTO.setCategoryForMaterialRequirement(productCategoryDTO);
 		materialRequirementItems = this.getAllItemsByRequirementId(materialRequirement.getMaterialRequirementId());
 		if (materialRequirementItems != null) {
 			System.out.println("Test" +materialRequirementItems.get(0).getMaterialRequirementId());
@@ -470,9 +549,9 @@ public class ProductService {
 		}
 		
 		Set<String> prop = null;
-		if(isCustomerOrBuilder.equals("Builder")) {
+		if(materialRequirement.getBuilderId() != null) {
 			 prop = new HashSet<>(Arrays.asList("materialRequirementId", "builderId", "productCategoryId", "requirementStatus", "state", "district"));
-		}else if(isCustomerOrBuilder.equals("Customer")) {
+		}else if(materialRequirement.getCustomerId() != null) {
 			 prop = new HashSet<>(Arrays.asList("materialRequirementId", "customerId", "productCategoryId", "requirementStatus", "state", "district"));
 		}
 		
@@ -503,6 +582,13 @@ public class ProductService {
 				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
 
 		BeanUtils.copyProperties(materialRequirement, materialRequirementDTO, excludedProperties);
+	}
+	
+	public static void copyProductCategoryBasicEntityToDTO(ProductCategory productCategory, ProductCategoryDTO productCategoryDTO, Set<String> props) {
+		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(productCategory.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
+
+		BeanUtils.copyProperties(productCategory, productCategoryDTO, excludedProperties);
 	}
 	
 	public static void copyMaterialRequirementItemsBasicEntityToDTO(MaterialRequirementItems materialRequirementItems, MaterialRequirementItemsDTO materialRequirementItemsDTO, Set<String> props) {
@@ -592,12 +678,6 @@ public class ProductService {
 	}
 	
 	
-	public static void copyProductCategoryBasicEntityToDTO(ProductCategory productCategoryEntity, ProductCategoryDTO productCategoryDTO, Set<String> props) {
-		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(productCategoryEntity.getClass()))
-				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
-
-		BeanUtils.copyProperties(productCategoryEntity, productCategoryDTO, excludedProperties);
-	}
 	
 	public static void copyProductSubCategoryBasicEntityToDTO(ProductSubCategory productSubCategoryEntity, ProductSubCategoryDTO productSubCategoryDTO, Set<String> props) {
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(productSubCategoryEntity.getClass()))

@@ -29,14 +29,16 @@ public class BuilderDTO {
 	private String userName;
 	private String password;
 	private List<BuildersEstimateDTO> buildersEstimate;
-	List<MaterialRequirement> materialRequirement;
+	List<MaterialRequirementDTO> materialRequirement;
 
 
-	public List<MaterialRequirement> getMaterialRequirement() {
+	
+
+	public List<MaterialRequirementDTO> getMaterialRequirement() {
 		return materialRequirement;
 	}
 
-	public void setMaterialRequirement(List<MaterialRequirement> materialRequirement) {
+	public void setMaterialRequirement(List<MaterialRequirementDTO> materialRequirement) {
 		this.materialRequirement = materialRequirement;
 	}
 
