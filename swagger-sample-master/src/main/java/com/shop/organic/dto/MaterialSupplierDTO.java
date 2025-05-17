@@ -32,7 +32,23 @@ public class MaterialSupplierDTO {
 	private MaterialSupplierAddressDTO materialSupplierAddress;
 	private List<MaterialRequirementItemsEstimateDTO> materialRequirementItemsEstimate;
 	private List<SupplierAvailableCategoriesDTO> materialSupplierAvailableCategories;
+	private List<MaterialRequirementDTO> materialRequirement;
+	private BuilderDTO builderDTO;
 	
+	
+	
+	public List<MaterialRequirementDTO> getMaterialRequirement() {
+		return materialRequirement;
+	}
+	public void setMaterialRequirement(List<MaterialRequirementDTO> materialRequirement) {
+		this.materialRequirement = materialRequirement;
+	}
+	public BuilderDTO getBuilderDTO() {
+		return builderDTO;
+	}
+	public void setBuilderDTO(BuilderDTO builderDTO) {
+		this.builderDTO = builderDTO;
+	}
 	
 	public List<SupplierAvailableCategoriesDTO> getMaterialSupplierAvailableCategories() {
 		return materialSupplierAvailableCategories;

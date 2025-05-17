@@ -1,16 +1,6 @@
 package com.shop.organic.service;
 
 import java.beans.PropertyDescriptor;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,100 +9,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import javax.persistence.Column;
+import javax.annotation.PreDestroy;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.io.IOUtils;
-import org.hibernate.jpa.QueryHints;
 import javax.transaction.Transactional;
 
+import org.hibernate.jpa.QueryHints;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import com.google.gson.Gson;
-import com.shop.organic.dto.AddressDTO;
-import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
-import com.shop.organic.dto.BuilderDTO;
-import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.BuildersEstimateDTO;
-import com.shop.organic.dto.CustomerRequirementDTO;
-import com.shop.organic.dto.DistrictDTO;
+import com.shop.organic.dto.MaterialRequirementDTO;
 import com.shop.organic.dto.MaterialRequirementItemsEstimateDTO;
 import com.shop.organic.dto.MaterialSupplierAddressDTO;
 import com.shop.organic.dto.MaterialSupplierDTO;
-import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProductCategoryDTO;
-import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
-import com.shop.organic.dto.ProjectsDTO;
-import com.shop.organic.dto.StateDTO;
 import com.shop.organic.dto.SupplierAvailableCategoriesDTO;
-import com.shop.organic.entity.car.Address;
-import com.shop.organic.entity.car.AmenitiesAndSpecifications;
 import com.shop.organic.entity.car.Builder;
-import com.shop.organic.entity.car.BuilderOtp;
-import com.shop.organic.entity.car.BuilderRedRequirements;
-import com.shop.organic.entity.car.BuildersAvailableAmenities;
-import com.shop.organic.entity.car.BuildersEstimate;
 import com.shop.organic.entity.car.Customer;
-import com.shop.organic.entity.car.CustomerOtp;
-import com.shop.organic.entity.car.CustomerRequirement;
-import com.shop.organic.entity.car.District;
 import com.shop.organic.entity.car.MaterialRequirement;
+import com.shop.organic.entity.car.MaterialRequirementItems;
 import com.shop.organic.entity.car.MaterialRequirementItemsEstimate;
 import com.shop.organic.entity.car.MaterialSupplier;
 import com.shop.organic.entity.car.MaterialSupplierAddress;
-import com.shop.organic.entity.car.MaterialSuppliersOtp;
-import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.ProductCategory;
-import com.shop.organic.entity.car.Projects;
-import com.shop.organic.entity.car.ProjectsAvailableAmenities;
-import com.shop.organic.entity.car.State;
 import com.shop.organic.entity.car.SupplierAvailableCategories;
 import com.shop.organic.entity.car.SupplierOtp;
-import com.shop.organic.entity.car.Test;
-import com.shop.organic.entity.category.category;
-import com.shop.organic.entity.category.price;
-import com.shop.organic.entity.category.product;
-import com.shop.organic.exception.ResourceNotFoundException;
 import com.shop.organic.util.CreateEntityManager;
-
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
-import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.util.FileSystemUtils;
-
-import java.net.MalformedURLException;
-
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
-
-import javax.servlet.ServletContext;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import javax.annotation.PreDestroy;
 
 @Service
 @Transactional
@@ -129,6 +63,9 @@ public class MaterialSupplierService {
 
 	@Autowired
 	private CustomerService customerService;
+	
+	@Autowired
+	private ProductService productService;
 
 	private enum ResourceType {
 		FILE_SYSTEM, CLASSPATH
@@ -280,7 +217,7 @@ public class MaterialSupplierService {
 	
 	
 	
-	public Map<String, Object> sendOTPSupplierLogin(MaterialSupplierDTO materialSupplierDTO) {
+	public Map<String, Object> sendOTPSupplierLogin(String Phone, String Password) {
 		MaterialSupplierDTO LoginMaterialSupplierDTO = new MaterialSupplierDTO();
 		Map<String, Object> response = new HashMap<String, Object>();
 		List<MaterialSupplier> LoginMaterialSupplier = new ArrayList<MaterialSupplier>();
@@ -288,7 +225,7 @@ public class MaterialSupplierService {
 		EntityManager entityManager = em.getEntityManager("builder");
 
 		Query q = entityManager.createQuery("SELECT s FROM MaterialSupplier s WHERE s.materialSupplierPhone = :materialSupplierPhone", MaterialSupplier.class);
-		q.setParameter("materialSupplierPhone", materialSupplierDTO.getMaterialSupplierPhone());
+		q.setParameter("materialSupplierPhone", Phone);
 		// q.setParameter("keyword", keyword); //etc
 		LoginMaterialSupplier = q.getResultList();
 
@@ -302,7 +239,7 @@ public class MaterialSupplierService {
 
 		if (!LoginMaterialSupplier.isEmpty()) {
 
-			if(verifySupplierPassword(LoginMaterialSupplier.get(0), materialSupplierDTO.getMaterialSupplierPassword())) {
+			if(verifySupplierPassword(LoginMaterialSupplier.get(0), Password)) {
 				responseStatus = "Success";
 				LoginMaterialSupplierDTO = setMaterialSupplierDTO(LoginMaterialSupplier.get(0));
 			}else {
@@ -314,6 +251,20 @@ public class MaterialSupplierService {
 		response.put("loggedinSupplier", LoginMaterialSupplierDTO);
 		// System.out.println("LoginBuilderDTO" +new Gson().toJson(LoginBuilderDTO));
 		return response;
+	}
+	
+	public MaterialSupplier getMaterialSupplierById(int supplierId) {
+		
+		List<MaterialSupplier> materialSupplier = new ArrayList<MaterialSupplier>();
+		String responseStatus= null;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		Query q = entityManager.createQuery("SELECT s FROM MaterialSupplier s WHERE s.materialSupplierBuilderId = :materialSupplierBuilderId", MaterialSupplier.class);
+		q.setParameter("materialSupplierBuilderId", supplierId);
+		// q.setParameter("keyword", keyword); //etc
+		materialSupplier = q.getResultList();
+		
+		return materialSupplier.get(0);
 	}
 	
 	public boolean verifySupplierPassword(MaterialSupplier materialSupplier, String password) {
@@ -438,8 +389,26 @@ public class MaterialSupplierService {
 
 	}
 	
+	public MaterialRequirementItemsEstimate saveSupplierEstimate(MaterialRequirementItemsEstimate materialRequirementItemsEstimate) {
+
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		// if (!entityManager.contains(builderEntity)) {
+		// persist object - add to entity manager
+		entityManager.persist(materialRequirementItemsEstimate);
+		// flush em - save to DB
+		entityManager.flush();
+		// }
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+		entityManager.close();
+	    return materialRequirementItemsEstimate;
+	}
 	
-	public List<MaterialRequirement> GetAllOpenMaterialReqirements(MaterialSupplierDTO materialSupplierDTO) {
+	
+	public List<MaterialRequirement> GetAllOpenMaterialReqirements(MaterialSupplierDTO materialSupplierDTO, 
+			String state, String district) {
 		boolean isOpenMaterialReuirementAvailable = false;
 		EntityManager entityManager = em.getEntityManager("builder");
 
@@ -453,8 +422,8 @@ public class MaterialSupplierService {
 
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		List<Long> categoryIds = new ArrayList<>();
-		for (SupplierAvailableCategoriesDTO supplierAvailableCategoriesDTO : materialSupplierDTO.getMaterialSupplierAvailableCategories()) {
-			if(supplierAvailableCategoriesDTO.getProductCategoryId() == 6) {
+		for (SupplierAvailableCategoriesDTO supplierAvailableCategories : materialSupplierDTO.getMaterialSupplierAvailableCategories()) {
+			if(Integer.valueOf(supplierAvailableCategories.getProductCategoryId()) == 6) {
 				categoryIds.add(1L);
 				categoryIds.add(2L);
 				categoryIds.add(3L);
@@ -463,7 +432,7 @@ public class MaterialSupplierService {
 				categoryIds.add(6L);
 				
 			}else {
-				categoryIds.add(Long.valueOf( supplierAvailableCategoriesDTO.getProductCategoryId()));
+				categoryIds.add(Long.valueOf(Integer.valueOf(supplierAvailableCategories.getProductCategoryId())));
 				
 			}
 		}
@@ -471,8 +440,8 @@ public class MaterialSupplierService {
 
 		
 	    
-		restrictions.add(builder.equal(rootBuilder.get("state"), materialSupplierDTO.getMaterialSupplierAddress().getState()));
-		restrictions.add(builder.equal(rootBuilder.get("district"), materialSupplierDTO.getMaterialSupplierAddress().getDistrict()));
+		restrictions.add(builder.equal(rootBuilder.get("state"), state));
+		restrictions.add(builder.equal(rootBuilder.get("district"), district));
 		restrictions.add(builder.equal(rootBuilder.get("requirementStatus"), "OPEN"));
 
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
@@ -492,6 +461,77 @@ public class MaterialSupplierService {
 		}
 
 		return null;
+	}
+	
+	public MaterialRequirement GetMaterialReqirementById(int materialRequirementId) {
+		boolean isOpenMaterialReuirementAvailable = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
+		Root<MaterialRequirement> rootBuilder = criteria.from(MaterialRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirement = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!materialRequirement.isEmpty()) {
+			isOpenMaterialReuirementAvailable = true;
+			return materialRequirement.get(0);
+		}
+
+		return null;
+	}
+	
+	
+	public boolean verifyIfEstimateAlreadySubmittedForMaterialRequirementByBuilderCustomer(MaterialRequirement materialRequirement, int SuplierId) {
+		boolean isEstimateAlreadySubmittedForMaterialRequirementByBuilderCustomer = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<MaterialRequirementItemsEstimate> materialRequirementEstimate = new ArrayList<MaterialRequirementItemsEstimate>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirementItemsEstimate> criteria = builder.createQuery(MaterialRequirementItemsEstimate.class);
+		Root<MaterialRequirementItemsEstimate> rootBuilder = criteria.from(MaterialRequirementItemsEstimate.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+				restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirement.getMaterialRequirementId()));
+				restrictions.add(builder.equal(rootBuilder.get("materialSupplierId"), SuplierId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirementItemsEstimate> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirementEstimate = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!materialRequirementEstimate.isEmpty()) {
+			isEstimateAlreadySubmittedForMaterialRequirementByBuilderCustomer = true;
+			return true;
+		}
+
+		return false;
 	}
 	
 	
@@ -577,6 +617,27 @@ public class MaterialSupplierService {
 					.collect(Collectors.toList()));
 		}
 
+		if (materialSupplierEntity.getMaterialRequirementItemsEstimate() != null
+				&& !materialSupplierEntity.getMaterialRequirementItemsEstimate().isEmpty()) {
+			List<String> materialRequirementIds = new ArrayList<String>();
+			materialSupplierEntity.getMaterialRequirementItemsEstimate()
+			.stream().filter(estimate -> materialRequirementIds.add(String.valueOf(estimate.getMaterialRequirementId()) )).collect(Collectors.toList());
+			
+			List<String> distinctMaterialRequirementIds = materialRequirementIds.stream()
+	                .distinct()
+	                .collect(Collectors.toList());
+			
+			List<MaterialRequirement> SuppliersSubmitedApprovedDecliedRequirements = distinctMaterialRequirementIds.stream().map(reqId->this.GetMaterialReqirementById(Integer.valueOf(reqId))).collect(Collectors.toList());
+			
+			List<MaterialRequirementDTO> SuppliersSubmitedApprovedDecliedRequirementsDTO = SuppliersSubmitedApprovedDecliedRequirements.stream()
+			.map(matReq-> productService.setMaterialRequirementDTO(matReq)).collect(Collectors.toList());
+			
+			List<MaterialRequirementDTO> SuppliersSubmitedApprovedDecliedRequirementsDTOWithEstimate = SuppliersSubmitedApprovedDecliedRequirementsDTO.stream()
+			.map(matReqDTO-> this.setSupplierEstimateDTO(matReqDTO, materialSupplierEntity)).collect(Collectors.toList());
+			
+			//materialSupplierDTO.setSuppliersSubmitedApprovedDecliedRequirementsDTOWithEstimate(SuppliersSubmitedApprovedDecliedRequirementsDTOWithEstimate);
+			materialSupplierDTO.setMaterialRequirement(SuppliersSubmitedApprovedDecliedRequirementsDTOWithEstimate);
+		}
 		
 		/*final Set<String> prop = new HashSet<>(Arrays.asList("materialSupplierBuilderId", "materialSupplierBuilderName", "materialSupplierCompany", "materialSupplierPhone", 
 				"materialSupplierUserName", "materialSupplierPassword"));
@@ -589,6 +650,75 @@ public class MaterialSupplierService {
 		materialSupplierDTO.setMaterialSupplierPassword(materialSupplierEntity.getMaterialSupplierPassword());
 		// carDTOList.add(carDTO);
 		return materialSupplierDTO;
+	}
+	
+	public MaterialSupplierDTO setMaterialSupplierDTOWithoutEstimate(MaterialSupplier materialSupplierEntity) {
+		MaterialSupplierDTO materialSupplierDTO = new MaterialSupplierDTO();
+		materialSupplierDTO.setMaterialSupplierAddress(this.copySupplierAddressEntityToDto(materialSupplierEntity.getMaterialSupplierAddress()));
+		
+		if (materialSupplierEntity.getMaterialSupplierAvailableCategories() != null
+				&& !materialSupplierEntity.getMaterialSupplierAvailableCategories().isEmpty()) {
+			materialSupplierDTO.setMaterialSupplierAvailableCategories(materialSupplierEntity.getMaterialSupplierAvailableCategories().stream()
+					.map(supplierAvailableCategories -> this.copySupplierBasicAvailableCategoriesEntityToDTO(
+							supplierAvailableCategories, new SupplierAvailableCategoriesDTO()))
+					.collect(Collectors.toList()));
+		}
+
+		
+		
+		/*final Set<String> prop = new HashSet<>(Arrays.asList("materialSupplierBuilderId", "materialSupplierBuilderName", "materialSupplierCompany", "materialSupplierPhone", 
+				"materialSupplierUserName", "materialSupplierPassword"));
+		this.copyMaterialSupplierBasicEntityToDTO(materialSupplierEntity, materialSupplierDTO, prop);*/
+		materialSupplierDTO.setMaterialSupplierBuilderId(materialSupplierEntity.getMaterialSupplierBuilderId());
+		materialSupplierDTO.setMaterialSupplierBuilderName(materialSupplierEntity.getMaterialSupplierBuilderName());
+		materialSupplierDTO.setMaterialSupplierCompany(materialSupplierEntity.getMaterialSupplierCompany());
+		materialSupplierDTO.setMaterialSupplierPhone(materialSupplierEntity.getMaterialSupplierPhone());
+		materialSupplierDTO.setMaterialSupplierUserName(materialSupplierEntity.getMaterialSupplierUserName());
+		materialSupplierDTO.setMaterialSupplierPassword(materialSupplierEntity.getMaterialSupplierPassword());
+		// carDTOList.add(carDTO);
+		return materialSupplierDTO;
+	}
+	
+	
+	public MaterialRequirementDTO setSupplierEstimateDTO(MaterialRequirementDTO materialRequirementDTO, MaterialSupplier materialSupplierEntity){
+		
+		List<MaterialRequirementItemsEstimate> materialRequirementItemsEstimate = materialSupplierEntity.getMaterialRequirementItemsEstimate()
+		.stream().filter(estimate-> estimate.getMaterialRequirementId() == materialRequirementDTO.getMaterialRequirementId())
+		.collect(Collectors.toList());
+		
+		List<MaterialRequirementItemsEstimateDTO> materialRequirementItemsEstimateDTO = materialRequirementItemsEstimate.stream()
+				.map(estimateEntity-> copyMaterialRequirementItemsEstimateEntityToDTO(estimateEntity, new MaterialRequirementItemsEstimateDTO())).collect(Collectors.toList());
+		// carDTOList.add(carDTO);
+		materialRequirementDTO.setMaterialRequirementItemsEstimate(materialRequirementItemsEstimateDTO);
+		return materialRequirementDTO;
+	}
+	
+	public MaterialRequirementItemsEstimateDTO copyMaterialRequirementItemsEstimateEntityToDTO(
+			MaterialRequirementItemsEstimate materialRequirementItemsEstimate,
+			MaterialRequirementItemsEstimateDTO materialRequirementItemsEstimateDTO) throws BeansException {
+		materialRequirementItemsEstimateDTO.setMaterialRequirementItemsForMaterialRequirementItemsEstimate(productService.setMaterialRequirementItemsDTO(productService.getMaterialRequirementItemByItemId(materialRequirementItemsEstimate.getMaterialRequirementItemId()).get(0)));
+		
+		final Set<String> prop = new HashSet<>(Arrays.asList("materialRequirementItemEstmtimateId", "materialRequirementItemId",
+				"materialRequirementId", "materialSupplierId", "totalPrice", "customerBuilderAceptedDeclined"));
+
+		/*
+		 * BuildersAvailableAmenitiesDTO.setAmenitiesAndSpecifications(
+		 * copyAmenityAndSpecificationsEntityToDTO(
+		 * getAmenitiesAndSpecificationsByAmenityid(
+		 * BuildersAvailableAmenitiesEntity.getAmenitiesAndSpecificationsId())));
+		 */
+		String[] excludedProperties = null;
+		try {
+			excludedProperties = Arrays
+					.stream(BeanUtils.getPropertyDescriptors(materialRequirementItemsEstimateDTO.getClass()))
+					.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+		} catch (BeansException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		BeanUtils.copyProperties(materialRequirementItemsEstimate, materialRequirementItemsEstimateDTO, excludedProperties);
+		return materialRequirementItemsEstimateDTO;
 	}
 	
 	
@@ -636,6 +766,25 @@ public class MaterialSupplierService {
 
 		BeanUtils.copyProperties(SupplierAvailableCategoriesDTO, supplierAvailableCategoriesEntity, excludedProperties);
 		return supplierAvailableCategoriesEntity;
+	}
+	
+	public static MaterialRequirementItemsEstimate copySupplierBasicAvailableItemEstimatesDTOToEntity(
+			MaterialRequirementItemsEstimateDTO materialRequirementItemsEstimateDTO,
+			MaterialRequirementItemsEstimate materialRequirementItemsEstimate) throws BeansException {
+		final Set<String> prop = new HashSet<>(Arrays.asList("materialRequirementItemId", "materialRequirementId", "materialSupplierId", "totalPrice", "customerBuilderAceptedDeclined", "deliveryCharge"));
+
+		String[] excludedProperties = null;
+		try {
+			excludedProperties = Arrays
+					.stream(BeanUtils.getPropertyDescriptors(materialRequirementItemsEstimate.getClass()))
+					.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+		} catch (BeansException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		BeanUtils.copyProperties(materialRequirementItemsEstimateDTO, materialRequirementItemsEstimate, excludedProperties);
+		return materialRequirementItemsEstimate;
 	}
 	
 	private static ProductCategoryDTO copyCategoriesEntityToDTO(

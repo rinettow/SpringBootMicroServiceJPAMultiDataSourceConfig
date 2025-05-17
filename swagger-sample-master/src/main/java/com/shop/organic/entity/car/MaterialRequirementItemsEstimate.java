@@ -43,6 +43,15 @@ public class MaterialRequirementItemsEstimate {
 	@Column(name = "MATERIAL_REQUIREMENT_ITEMS_ESTIMATE_ID")
 	private int materialRequirementItemEstmtimateId;
 	
+	@Column(name = "MATERIAL_REQUIREMENT_ITEMS_ID")
+	private int materialRequirementItemId;
+	
+	@Column(name = "MATERIAL_REQUIREMENT_ID")
+	private int materialRequirementId;
+	
+	@Column(name = "MATERIAL_SUPPLIER_ID")
+	private int materialSupplierId;
+	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "MATERIAL_REQUIREMENT_ITEMS_ID", insertable = false, updatable = false)
 	private MaterialRequirementItems materialRequirementItemsForMaterialRequirementItemsEstimate;
@@ -59,6 +68,65 @@ public class MaterialRequirementItemsEstimate {
 
 	@Column(name = "TOTAL_PRICE")
 	private float totalPrice;
+	
+	@Column(name = "DELIVERY_CHARGE")
+	private float deliveryCharge;
+	
+	
+	@Column(name = "CUSTOMER_BUILDER_ACCEPTED_DECLINED")
+	private String customerBuilderAceptedDeclined;
+
+
+
+
+	public float getDeliveryCharge() {
+		return deliveryCharge;
+	}
+
+
+	public void setDeliveryCharge(float deliveryCharge) {
+		this.deliveryCharge = deliveryCharge;
+	}
+
+
+	public String getCustomerBuilderAceptedDeclined() {
+		return customerBuilderAceptedDeclined;
+	}
+
+
+	public void setCustomerBuilderAceptedDeclined(String customerBuilderAceptedDeclined) {
+		this.customerBuilderAceptedDeclined = customerBuilderAceptedDeclined;
+	}
+
+
+	public int getMaterialRequirementItemId() {
+		return materialRequirementItemId;
+	}
+
+
+	public void setMaterialRequirementItemId(int materialRequirementItemId) {
+		this.materialRequirementItemId = materialRequirementItemId;
+	}
+
+
+	public int getMaterialRequirementId() {
+		return materialRequirementId;
+	}
+
+
+	public void setMaterialRequirementId(int materialRequirementId) {
+		this.materialRequirementId = materialRequirementId;
+	}
+
+
+	public int getMaterialSupplierId() {
+		return materialSupplierId;
+	}
+
+
+	public void setMaterialSupplierId(int materialSupplierId) {
+		this.materialSupplierId = materialSupplierId;
+	}
 
 
 	public int getMaterialRequirementItemEstmtimateId() {

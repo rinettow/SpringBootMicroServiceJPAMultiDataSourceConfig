@@ -25,11 +25,48 @@ public class MaterialRequirementItemsEstimateDTO {
 
 	
 	private int materialRequirementItemEstmtimateId;
+    private int materialRequirementItemId;
+	private int materialRequirementId;
+	private int materialSupplierId;
 	private MaterialRequirementItemsDTO materialRequirementItemsForMaterialRequirementItemsEstimate;
 	private MaterialRequirementDTO materialRequirementForMaterialRequirementItemsEstimate;
 	private MaterialSupplierDTO materialSupplierForMaterialRequirementItemsEstimate;
 	private float totalPrice;
+	private String customerBuilderAceptedDeclined;
+	private float deliveryCharge;
 	
+	
+	
+	public float getDeliveryCharge() {
+		return deliveryCharge;
+	}
+	public void setDeliveryCharge(float deliveryCharge) {
+		this.deliveryCharge = deliveryCharge;
+	}
+	public String getCustomerBuilderAceptedDeclined() {
+		return customerBuilderAceptedDeclined;
+	}
+	public void setCustomerBuilderAceptedDeclined(String customerBuilderAceptedDeclined) {
+		this.customerBuilderAceptedDeclined = customerBuilderAceptedDeclined;
+	}
+	public int getMaterialRequirementItemId() {
+		return materialRequirementItemId;
+	}
+	public void setMaterialRequirementItemId(int materialRequirementItemId) {
+		this.materialRequirementItemId = materialRequirementItemId;
+	}
+	public int getMaterialRequirementId() {
+		return materialRequirementId;
+	}
+	public void setMaterialRequirementId(int materialRequirementId) {
+		this.materialRequirementId = materialRequirementId;
+	}
+	public int getMaterialSupplierId() {
+		return materialSupplierId;
+	}
+	public void setMaterialSupplierId(int materialSupplierId) {
+		this.materialSupplierId = materialSupplierId;
+	}
 	public int getMaterialRequirementItemEstmtimateId() {
 		return materialRequirementItemEstmtimateId;
 	}

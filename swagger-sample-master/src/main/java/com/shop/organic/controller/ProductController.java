@@ -15,6 +15,7 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Produces;
 
 import org.hibernate.jpa.QueryHints;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -166,10 +167,19 @@ public class ProductController {
 		
 	}
 	
+	
 	@PostMapping(value = "/CheckOut")
-	public ResponseEntity<Object> CheckOut(@RequestBody MaterialRequirementDTO materialRequirementDTO) {
+	/*@RequestMapping(path = "/CheckOut", 
+    consumes = MediaType.APPLICATION_JSON_VALUE, 
+    produces = MediaType.APPLICATION_JSON_VALUE, 
+    method = {RequestMethod.POST})*/
+	//public ResponseEntity<Object> CheckOut(@RequestBody MaterialRequirementDTO materialRequirementDTO) {
+	public ResponseEntity<Object> CheckOut(@RequestParam("materialRequirementId") String materialRequirementId, @RequestParam("builderId") String builderId,
+			@RequestParam("customerId") String customerId, @RequestParam("productCategoryId") String productCategoryId,
+			@RequestParam("state") String state, @RequestParam("district") String district) {
 		MaterialRequirementDTO materialRequirementDTOResponse = new MaterialRequirementDTO();
-		MaterialRequirement materialRequirementEntity = productService.checkOut(materialRequirementDTO);
+		MaterialRequirement materialRequirementEntity = productService.checkOut(materialRequirementId,builderId,
+				  customerId,productCategoryId, state, district);
 		
 		
 		return generateResponse("Checked out Successfull, New requirement created!", HttpStatus.OK, null);

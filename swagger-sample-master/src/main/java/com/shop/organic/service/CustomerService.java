@@ -856,15 +856,47 @@ public class CustomerService {
 		 * buildersEstimateDTO.setProjectDTO(builderService.setProjectDTO(
 		 * buildersEstimateEntity.getProjectForBuildersEstimate())); }
 		 */
-
-		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
+		List<Builder> builder= GetBuilderByBuilderId(buildersEstimateEntity.getBuilderId());
+		if (builder != null) {
 			buildersEstimateDTO.setBuilderDTO(
-					builderService.setBuilderDTOWithoutProject(buildersEstimateEntity.getBuilderForBuildersEstimate()));
+					builderService.setBuilderDTOWithoutProject(builder.get(0)));
 		}
 		// carDTOList.add(carDTO);
 		return buildersEstimateDTO;
 	}
+	
+	public List<Builder> GetBuilderByBuilderId(int builderId) {
+		EntityManager entityManager = em.getEntityManager("builder");
 
+		entityManager.getTransaction().begin();
+		List<Builder> builderEntity = new ArrayList<Builder>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Builder> criteria = builder.createQuery(Builder.class);
+		Root<Builder> rootBuilder = criteria.from(Builder.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Builder> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		builderEntity = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		return builderEntity;
+	}
+
+	
+	
+	
 	public CustomerRequirementDTO getCustomerRequirementById(int customerRequirementId) {
 		List<CustomerRequirement> custRequirement = null;
 		CustomerRequirementDTO custRequirementDTO = null;
@@ -941,17 +973,76 @@ public class CustomerService {
 			}
 
 		}
-		if (customerRequirementEntity.getCustomerForCustomerRequirement() != null) {
+		List<Customer> customer = GetCustomerByCustomerId(customerRequirementEntity.getCustomerId());
+		if (customer != null) {
 			customerRequirementDTO.setCustomerForCustomerRequirement(
-					setCustomerDTOWithoutRequirement(customerRequirementEntity.getCustomerForCustomerRequirement()));
+					setCustomerDTOWithoutRequirement(customer.get(0)));
 		}
-		if (customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement() != null) {
+		List<AmenitiesAndSpecifications> amenitiesAndSpecifications = GetAmenityAndSpecificationByAmenityId(customerRequirementEntity.getAmenityAndSpecifiactionId());
+		if (amenitiesAndSpecifications != null) {
 			customerRequirementDTO
-					.setAmenitiesAndSpecificationsForCustomerRequirement(copyAmenitiesAndSpecificationEntityToDto(
-							customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement()));
+					.setAmenitiesAndSpecificationsForCustomerRequirement(copyAmenitiesAndSpecificationEntityToDto(amenitiesAndSpecifications.get(0)));
 		}
 		// carDTOList.add(carDTO);
 		return customerRequirementDTO;
+	}
+	
+	public List<AmenitiesAndSpecifications> GetAmenityAndSpecificationByAmenityId(int amenityId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<AmenitiesAndSpecifications> amenitiesAndSpecifications = new ArrayList<AmenitiesAndSpecifications>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<AmenitiesAndSpecifications> criteria = builder.createQuery(AmenitiesAndSpecifications.class);
+		Root<AmenitiesAndSpecifications> rootBuilder = criteria.from(AmenitiesAndSpecifications.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("amenitiesAndSpecificationsId"), amenityId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<AmenitiesAndSpecifications> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		amenitiesAndSpecifications = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		return amenitiesAndSpecifications;
+	}
+	
+	public List<Customer> GetCustomerByCustomerId(int customerId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<Customer> customer = new ArrayList<Customer>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Customer> criteria = builder.createQuery(Customer.class);
+		Root<Customer> rootBuilder = criteria.from(Customer.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("customerId"), customerId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Customer> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		customer = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		return customer;
 	}
 
 	public static void copyBuildersEstimateBasicEntityToDTO(BuildersEstimate buildersEstimatetEntity,

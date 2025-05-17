@@ -1,6 +1,7 @@
 package com.shop.organic.dto;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -36,9 +37,17 @@ public class MaterialRequirementDTO {
 	private String district;
 	private List<MaterialRequirementItemsDTO> materialRequirementItems;
 	private List<MaterialRequirementItemsEstimateDTO> materialRequirementItemsEstimate;
+	//private Map<MaterialSupplierDTO, List<MaterialRequirementItemsEstimateDTO>> suppliersEstimate;
+	private List<SuppliersEstimates> suppliersEstimates;
 	
 	
 	
+	public List<SuppliersEstimates> getSuppliersEstimates() {
+		return this.suppliersEstimates;
+	}
+	public void setSuppliersEstimates(List<SuppliersEstimates> suppliersEstimates) {
+		this.suppliersEstimates = suppliersEstimates;
+	}
 	
 	public Integer getCustomerId() {
 		return customerId;

@@ -98,8 +98,8 @@ public class BuilderController {
 		List<BuilderDTO> filterdsolarPlantersList = null;
 		Map<String, List<BuilderDTO>> responseBuildersMap = new HashMap<String, List<BuilderDTO>>();
 		ObjectMapper objectMapper = new ObjectMapper();
-		amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecificationsId,
-				AmenitiesAndSpecificationsDTO.class);
+		//amenitiesAndSpecificationsDTO = objectMapper.readValue(amenitiesAndSpecificationsId,
+			//	AmenitiesAndSpecificationsDTO.class);
 		for (int i = 1; i <= 6; i++) {
 			if (i == 1) {
 				buildersList = builderService.findBuildersList(1);
@@ -407,11 +407,14 @@ public class BuilderController {
 	}
 
 	@PostMapping(value = "/SendOTP")
-	public ResponseEntity<Object> SendOTP(@RequestBody BuilderDTO builderDTO) {
+	//public ResponseEntity<Object> SendOTP(@RequestBody BuilderDTO builderDTO) {
+	public ResponseEntity<Object> SendOTP(@RequestParam("Phone") String Phone, @RequestParam("Password") String Password) {
 		BuilderDTO loginBuilder = new BuilderDTO();
 		Map<String, Object> response = null;
-		System.out.println("builderDTO:::::Test" + new Gson().toJson(builderDTO));
-		response = builderService.sendOTP(builderDTO);
+		//System.out.println("builderDTO:::::Test" + new Gson().toJson(builderDTO));
+		String PasswordQuotesRemoved =Password.replace("\"","");
+		String PhoneQuotesRemoved =Phone.replace("\"","");
+		response = builderService.sendOTP(PhoneQuotesRemoved, PasswordQuotesRemoved);
 		if(response.get("responseStatus").equals("Builder Mobile Not Registered")) {
 			return generateResponse("Builder Mobile Not Registered", HttpStatus.NOT_FOUND, null);
 		}else if(response.get("responseStatus").equals("Incorrect Password")){
@@ -426,6 +429,20 @@ public class BuilderController {
 		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
 		//return generateResponse("List of Builders!", HttpStatus.OK, loginBuilder);
+	}
+	
+	@PostMapping(value = "/AcceptDeclineMaterialQuotation")
+	public ResponseEntity<Object> AcceptDeclineMaterialQuotation(
+			@RequestParam("supplierId") String supplierId, 
+			@RequestParam("materialRequirementId") String materialRequirementId) throws IOException {
+		System.out.println("pictureDTO" + new Gson().toJson(materialRequirementId));
+		ObjectMapper objectMapper = new ObjectMapper();
+            builderService.AcceptMaterialQuotation(supplierId, materialRequirementId);
+			builderService.DeclineRestAllMaterialQuotation(supplierId, materialRequirementId);
+			builderService.CloseMaterialRequirement(materialRequirementId);
+		
+
+		return generateResponse("Material Estimate Approved!", HttpStatus.OK, null);
 	}
 	
 	

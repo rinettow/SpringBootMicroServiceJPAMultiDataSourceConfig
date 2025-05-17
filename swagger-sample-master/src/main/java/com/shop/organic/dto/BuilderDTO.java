@@ -1,6 +1,7 @@
 package com.shop.organic.dto;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -29,17 +30,17 @@ public class BuilderDTO {
 	private String userName;
 	private String password;
 	private List<BuildersEstimateDTO> buildersEstimate;
-	List<MaterialRequirementDTO> materialRequirement;
-
-
+	private List<MaterialRequirementDTO> materialRequirement;
+	private MaterialSupplierDTO materialSupplier;
 	
 
-	public List<MaterialRequirementDTO> getMaterialRequirement() {
-		return materialRequirement;
+
+	public MaterialSupplierDTO getMaterialSupplier() {
+		return this.materialSupplier;
 	}
 
-	public void setMaterialRequirement(List<MaterialRequirementDTO> materialRequirement) {
-		this.materialRequirement = materialRequirement;
+	public void setMaterialSupplier(MaterialSupplierDTO materialSupplier) {
+		this.materialSupplier = materialSupplier;
 	}
 
 	public List<BuildersEstimateDTO> getBuildersEstimate() {
@@ -48,6 +49,14 @@ public class BuilderDTO {
 
 	public void setBuildersEstimate(List<BuildersEstimateDTO> buildersEstimate) {
 		this.buildersEstimate = buildersEstimate;
+	}
+
+	public List<MaterialRequirementDTO> getMaterialRequirement() {
+		return this.materialRequirement;
+	}
+
+	public void setMaterialRequirement(List<MaterialRequirementDTO> materialRequirement) {
+		this.materialRequirement = materialRequirement;
 	}
 
 	public List<ProjectsDTO> getProjects() {

@@ -1,17 +1,26 @@
 package com.shop.organic;
-import java.util.*; 
+import java.util.*;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shop.organic.dto.MaterialRequirementItemsEstimateDTO; 
 
 public class Test {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws JsonMappingException, JsonProcessingException {
 		// TODO Auto-generated method stub
 		String value = "8008";
 		System.out.println(value.replace("\"",""));
-		
-
+		String availCatg = "[6,2,3,4]";
+		System.out.println(availCatg.substring(1, availCatg.length()-1));
 		int length = 4; 
         //System.out.println(OTP(length)); 
-        
+        String req = "[{\"materialRequirementItemId\":6,\"materialRequirementId\":2,\"materialSupplierId\":13,\"totalPrice\":4800,\"customerBuilderAceptedDeclined\":\"ON_HOLD\",\"deliveryCharge\":600}][{\"materialRequirementItemId\":6,\"materialRequirementId\":2,\"materialSupplierId\":13,\"totalPrice\":4800,\"customerBuilderAceptedDeclined\":\"ON_HOLD\",\"deliveryCharge\":600}]";
+        ObjectMapper objectMapper = new ObjectMapper();
+
+		List<MaterialRequirementItemsEstimateDTO> MaterialRequirementItemsEstimates = new ArrayList<MaterialRequirementItemsEstimateDTO>();
+		MaterialRequirementItemsEstimates = (List<MaterialRequirementItemsEstimateDTO>) objectMapper.readValue(req, MaterialRequirementItemsEstimateDTO.class);
         char[] otpGeneratedForBuilder = OTP(length);
         System.out.println(otpGeneratedForBuilder); 
 		//String[] otpGeneratedForBuilderStringArr = new String[otpGeneratedForBuilder.length];

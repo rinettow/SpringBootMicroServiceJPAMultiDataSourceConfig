@@ -43,6 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.google.gson.Gson;
@@ -53,6 +54,7 @@ import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.DistrictDTO;
+import com.shop.organic.dto.MaterialRequirementDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
@@ -68,6 +70,8 @@ import com.shop.organic.entity.car.Customer;
 import com.shop.organic.entity.car.CustomerOtp;
 import com.shop.organic.entity.car.CustomerRequirement;
 import com.shop.organic.entity.car.District;
+import com.shop.organic.entity.car.MaterialRequirement;
+import com.shop.organic.entity.car.MaterialRequirementItemsEstimate;
 import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 import com.shop.organic.entity.car.ProjectsAvailableAmenities;
@@ -116,6 +120,15 @@ public class BuilderService {
 
 	@Autowired
 	private CustomerService customerService;
+	
+	@Autowired
+	private MaterialSupplierService materialSupplierService;
+	
+	@Autowired
+	private ProductService productService;
+	
+	private BuilderDTO builderDTO1;
+	
 
 	private enum ResourceType {
 		FILE_SYSTEM, CLASSPATH
@@ -129,7 +142,8 @@ public class BuilderService {
 
 	private List<Builder> builderEntityList;
 	private List<BuildersAvailableAmenities> buildersAvailableAmenities;
-	private List<BuilderDTO> builderDTOList = new ArrayList<BuilderDTO>();
+	//private List<BuilderDTO> builderDTOList = new ArrayList<BuilderDTO>();
+	
 	List<String> builderViewedCustomerRequirementIds = null;
 
 	// @Async
@@ -170,7 +184,8 @@ public class BuilderService {
 				.collect(Collectors.toList());*/
 		
 		response = buildersAvailableAmenities.stream()
-				.map(buildersAvailableAmenities -> setBuilderDTO(buildersAvailableAmenities.getBuilderForAmenity()))
+				.map(buildersAvailableAmenities -> this.getBuildersById(buildersAvailableAmenities.getBuilderId()))
+				//.map(buildersAvailableAmenities -> this.setBuilderDTO(buildersAvailableAmenities.getBuilderForAmenity()))
 				.collect(Collectors.toList());
 		
 		
@@ -438,6 +453,161 @@ public class BuilderService {
 		
 
 	}
+	
+	
+	
+	public void AcceptMaterialQuotation(String supplierId, String materialRequirementId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+		entityManager.getTransaction().begin();
+		List<MaterialRequirementItemsEstimate> materialRequirementEstimate = new ArrayList<MaterialRequirementItemsEstimate>();
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirementItemsEstimate> criteria = builder.createQuery(MaterialRequirementItemsEstimate.class);
+		Root<MaterialRequirementItemsEstimate> rootBuilder = criteria.from(MaterialRequirementItemsEstimate.class);
+		criteria.select(rootBuilder);
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+				restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
+				restrictions.add(builder.equal(rootBuilder.get("materialSupplierId"), supplierId));
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirementItemsEstimate> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirementEstimate = query.getResultList();
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!materialRequirementEstimate.isEmpty()) {
+			List<MaterialRequirementItemsEstimate> materialRequirementEstimateApproved = materialRequirementEstimate.stream()
+					.peek(estimate -> estimate.setCustomerBuilderAceptedDeclined("ACCEPT"))
+					.collect(Collectors.toList());
+			materialRequirementEstimateApproved.stream().map(estimate-> UpdateMaterialEstimateWithApproveAndDeclinedStatus(estimate)).collect(Collectors.toList());
+		}
+		
+	}
+	
+public MaterialRequirementItemsEstimate UpdateMaterialEstimateWithApproveAndDeclinedStatus(MaterialRequirementItemsEstimate materialRequirementItemsEstimate) {
+	EntityManager entityManager1 = em.getEntityManager("builder");
+	entityManager1.getTransaction().begin();
+	if (!entityManager1.contains(materialRequirementItemsEstimate)) {
+		MaterialRequirementItemsEstimate entityAvailableOrNot = entityManager1.find(MaterialRequirementItemsEstimate.class, materialRequirementItemsEstimate.getMaterialRequirementItemEstmtimateId());
+		if (entityAvailableOrNot == null) {
+			// persist object - add to entity manager
+			entityManager1.persist(materialRequirementItemsEstimate);
+			// flush em - save to DB
+			entityManager1.flush();
+		} else {
+			entityManager1.merge(materialRequirementItemsEstimate);
+		}
+
+	}
+	// commit transaction at all
+	entityManager1.getTransaction().commit();
+
+	entityManager1.close();
+   return materialRequirementItemsEstimate;
+}
+	
+public void DeclineRestAllMaterialQuotation(String supplierId, String materialRequirementId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<MaterialRequirementItemsEstimate> materialRequirementEstimate = new ArrayList<MaterialRequirementItemsEstimate>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirementItemsEstimate> criteria = builder.createQuery(MaterialRequirementItemsEstimate.class);
+		Root<MaterialRequirementItemsEstimate> rootBuilder = criteria.from(MaterialRequirementItemsEstimate.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+				restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
+				restrictions.add(builder.notEqual(rootBuilder.get("materialSupplierId"), supplierId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirementItemsEstimate> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirementEstimate = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!materialRequirementEstimate.isEmpty()) {
+			List<MaterialRequirementItemsEstimate> materialRequirementEstimateApproved = materialRequirementEstimate.stream()
+					.peek(estimate -> estimate.setCustomerBuilderAceptedDeclined("DECLINE"))
+					.collect(Collectors.toList());
+			
+			materialRequirementEstimateApproved.stream().map(estimate-> UpdateMaterialEstimateWithApproveAndDeclinedStatus(estimate)).collect(Collectors.toList());
+			
+		}
+		
+	}
+
+
+
+public void CloseMaterialRequirement(String materialRequirementId) {
+	
+	
+	EntityManager entityManager = em.getEntityManager("builder");
+
+	entityManager.getTransaction().begin();
+	List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+
+	CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+	CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
+	Root<MaterialRequirement> rootBuilder = criteria.from(MaterialRequirement.class);
+	criteria.select(rootBuilder);
+
+	List<Predicate> restrictions = new ArrayList<Predicate>();
+			restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
+			
+
+	criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+	TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
+	query.setHint(QueryHints.HINT_CACHEABLE, true);
+	query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+	materialRequirement = query.getResultList();
+
+	
+	entityManager.flush();
+	entityManager.getTransaction().commit();
+	entityManager.close();
+	
+	if(!materialRequirement.isEmpty()) {
+		List<MaterialRequirement> materialRequirementClosed = materialRequirement.stream()
+				.peek(req -> req.setRequirementStatus("CLOSED"))
+				.collect(Collectors.toList());
+		
+		materialRequirementClosed.stream().map(requirementToClose-> CloseMaterialRequirement(requirementToClose)).collect(Collectors.toList());
+		
+	}
+	
+}
+
+public MaterialRequirement CloseMaterialRequirement(MaterialRequirement materialRequirement) {
+	EntityManager entityManager1 = em.getEntityManager("builder");
+
+	entityManager1.getTransaction().begin();
+	if (!entityManager1.contains(materialRequirement)) {
+		MaterialRequirement entityAvailableOrNot = entityManager1.find(MaterialRequirement.class, materialRequirement.getMaterialRequirementId());
+		if (entityAvailableOrNot == null) {
+			// persist object - add to entity manager
+			entityManager1.persist(materialRequirement);
+			// flush em - save to DB
+			entityManager1.flush();
+		} else {
+			entityManager1.merge(materialRequirement);
+		}
+
+	}
+	// commit transaction at all
+	entityManager1.getTransaction().commit();
+
+	entityManager1.close();
+	return materialRequirement;
+}
+	
 	
 	public BuildersEstimateDTO SubmitReview(BuildersEstimateDTO buildersEstimateDTO) {
 		BuildersEstimate buildersEstimate = new BuildersEstimate();
@@ -916,7 +1086,7 @@ public class BuilderService {
 		}
 	}
 
-	public Map<String, Object> sendOTP(BuilderDTO builderDTO) {
+	public Map<String, Object> sendOTP(String Phone, String Password) {
 		BuilderDTO LoginBuilderDTO = new BuilderDTO();
 		Map<String, Object> response = new HashMap<String, Object>();
 		List<Builder> LoginBuilder = new ArrayList<Builder>();
@@ -924,13 +1094,13 @@ public class BuilderService {
 		EntityManager entityManager = em.getEntityManager("builder");
 
 		Query q = entityManager.createQuery("SELECT b FROM Builder b WHERE b.phone = :phone", Builder.class);
-		q.setParameter("phone", builderDTO.getPhone());
+		q.setParameter("phone", Phone);
 		// q.setParameter("keyword", keyword); //etc
 		builderEntityList = q.getResultList();
 
 		if(builderEntityList != null && !builderEntityList.isEmpty()) {
 			LoginBuilder = builderEntityList.stream()
-					.filter(builder -> builder.getPhone().equalsIgnoreCase(builderDTO.getPhone()))
+					.filter(builder -> builder.getPhone().equalsIgnoreCase(Phone))
 					.collect(Collectors.toList());
 		}
 		
@@ -942,7 +1112,7 @@ public class BuilderService {
 
 		if (!LoginBuilder.isEmpty()) {
 
-			if(verifyBuilderPassword(LoginBuilder.get(0), builderDTO.getPassword())) {
+			if(verifyBuilderPassword(LoginBuilder.get(0), Password)) {
 				responseStatus = "Success";
 				LoginBuilderDTO = setBuilderDTO(LoginBuilder.get(0));
 			}else {
@@ -954,6 +1124,21 @@ public class BuilderService {
 		response.put("loggedinBuilder", LoginBuilderDTO);
 		// System.out.println("LoginBuilderDTO" +new Gson().toJson(LoginBuilderDTO));
 		return response;
+	}
+	
+	
+	public Builder getBuilderByBuilderId(int builderId) {
+		List<Builder> builder = new ArrayList<Builder>();
+		String responseStatus= null;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		Query q = entityManager.createQuery("SELECT b FROM Builder b WHERE b.builderId = :builderId", Builder.class);
+		q.setParameter("builderId", builderId);
+		// q.setParameter("keyword", keyword); //etc
+		builder = q.getResultList();
+
+		
+		return builder.get(0);
 	}
 	
 	public boolean verifyBuilderPassword(Builder loggedinBuilder, String password) {
@@ -981,19 +1166,29 @@ public class BuilderService {
 	}
 
 	public BuilderDTO getBuildersById(int builderId) {
-		Builder builderEntity = new Builder();
-		BuilderDTO builderDTO = new BuilderDTO();
+		
+		EntityManager entityManager = em.getEntityManager("builder");
 
+		Query q = entityManager.createQuery("SELECT b FROM Builder b WHERE b.builderId = :builderId", Builder.class);
+		q.setParameter("builderId", builderId);
+		// q.setParameter("keyword", keyword); //etc
+		builderEntityList = q.getResultList();
+
+		
+		entityManager.close();
+		
+		
+		
+		/*Builder builderEntity = new Builder();
 		EntityManager entityManager = em.getEntityManager("builder");
 		Query q = entityManager.createQuery("SELECT b FROM Builder b WHERE b.builderId = :builderId", Builder.class);
-		// q.setParameter(1, builderId);
 		q.setParameter("builderId", builderId);
-		builderEntity = (Builder) q.getSingleResult();
+		builderEntity = (Builder) q.getSingleResult();*/
 
-		builderDTO = setBuilderDTO(builderEntity);
+		builderDTO1 = setBuilderDTO(builderEntityList.get(0));
 		entityManager.close();
 
-		return builderDTO;
+		return builderDTO1;
 	}
 
 	public Builder setBuilderEntity(BuilderDTO builderDTO) {
@@ -1056,27 +1251,51 @@ public class BuilderService {
 	// @Async
 	public BuilderDTO setBuilderDTO(Builder builderEntity) {
 		BuilderDTO builderDTO = new BuilderDTO();
-		builderDTO.setAddress(this.copyAddressEntityToDto(builderEntity.getAddress()));
+		Address address = builderEntity.getAddress();
+		List<Address>  builderAddress =GetBuilderAddressByAddressId(address.getAddressId());
+		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderAddress.get(0));
+		builderDTO.setAddress(addressDTO);
 
-		if (builderEntity.getProjects() != null && !builderEntity.getProjects().isEmpty()) {
-			builderDTO.setProjects(builderEntity.getProjects().stream().map(project -> setProjectDTO(project))
+		List<Projects> builderProjects = this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
+		if (builderProjects != null && !builderProjects.isEmpty()) {
+			builderDTO.setProjects(builderProjects.stream().map(project -> setProjectDTO(project))
 					.collect(Collectors.toList()));
 		}
 		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
 		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
-		if (builderEntity.getBuildersAvailableAmenities() != null
-				&& !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
-			builderDTO.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
+		List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this.GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
+		if (builderAvailableAmenitiesById != null
+				&& !builderAvailableAmenitiesById.isEmpty()) {
+			builderDTO.setBuildersAvailableAmenities(builderAvailableAmenitiesById.stream()
 					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
 							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
 					.collect(Collectors.toList()));
 		}
 
-		if (builderEntity.getBuildersEstimate() != null && !builderEntity.getBuildersEstimate().isEmpty()) {
-			builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
+		List<BuildersEstimate> buildersEstimates =this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
+		if (buildersEstimates != null && !buildersEstimates.isEmpty()) {
+			builderDTO.setBuildersEstimate(buildersEstimates.stream()
 					.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
 					.collect(Collectors.toList()));
 		}
+		
+		List<MaterialRequirement> materialRequirements = GetMaterialRequirementByBuilderId(builderEntity.getBuilderId());
+		if (materialRequirements != null && !materialRequirements.isEmpty()) {
+					builderDTO.setMaterialRequirement(materialRequirements.stream()
+							.map(materialRequirement -> productService.setMaterialRequirementDTO(materialRequirement))
+							.collect(Collectors.toList()));
+					
+		}
+		
+		/*List<String> materialRequirementIds = new ArrayList<String>();
+		builderEntity.getMaterialRequirement()
+		.stream().filter(estimate -> materialRequirementIds.add(String.valueOf(estimate.getMaterialRequirementId()) )).collect(Collectors.toList());
+		
+		List<String> distinctMaterialRequirementIds = materialRequirementIds.stream()
+                .distinct()
+                .collect(Collectors.toList());*/
+		
+		
 
 		final Set<String> prop = new HashSet<>(Arrays.asList("builderId", "builderName", "manufacturingCompany",
 				"projectType", "phone", "userName", "password", "amenityAndSpecificationId"));
@@ -1084,6 +1303,154 @@ public class BuilderService {
 		// carDTOList.add(carDTO);
 		return builderDTO;
 	}
+	
+	public List<MaterialRequirement> GetMaterialRequirementByBuilderId(int builderId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<MaterialRequirement> materialRequirements = new ArrayList<MaterialRequirement>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
+		Root<MaterialRequirement> rootBuilder = criteria.from(MaterialRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		materialRequirements = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		return materialRequirements;
+	}
+	
+	public List<Address> GetBuilderAddressByAddressId(int addressId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<Address> address = new ArrayList<Address>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Address> criteria = builder.createQuery(Address.class);
+		Root<Address> rootBuilder = criteria.from(Address.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("addressId"), addressId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Address> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		address = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		return address;
+	}
+	
+	public List<BuildersEstimate> GetBuildersEstimatesByBuilderId(int builderId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<BuildersEstimate> buildersEstimates = new ArrayList<BuildersEstimate>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<BuildersEstimate> criteria = builder.createQuery(BuildersEstimate.class);
+		Root<BuildersEstimate> rootBuilder = criteria.from(BuildersEstimate.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<BuildersEstimate> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		buildersEstimates = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		return buildersEstimates;
+	}
+	
+	public List<BuildersAvailableAmenities> GetBuildersAvailableAmenitiesBuilderId(int builderId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<BuildersAvailableAmenities> buildersAvailableAmenities = new ArrayList<BuildersAvailableAmenities>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<BuildersAvailableAmenities> criteria = builder.createQuery(BuildersAvailableAmenities.class);
+		Root<BuildersAvailableAmenities> rootBuilder = criteria.from(BuildersAvailableAmenities.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<BuildersAvailableAmenities> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		buildersAvailableAmenities = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		return buildersAvailableAmenities;
+	}
+	
+	public List<Projects> GetAllProjectsByBuilderId(int builderId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<Projects> projects = new ArrayList<Projects>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Projects> criteria = builder.createQuery(Projects.class);
+		Root<Projects> rootBuilder = criteria.from(Projects.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Projects> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		projects = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		return projects;
+	}
+	
+	
+	
 
 	public BuilderDTO setBuilderDTOWithoutProject(Builder builderEntity) {
 		BuilderDTO builderDTO = new BuilderDTO();
@@ -1146,15 +1513,19 @@ public class BuilderService {
 			}
 
 		}*/
-		if (projectEntity.getBuilderForProjects() != null) {
+		/*if (projectEntity.getBuilderForProjects() != null) {
 			projectDTO.setBuilder(setBuilderDTOWithoutProject(projectEntity.getBuilderForProjects()));
-		}
-		if (projectEntity.getPicture() != null && !projectEntity.getPicture().isEmpty()) {
+		}*/
+		
+		List<Picture> projectPictures = this.GetProjectPicturesByProjectId(projectEntity.getProjectId());
+		if (projectPictures != null && !projectPictures.isEmpty()) {
 			projectDTO.setPicture(
-					projectEntity.getPicture().stream().map(this::setPictureDTO).collect(Collectors.toList()));
+					projectPictures.stream().map(this::setPictureDTO).collect(Collectors.toList()));
 		}
-		if (projectEntity.getProjectsAvailableAmenities() != null) {
-			projectDTO.setProjectsAvailableAmenities(projectEntity.getProjectsAvailableAmenities().stream()
+		
+		List<ProjectsAvailableAmenities> projectsAvailableAmenities = this.GetProjectAvailableAmenitiesByProjectId(projectEntity.getProjectId());
+		if (projectsAvailableAmenities != null) {
+			projectDTO.setProjectsAvailableAmenities(projectsAvailableAmenities.stream()
 					.map(projectsAvailableEntities -> this.copyProjectsBasicAvailableAmenitiesEntityToDTO(
 							projectsAvailableEntities, new ProjectsAvailableAmenitiesDTO()))
 					.collect(Collectors.toList()));
@@ -1162,6 +1533,64 @@ public class BuilderService {
 
 		// carDTOList.add(carDTO);
 		return projectDTO;
+	}
+	
+	public List<Picture> GetProjectPicturesByProjectId(int projectId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<Picture> pictures = new ArrayList<Picture>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Picture> criteria = builder.createQuery(Picture.class);
+		Root<Picture> rootBuilder = criteria.from(Picture.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("projectId"), projectId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Picture> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		pictures = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+
+		return pictures;
+	}
+	
+	public List<ProjectsAvailableAmenities> GetProjectAvailableAmenitiesByProjectId(int projectId) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<ProjectsAvailableAmenities> projectsAvailableAmenities = new ArrayList<ProjectsAvailableAmenities>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<ProjectsAvailableAmenities> criteria = builder.createQuery(ProjectsAvailableAmenities.class);
+		Root<ProjectsAvailableAmenities> rootBuilder = criteria.from(ProjectsAvailableAmenities.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("projectId"), projectId));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<ProjectsAvailableAmenities> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		projectsAvailableAmenities = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+
+		return projectsAvailableAmenities;
 	}
 
 	// @Async
@@ -1255,6 +1684,21 @@ public class BuilderService {
 	private AddressDTO copyAddressEntityToDto(Address addressEntity) {
 		AddressDTO addressDTO = new AddressDTO();
 		BeanUtils.copyProperties(addressEntity, addressDTO);
+		return addressDTO;
+	}
+	
+	private AddressDTO copyAddressBasicEntityToDto(
+			Address addressEntity) {
+		AddressDTO addressDTO = new AddressDTO();
+		
+		final Set<String> prop = new HashSet<>(
+				Arrays.asList("addressId", "doorNumber", "streetFirst", "streetSecond", "landmark", "city", "state",
+						"district", "pincode", "country"));
+		String[] excludedProperties = Arrays
+				.stream(BeanUtils.getPropertyDescriptors(addressEntity.getClass()))
+				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+		BeanUtils.copyProperties(addressEntity, addressDTO,
+				excludedProperties);
 		return addressDTO;
 	}
 
@@ -1365,7 +1809,7 @@ public class BuilderService {
 	public BuildersAvailableAmenitiesDTO copyBuildersBasicAvailableAmenitiesEntityToDTO(
 			BuildersAvailableAmenities BuildersAvailableAmenitiesEntity,
 			BuildersAvailableAmenitiesDTO BuildersAvailableAmenitiesDTO) throws BeansException {
-		BuildersAvailableAmenitiesDTO.setAmenitiesAndSpecifications(copyAmenityAndSpecificationsEntityToDTO(BuildersAvailableAmenitiesEntity.getAmenitiesAndSpecificationsForBuilders()));
+		BuildersAvailableAmenitiesDTO.setAmenitiesAndSpecifications(copyAmenityAndSpecificationsEntityToDTO(getAmenitiesAndSpecificationsByAmenityid(BuildersAvailableAmenitiesEntity.getAmenitiesAndSpecificationsId())));
 		final Set<String> prop = new HashSet<>(Arrays.asList("builderId", "amenitiesAndSpecificationsId"));
 
 		/*
