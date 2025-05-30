@@ -94,9 +94,15 @@ public class ProductController {
 		System.out.println("BuilderDirectory" + new Gson().toJson(productCategoryId));
 		Map<String, List<ProductSubCategoryDTO>> responseProductSubCategory = new HashMap<String, List<ProductSubCategoryDTO>>();
 		ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
+		List<ProductSubCategoryDTO> productSubCategory = null;
 		
 		productCategoryDTO = productService.getAllProductsBasedOnCategory(Integer.parseInt(productCategoryId.replace("\"", "")));
-		responseProductSubCategory.put("productSubCategory", productCategoryDTO.getProductSubCategory());
+		if(productCategoryDTO.getProductSubCategory() != null) {
+			responseProductSubCategory.put("productSubCategory", productCategoryDTO.getProductSubCategory());
+		}else {
+			responseProductSubCategory.put("productSubCategory", productSubCategory);
+		}
+		
 		return generateResponse("List of Product Category!", HttpStatus.OK, responseProductSubCategory);
 		//return productCategoryDTO.getProductSubCategory();
 		
@@ -135,6 +141,7 @@ public class ProductController {
 			
 		}else {
 			System.out.println("Requirement already created for category, please wait for suppliers quotations or if and additional products needed edit the cart");
+			return generateResponse("Requirement already created for category, please wait for suppliers quotations or if and additional products needed edit the cart!", HttpStatus.NOT_FOUND, null);
 		}
 		
 		return generateResponse("Product added to cart Successfully!", HttpStatus.OK, null);
@@ -173,13 +180,12 @@ public class ProductController {
     consumes = MediaType.APPLICATION_JSON_VALUE, 
     produces = MediaType.APPLICATION_JSON_VALUE, 
     method = {RequestMethod.POST})*/
-	//public ResponseEntity<Object> CheckOut(@RequestBody MaterialRequirementDTO materialRequirementDTO) {
-	public ResponseEntity<Object> CheckOut(@RequestParam("materialRequirementId") String materialRequirementId, @RequestParam("builderId") String builderId,
-			@RequestParam("customerId") String customerId, @RequestParam("productCategoryId") String productCategoryId,
-			@RequestParam("state") String state, @RequestParam("district") String district) {
+	public ResponseEntity<Object> CheckOut(@RequestBody MaterialRequirementDTO materialRequirementDTO) {
+		//public ResponseEntity<Object> CheckOut(@RequestParam("materialRequirementId") String materialRequirementId, @RequestParam("builderId") String builderId,
+		//@RequestParam("customerId") String customerId, @RequestParam("productCategoryId") String productCategoryId,
+		//@RequestParam("state") String state, @RequestParam("district") String district) {
 		MaterialRequirementDTO materialRequirementDTOResponse = new MaterialRequirementDTO();
-		MaterialRequirement materialRequirementEntity = productService.checkOut(materialRequirementId,builderId,
-				  customerId,productCategoryId, state, district);
+		MaterialRequirement materialRequirementEntity = productService.checkOut(materialRequirementDTO);
 		
 		
 		return generateResponse("Checked out Successfull, New requirement created!", HttpStatus.OK, null);

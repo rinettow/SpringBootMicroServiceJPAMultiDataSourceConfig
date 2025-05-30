@@ -534,15 +534,53 @@ public void DeclineRestAllMaterialQuotation(String supplierId, String materialRe
 		entityManager.close();
 		
 		if(!materialRequirementEstimate.isEmpty()) {
-			List<MaterialRequirementItemsEstimate> materialRequirementEstimateApproved = materialRequirementEstimate.stream()
+			List<MaterialRequirementItemsEstimate> materialRequirementEstimateDeclined = materialRequirementEstimate.stream()
 					.peek(estimate -> estimate.setCustomerBuilderAceptedDeclined("DECLINE"))
 					.collect(Collectors.toList());
 			
-			materialRequirementEstimateApproved.stream().map(estimate-> UpdateMaterialEstimateWithApproveAndDeclinedStatus(estimate)).collect(Collectors.toList());
+			materialRequirementEstimateDeclined.stream().map(estimate-> UpdateMaterialEstimateWithApproveAndDeclinedStatus(estimate)).collect(Collectors.toList());
 			
 		}
 		
 	}
+
+
+public void DeclineAllMaterialQuotationOnCancellationRequest(String materialRequirementId) {
+	EntityManager entityManager = em.getEntityManager("builder");
+
+	entityManager.getTransaction().begin();
+	List<MaterialRequirementItemsEstimate> materialRequirementEstimate = new ArrayList<MaterialRequirementItemsEstimate>();
+
+	CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+	CriteriaQuery<MaterialRequirementItemsEstimate> criteria = builder.createQuery(MaterialRequirementItemsEstimate.class);
+	Root<MaterialRequirementItemsEstimate> rootBuilder = criteria.from(MaterialRequirementItemsEstimate.class);
+	criteria.select(rootBuilder);
+
+	List<Predicate> restrictions = new ArrayList<Predicate>();
+			restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
+			//restrictions.add(builder.notEqual(rootBuilder.get("materialSupplierId"), supplierId));
+
+	criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+	TypedQuery<MaterialRequirementItemsEstimate> query = entityManager.createQuery(criteria);
+	query.setHint(QueryHints.HINT_CACHEABLE, true);
+	query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+	materialRequirementEstimate = query.getResultList();
+
+	
+	entityManager.flush();
+	entityManager.getTransaction().commit();
+	entityManager.close();
+	
+	if(!materialRequirementEstimate.isEmpty()) {
+		List<MaterialRequirementItemsEstimate> materialRequirementEstimateDeclined = materialRequirementEstimate.stream()
+				.peek(estimate -> estimate.setCustomerBuilderAceptedDeclined("DECLINE"))
+				.collect(Collectors.toList());
+		
+		materialRequirementEstimateDeclined.stream().map(estimate-> UpdateMaterialEstimateWithApproveAndDeclinedStatus(estimate)).collect(Collectors.toList());
+		
+	}
+	
+}
 
 
 
@@ -579,13 +617,52 @@ public void CloseMaterialRequirement(String materialRequirementId) {
 				.peek(req -> req.setRequirementStatus("CLOSED"))
 				.collect(Collectors.toList());
 		
-		materialRequirementClosed.stream().map(requirementToClose-> CloseMaterialRequirement(requirementToClose)).collect(Collectors.toList());
+		materialRequirementClosed.stream().map(requirementToClose-> CloseOrCancelMaterialRequirement(requirementToClose)).collect(Collectors.toList());
 		
 	}
 	
 }
 
-public MaterialRequirement CloseMaterialRequirement(MaterialRequirement materialRequirement) {
+public void CancelMaterialRequirement(String materialRequirementId) {
+	
+	
+	EntityManager entityManager = em.getEntityManager("builder");
+
+	entityManager.getTransaction().begin();
+	List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+
+	CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+	CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
+	Root<MaterialRequirement> rootBuilder = criteria.from(MaterialRequirement.class);
+	criteria.select(rootBuilder);
+
+	List<Predicate> restrictions = new ArrayList<Predicate>();
+			restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
+			
+
+	criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+	TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
+	query.setHint(QueryHints.HINT_CACHEABLE, true);
+	query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+	materialRequirement = query.getResultList();
+
+	
+	entityManager.flush();
+	entityManager.getTransaction().commit();
+	entityManager.close();
+	
+	if(!materialRequirement.isEmpty()) {
+		List<MaterialRequirement> materialRequirementCancelled = materialRequirement.stream()
+				.peek(req -> req.setRequirementStatus("CANCELLED"))
+				.collect(Collectors.toList());
+		
+		materialRequirementCancelled.stream().map(requirementToCancel-> CloseOrCancelMaterialRequirement(requirementToCancel)).collect(Collectors.toList());
+		
+	}
+	
+}
+
+public MaterialRequirement CloseOrCancelMaterialRequirement(MaterialRequirement materialRequirement) {
 	EntityManager entityManager1 = em.getEntityManager("builder");
 
 	entityManager1.getTransaction().begin();

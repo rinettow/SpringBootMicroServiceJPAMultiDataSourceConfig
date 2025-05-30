@@ -240,28 +240,33 @@ public class ProductService {
 	}
 	
 	//public MaterialRequirement checkOut(MaterialRequirementDTO materialRequirementDTO) {
-	public MaterialRequirement checkOut(String materialRequirementId, String builderId,
-			 String customerId,  String productCategoryId,
-			 String state, String district) {
+	public MaterialRequirement checkOut(MaterialRequirementDTO materialRequirementDTO) {
 	
-		String stateQuotesRemoved =state.replace("\"","");
-		String districtQuotesRemoved =district.replace("\"","");
+		//String stateQuotesRemoved =state.replace("\"","");
+		//String districtQuotesRemoved =district.replace("\"","");
 		MaterialRequirement materialRequirementEntity = new MaterialRequirement();
 		/*final Set<String> prop = new HashSet<>(Arrays.asList("materialRequirementId", "customerId", "builderId", 
 				"productCategoryId", "requirementStatus", "state", "district"));
 		this.copyPicturesBasicDTOToEntity(materialRequirementDTO, materialRequirementEntity, prop);*/
 		
-		materialRequirementEntity.setMaterialRequirementId(Integer.valueOf(materialRequirementId));
-		if(Integer.valueOf(builderId) !=null) {
-			materialRequirementEntity.setBuilderId(Integer.valueOf(builderId));
+		materialRequirementEntity.setMaterialRequirementId(materialRequirementDTO.getMaterialRequirementId());
+		if(materialRequirementDTO.getBuilderId() !=null) {
+			materialRequirementEntity.setBuilderId(materialRequirementDTO.getBuilderId());
 		}
-		if(!customerId.equals("undefined")) {
-			materialRequirementEntity.setCustomerId(Integer.valueOf(customerId));
+		if(materialRequirementDTO.getCustomerId() != null) {
+			materialRequirementEntity.setCustomerId(materialRequirementDTO.getCustomerId());
 		}
 		
-		materialRequirementEntity.setProductCategoryId(Integer.valueOf(productCategoryId));
-		materialRequirementEntity.setState(stateQuotesRemoved);
-		materialRequirementEntity.setDistrict(districtQuotesRemoved);
+		materialRequirementEntity.setProductCategoryId(materialRequirementDTO.getProductCategoryId());
+		materialRequirementEntity.setState(materialRequirementDTO.getState());
+		materialRequirementEntity.setDistrict(materialRequirementDTO.getDistrict());
+		materialRequirementEntity.setDoorNumber(null);
+		materialRequirementEntity.setStreetFirst(materialRequirementDTO.getStreetFirst());
+		materialRequirementEntity.setStreetSecond(null);
+		materialRequirementEntity.setLandmark(materialRequirementDTO.getLandmark());
+		materialRequirementEntity.setCity(materialRequirementDTO.getCity());
+		materialRequirementEntity.setPincode(materialRequirementDTO.getPincode());
+		materialRequirementEntity.setCountry("India");
 		materialRequirementEntity.setRequirementStatus("OPEN");
 		
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -673,9 +678,9 @@ public class ProductService {
 		if(materialRequirement.getBuilderId() != null) {
 			List<Builder> builderEntity = getBuilderByBuilderId(materialRequirement.getBuilderId());
 			materialRequirementDTO.setBuilderForMaterialRequirement(builderService.setBuilderDTOWithoutProject(builderEntity.get(0)));
-			 prop = new HashSet<>(Arrays.asList("materialRequirementId", "builderId", "productCategoryId", "requirementStatus", "state", "district"));
+			 prop = new HashSet<>(Arrays.asList("materialRequirementId", "builderId", "productCategoryId", "requirementStatus", "state", "district", "doorNumber", "streetFirst", "streetSecond", "landmark", "city", "pincode", "country"));
 		}else if(materialRequirement.getCustomerId() != null) {
-			 prop = new HashSet<>(Arrays.asList("materialRequirementId", "customerId", "productCategoryId", "requirementStatus", "state", "district"));
+			 prop = new HashSet<>(Arrays.asList("materialRequirementId", "customerId", "productCategoryId", "requirementStatus", "state", "district", "doorNumber", "streetFirst", "streetSecond", "landmark", "city", "pincode", "country"));
 		}
 		
 		this.copyMaterialRequirementBasicEntityToDTO(materialRequirement, materialRequirementDTO, prop);

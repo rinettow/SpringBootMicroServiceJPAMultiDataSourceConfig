@@ -41,6 +41,7 @@ import com.shop.organic.dto.BuildersAvailableAmenitiesDTO;
 import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
+import com.shop.organic.dto.MaterialRequirementDTO;
 import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
@@ -442,7 +443,18 @@ public class BuilderController {
 			builderService.CloseMaterialRequirement(materialRequirementId);
 		
 
-		return generateResponse("Material Estimate Approved!", HttpStatus.OK, null);
+		return generateResponse("Material Estimate Approved and Requirement Closed!", HttpStatus.OK, null);
+	}
+	
+	@PostMapping(value = "/cancelMaterialRequirement")
+	public ResponseEntity<Object> cancelMaterialRequirement(@RequestBody MaterialRequirementDTO materialRequirementDTO) throws IOException {
+		System.out.println("pictureDTO" + new Gson().toJson(materialRequirementDTO));
+		ObjectMapper objectMapper = new ObjectMapper();
+            builderService.DeclineAllMaterialQuotationOnCancellationRequest(String.valueOf(materialRequirementDTO.getMaterialRequirementId()));
+			builderService.CancelMaterialRequirement(String.valueOf(materialRequirementDTO.getMaterialRequirementId()));
+		
+
+		return generateResponse("All Material Estimate declined! and Requirement cancelled", HttpStatus.OK, null);
 	}
 	
 	
