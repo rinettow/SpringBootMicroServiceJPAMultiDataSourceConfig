@@ -634,7 +634,7 @@ public class ProductService {
 		
 		materialRequirementItems = this.getAllItemsByRequirementId(materialRequirement.getMaterialRequirementId());
 		if (materialRequirementItems != null) {
-			System.out.println("Test" +materialRequirementItems.get(0).getMaterialRequirementId());
+			//System.out.println("Test" +materialRequirementItems.get(0).getMaterialRequirementId());
 			materialRequirementDTO.setMaterialRequirementItems(materialRequirementItems.stream().map(item -> this.setMaterialRequirementItemsDTO(item))
 					.collect(Collectors.toList()));
 		}

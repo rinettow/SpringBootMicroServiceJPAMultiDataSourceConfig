@@ -887,11 +887,15 @@ public MaterialRequirement CloseOrCancelMaterialRequirement(MaterialRequirement 
 		criteria.select(rootBuilder);
 
 		List<Predicate> restrictions = new ArrayList<Predicate>();
+		List<Long> amenityIds = new ArrayList<>();
 		for (BuildersAvailableAmenitiesDTO availAmenity : builderDTO.getBuildersAvailableAmenities()) {
-			restrictions.add(rootBuilder.get("amenityAndSpecifiactionId").in(availAmenity.getAmenitiesAndSpecificationsId()));
+			amenityIds.add(Long.valueOf(Integer.valueOf(availAmenity.getAmenitiesAndSpecificationsId())));
+			
 		    }
+		restrictions.add(rootBuilder.get("amenityAndSpecifiactionId").in(amenityIds));
 		restrictions.add(builder.equal(rootBuilder.get("requirementStatus"), "OPEN"));
 		restrictions.add(builder.equal(rootBuilder.get("state"), builderDTO.getAddress().getState()));
+		restrictions.add(builder.equal(rootBuilder.get("district"), builderDTO.getAddress().getDistrict()));
 
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		TypedQuery<CustomerRequirement> query = entityManager.createQuery(criteria);
@@ -1262,7 +1266,7 @@ public MaterialRequirement CloseOrCancelMaterialRequirement(MaterialRequirement 
 		q.setParameter("builderId", builderId);
 		builderEntity = (Builder) q.getSingleResult();*/
 
-		builderDTO1 = setBuilderDTO(builderEntityList.get(0));
+		builderDTO1 = setBuilderDTOWithoutProject(builderEntityList.get(0));
 		entityManager.close();
 
 		return builderDTO1;
