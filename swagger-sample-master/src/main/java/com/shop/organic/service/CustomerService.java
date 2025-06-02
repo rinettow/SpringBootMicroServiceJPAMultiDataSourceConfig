@@ -1075,7 +1075,7 @@ public class CustomerService {
 				"amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet",
 				"planImagePath", "landImagePath", "brickType", "pillerBeamRequired", "floorType", "woodType",
 				"paintCoatCount", "paintWallPuttyCount", "paintBrand", "paintQuality", "plumbingBrand",
-				"electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand", "state", "district"));
+				"electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand", "state", "district", "doorNumber", "streetFirst", "streetSecond", "landmark", "city", "pincode", "country"));
 		String[] excludedProperties = Arrays
 				.stream(BeanUtils.getPropertyDescriptors(CustomerRequirementEntity.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
@@ -1099,7 +1099,7 @@ public class CustomerService {
 				"amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet",
 				"planImagePath", "landImagePath", "brickType", "pillerBeamRequired", "floorType", "woodType",
 				"paintCoatCount", "paintWallPuttyCount", "paintBrand", "paintQuality", "plumbingBrand",
-				"electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand", "state", "district"));
+				"electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand", "state", "district", "doorNumber", "streetFirst", "streetSecond", "landmark", "city", "pincode", "country"));
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(customerRequirementDTO.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
 
