@@ -800,6 +800,74 @@ public MaterialRequirement CloseOrCancelMaterialRequirement(MaterialRequirement 
 
 	}
 	
+	public void closeCustomerRequirement(BuildersEstimateDTO buildersEstimateDTO) {
+		List<CustomerRequirement> customerRequirement;
+		List<CustomerRequirement> toCloseCustomerRequirement = null;
+		List<CustomerRequirement> closedCustomerRequirement;
+		
+		boolean isAnyQuotationAcceptedForRequirement = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<CustomerRequirement> criteria = builder.createQuery(CustomerRequirement.class);
+		Root<CustomerRequirement> rootBuilder = criteria.from(CustomerRequirement.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+	
+		restrictions.add(builder.equal(rootBuilder.get("customerRequirementId"), buildersEstimateDTO.getCustomerRequirementId()));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<CustomerRequirement> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		customerRequirement = query.getResultList();
+		
+		
+		if (customerRequirement != null && !customerRequirement.isEmpty()) {
+			toCloseCustomerRequirement = customerRequirement.stream()
+					.peek(custReq -> custReq.setRequirementStatus("CLOSED"))
+					.collect(Collectors.toList());
+		}
+		
+		
+		if(toCloseCustomerRequirement != null && !toCloseCustomerRequirement.isEmpty()) {
+			closedCustomerRequirement = toCloseCustomerRequirement.stream().map(closeReq->this.closeCustRequirement(closeReq)).collect(Collectors.toList());
+		}
+		
+		entityManager.close();
+		
+
+	}
+	
+	public CustomerRequirement closeCustRequirement(CustomerRequirement customerRequirement) {
+		BuildersEstimateDTO responseBuildersEstimateDTO = new BuildersEstimateDTO();
+		
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		if (!entityManager.contains(customerRequirement)) {
+			CustomerRequirement customerRequirementAvailOrNot = entityManager.find(CustomerRequirement.class, customerRequirement.getCustomerRequirementId());
+			if (customerRequirementAvailOrNot == null) {
+				// persist object - add to entity manager
+				entityManager.persist(customerRequirement);
+				// flush em - save to DB
+				entityManager.flush();
+			} else {
+				entityManager.merge(customerRequirement);
+			}
+
+		}
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+
+		
+		entityManager.close();
+		return customerRequirement;
+		
+
+	}
+	
 	public BuildersEstimateDTO declineRestAllQuotation(BuildersEstimate buildersEstimate) {
 		BuildersEstimateDTO responseBuildersEstimateDTO = new BuildersEstimateDTO();
 		
@@ -889,7 +957,7 @@ public MaterialRequirement CloseOrCancelMaterialRequirement(MaterialRequirement 
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		List<Long> amenityIds = new ArrayList<>();
 		for (BuildersAvailableAmenitiesDTO availAmenity : builderDTO.getBuildersAvailableAmenities()) {
-			amenityIds.add(Long.valueOf(Integer.valueOf(availAmenity.getAmenitiesAndSpecificationsId())));
+			amenityIds.add(Long.valueOf(availAmenity.getAmenitiesAndSpecificationsId()));
 			
 		    }
 		restrictions.add(rootBuilder.get("amenityAndSpecifiactionId").in(amenityIds));

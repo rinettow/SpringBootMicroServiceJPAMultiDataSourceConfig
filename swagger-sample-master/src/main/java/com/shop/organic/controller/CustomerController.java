@@ -243,6 +243,7 @@ public class CustomerController {
 			} else {
 				uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
 				builderService.DeclineRestAllQuotationsExceptApprovedQuote(buildersEstimateDTO);
+				builderService.closeCustomerRequirement(buildersEstimateDTO);
 			}
 		} else if (buildersEstimateDTO.getCustomerAcceptedDeclined().equals("DECLINE")) {
 			uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
