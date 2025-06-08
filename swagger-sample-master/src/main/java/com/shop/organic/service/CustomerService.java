@@ -551,12 +551,12 @@ public class CustomerService {
 			// persist object - add to entity manager
 			entityManager.persist(customerRedQuotations);
 			// flush em - save to DB
-			entityManager.flush();
+			
 
 		}
 		// commit transaction at all
 		entityManager.getTransaction().commit();
-
+		entityManager.flush();
 		entityManager.close();
 	}
 
