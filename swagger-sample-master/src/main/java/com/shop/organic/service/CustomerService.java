@@ -785,7 +785,7 @@ public class CustomerService {
 
 		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
 			buildersEstimateDTO.setBuilderDTO(
-					builderService.setBuilderDTO(buildersEstimateEntity.getBuilderForBuildersEstimate()));
+					builderService.setBuilderDTOForCustomer(buildersEstimateEntity.getBuilderForBuildersEstimate()));
 		}
 
 		
@@ -845,11 +845,36 @@ public class CustomerService {
 
 	public BuildersEstimateDTO setBuilderEstimateDTObymanualCustomerRequirementPicking(
 			BuildersEstimate buildersEstimateEntity) {
+		HttpServletResponse response = null;
 		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
 		this.copyBuildersEstimateBasicEntityToDTO(buildersEstimateEntity, buildersEstimateDTO);
 
 		buildersEstimateDTO.setCustomerRequirementDTO(
 				getCustomerRequirementById(buildersEstimateEntity.getCustomerRequirementId()));
+		
+		if (buildersEstimateEntity.getDetailedEstimateFilePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(buildersEstimateEntity.getDetailedEstimateFilePath(), response)
+						.getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				buildersEstimateDTO.setDetailedEstimateFile(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
 
 		/*
 		 * if (buildersEstimateEntity.getProjectForBuildersEstimate() != null) {

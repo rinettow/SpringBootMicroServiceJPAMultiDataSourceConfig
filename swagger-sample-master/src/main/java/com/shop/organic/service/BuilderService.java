@@ -1610,6 +1610,44 @@ public MaterialRequirement CloseOrCancelMaterialRequirement(MaterialRequirement 
 		// carDTOList.add(carDTO);
 		return builderDTO;
 	}
+	
+	public BuilderDTO setBuilderDTOForCustomer(Builder builderEntity) {
+		BuilderDTO builderDTO = new BuilderDTO();
+		Address address = builderEntity.getAddress();
+		List<Address>  builderAddress =GetBuilderAddressByAddressId(address.getAddressId());
+		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderAddress.get(0));
+		builderDTO.setAddress(addressDTO);
+
+		List<Projects> builderProjects = this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
+		if (builderProjects != null && !builderProjects.isEmpty()) {
+			builderDTO.setProjects(builderProjects.stream().map(project -> setProjectDTO(project))
+					.collect(Collectors.toList()));
+		}
+		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
+		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
+		List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this.GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
+		if (builderAvailableAmenitiesById != null
+				&& !builderAvailableAmenitiesById.isEmpty()) {
+			builderDTO.setBuildersAvailableAmenities(builderAvailableAmenitiesById.stream()
+					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
+							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
+					.collect(Collectors.toList()));
+		}
+		
+		List<BuildersEstimate> buildersEstimates =this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
+		if (buildersEstimates != null && !buildersEstimates.isEmpty()) {
+			builderDTO.setBuildersEstimate(buildersEstimates.stream()
+					.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
+					.collect(Collectors.toList()));
+		}
+		
+
+		final Set<String> prop = new HashSet<>(Arrays.asList("builderId", "builderName", "manufacturingCompany",
+				"projectType", "phone", "userName", "password", "amenityAndSpecificationId"));
+		this.copyBuilderBasicEntityToDTO(builderEntity, builderDTO, prop);
+		// carDTOList.add(carDTO);
+		return builderDTO;
+	}
 
 	// @Async
 	public ProjectsDTO setProjectDTO(Projects projectEntity) {
