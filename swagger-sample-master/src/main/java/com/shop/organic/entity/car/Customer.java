@@ -37,6 +37,9 @@ public class Customer {
 	
 	@Column(name = "PASSWORD_CUSTOMER")
 	private String passwordCustomer;
+	
+	@Column(name = "ACCOUNT_STATUS")
+	private String accountStatus;
 
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerForCustomerRequirement")
 	private List<CustomerRequirement> customerRequirement;
@@ -49,6 +52,14 @@ public class Customer {
 	
 	
 	
+	public String getAccountStatus() {
+		return accountStatus;
+	}
+
+	public void setAccountStatus(String accountStatus) {
+		this.accountStatus = accountStatus;
+	}
+
 	public List<MaterialRequirement> getMaterialRequirement() {
 		return materialRequirement;
 	}

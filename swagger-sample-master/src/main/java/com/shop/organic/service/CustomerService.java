@@ -322,18 +322,37 @@ public class CustomerService {
 		CustomerDTO LoginCustomerDTO = new CustomerDTO();
 		Map<String, Object> response = new HashMap<String, Object>();
 		List<Customer> LoginCustomer = new ArrayList<Customer>();
+		String responseStatus = null;
 		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<Customer> loginCustomer = new ArrayList<Customer>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Customer> criteria = builder.createQuery(Customer.class);
+		Root<Customer> rootBuilder = criteria.from(Customer.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("phoneCustomer"), customerDTO.getPhoneCustomer()));
+		restrictions.add(builder.isNull(rootBuilder.get("accountStatus")));
+		//restrictions.add(builder.notEqual(rootBuilder.get("accountStatus"), "DELETED"));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Customer> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		
+		
+		/*EntityManager entityManager = em.getEntityManager("builder");
 		String responseStatus = null;
 
-		Query q = entityManager.createQuery("SELECT c FROM Customer c", Customer.class);
-		// q.setParameter("keyword", keyword); //etc
-		LoginCustomer = q.getResultList();
+		Query q = entityManager.createQuery("SELECT c FROM Customer c", Customer.class);*/
+		
+		LoginCustomer = query.getResultList();
 
 		System.out.println("LoginBuilderDTO" + LoginCustomer.get(0).getPhoneCustomer());
 
-		LoginCustomer = LoginCustomer.stream()
-				.filter(customer -> customer.getPhoneCustomer().equalsIgnoreCase(customerDTO.getPhoneCustomer()))
-				.collect(Collectors.toList());
 
 		if (LoginCustomer.isEmpty() && LoginCustomer.size() == 0) {
 			// throw new ResourceNotFoundException(

@@ -54,6 +54,9 @@ public class Builder {
 
 	@Column(name = "PHONE")
 	private String phone;
+	
+	@Column(name = "ACCOUNT_STATUS")
+	private String accountStatus;
 
 	@OneToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "ADDRESS_ID", referencedColumnName = "ADDRESS_ID")
@@ -76,6 +79,14 @@ public class Builder {
 	private List<MaterialRequirement> materialRequirement;
 	
 	
+
+	public String getAccountStatus() {
+		return accountStatus;
+	}
+
+	public void setAccountStatus(String accountStatus) {
+		this.accountStatus = accountStatus;
+	}
 
 	public List<MaterialRequirement> getMaterialRequirement() {
 		return materialRequirement;

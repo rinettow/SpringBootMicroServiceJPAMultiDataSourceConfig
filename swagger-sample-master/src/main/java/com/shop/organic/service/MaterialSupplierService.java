@@ -34,7 +34,9 @@ import com.shop.organic.dto.MaterialRequirementDTO;
 import com.shop.organic.dto.MaterialRequirementItemsEstimateDTO;
 import com.shop.organic.dto.MaterialSupplierAddressDTO;
 import com.shop.organic.dto.MaterialSupplierDTO;
+import com.shop.organic.dto.ProductBrandDTO;
 import com.shop.organic.dto.ProductCategoryDTO;
+import com.shop.organic.dto.SupplierAvailableBrandsDTO;
 import com.shop.organic.dto.SupplierAvailableCategoriesDTO;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.Customer;
@@ -43,7 +45,9 @@ import com.shop.organic.entity.car.MaterialRequirementItems;
 import com.shop.organic.entity.car.MaterialRequirementItemsEstimate;
 import com.shop.organic.entity.car.MaterialSupplier;
 import com.shop.organic.entity.car.MaterialSupplierAddress;
+import com.shop.organic.entity.car.ProductBrand;
 import com.shop.organic.entity.car.ProductCategory;
+import com.shop.organic.entity.car.SupplierAvailableBrands;
 import com.shop.organic.entity.car.SupplierAvailableCategories;
 import com.shop.organic.entity.car.SupplierOtp;
 import com.shop.organic.util.CreateEntityManager;
@@ -222,12 +226,35 @@ public class MaterialSupplierService {
 		Map<String, Object> response = new HashMap<String, Object>();
 		List<MaterialSupplier> LoginMaterialSupplier = new ArrayList<MaterialSupplier>();
 		String responseStatus= null;
+		
+		
 		EntityManager entityManager = em.getEntityManager("builder");
 
+		entityManager.getTransaction().begin();
+		
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<MaterialSupplier> criteria = builder.createQuery(MaterialSupplier.class);
+		Root<MaterialSupplier> rootBuilder = criteria.from(MaterialSupplier.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("materialSupplierPhone"), Phone));
+		restrictions.add(builder.isNull(rootBuilder.get("accountStatus")));
+		//restrictions.add(builder.notEqual(rootBuilder.get("accountStatus"), "DELETED"));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<MaterialSupplier> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		
+		
+		
+		/*EntityManager entityManager = em.getEntityManager("builder");
+
 		Query q = entityManager.createQuery("SELECT s FROM MaterialSupplier s WHERE s.materialSupplierPhone = :materialSupplierPhone", MaterialSupplier.class);
-		q.setParameter("materialSupplierPhone", Phone);
-		// q.setParameter("keyword", keyword); //etc
-		LoginMaterialSupplier = q.getResultList();
+		q.setParameter("materialSupplierPhone", Phone);*/
+		
+		LoginMaterialSupplier = query.getResultList();
 
 		
 		
@@ -573,6 +600,21 @@ public class MaterialSupplierService {
 		entityManager.close();
 	}
 	
+	public void registerSupplierAvailableBrands(SupplierAvailableBrands supplierAvailableBrands) {
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		// if (!entityManager.contains(builderEntity)) {
+		// persist object - add to entity manager
+		entityManager.persist(supplierAvailableBrands);
+		// flush em - save to DB
+		entityManager.flush();
+		// }
+		// commit transaction at all
+		entityManager.getTransaction().commit();
+		entityManager.close();
+	}
+	
 	public MaterialSupplier setMaterialSupplierEntity(MaterialSupplierDTO materialSupplierDTO) {
 		MaterialSupplier materialSupplierEntity = new MaterialSupplier();
 
@@ -614,6 +656,14 @@ public class MaterialSupplierService {
 			materialSupplierDTO.setMaterialSupplierAvailableCategories(materialSupplierEntity.getMaterialSupplierAvailableCategories().stream()
 					.map(supplierAvailableCategories -> this.copySupplierBasicAvailableCategoriesEntityToDTO(
 							supplierAvailableCategories, new SupplierAvailableCategoriesDTO()))
+					.collect(Collectors.toList()));
+		}
+		
+		if (materialSupplierEntity.getMaterialSupplierAvailableBrands() != null
+				&& !materialSupplierEntity.getMaterialSupplierAvailableBrands().isEmpty()) {
+			materialSupplierDTO.setMaterialSupplierAvailableBrands(materialSupplierEntity.getMaterialSupplierAvailableBrands().stream()
+					.map(supplierAvailableBrand -> this.copySupplierBasicAvailableBrandsEntityToDTO(
+							supplierAvailableBrand, new SupplierAvailableBrandsDTO()))
 					.collect(Collectors.toList()));
 		}
 
@@ -749,6 +799,32 @@ public class MaterialSupplierService {
 		return SupplierAvailableCategoriesDTO;
 	}
 	
+	public SupplierAvailableBrandsDTO copySupplierBasicAvailableBrandsEntityToDTO(
+			SupplierAvailableBrands supplierAvailableBrandsEntity,
+			SupplierAvailableBrandsDTO supplierAvailableBrandsDTO) throws BeansException {
+		supplierAvailableBrandsDTO.setProductBrandForSupplierAvailableBrands(copyBrandEntityToDTO(supplierAvailableBrandsEntity.getProductBrandForSupplierAvailableBrands()));
+		final Set<String> prop = new HashSet<>(Arrays.asList("materialSupplierId", "productBrandId"));
+
+		/*
+		 * BuildersAvailableAmenitiesDTO.setAmenitiesAndSpecifications(
+		 * copyAmenityAndSpecificationsEntityToDTO(
+		 * getAmenitiesAndSpecificationsByAmenityid(
+		 * BuildersAvailableAmenitiesEntity.getAmenitiesAndSpecificationsId())));
+		 */
+		String[] excludedProperties = null;
+		try {
+			excludedProperties = Arrays
+					.stream(BeanUtils.getPropertyDescriptors(supplierAvailableBrandsDTO.getClass()))
+					.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+		} catch (BeansException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		BeanUtils.copyProperties(supplierAvailableBrandsEntity, supplierAvailableBrandsDTO, excludedProperties);
+		return supplierAvailableBrandsDTO;
+	}
+	
 	public static SupplierAvailableCategories copySupplierBasicAvailableCategoriesDTOToEntity(
 			SupplierAvailableCategoriesDTO SupplierAvailableCategoriesDTO,
 			SupplierAvailableCategories supplierAvailableCategoriesEntity) throws BeansException {
@@ -766,6 +842,25 @@ public class MaterialSupplierService {
 
 		BeanUtils.copyProperties(SupplierAvailableCategoriesDTO, supplierAvailableCategoriesEntity, excludedProperties);
 		return supplierAvailableCategoriesEntity;
+	}
+	
+	public static SupplierAvailableBrands copySupplierBasicAvailableBrandsDTOToEntity(
+			SupplierAvailableBrandsDTO supplierAvailableBrandsDTO,
+			SupplierAvailableBrands supplierAvailableBrandsEntity) throws BeansException {
+		final Set<String> prop = new HashSet<>(Arrays.asList("materialSupplierId", "productBrandId"));
+
+		String[] excludedProperties = null;
+		try {
+			excludedProperties = Arrays
+					.stream(BeanUtils.getPropertyDescriptors(supplierAvailableBrandsEntity.getClass()))
+					.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+		} catch (BeansException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		BeanUtils.copyProperties(supplierAvailableBrandsDTO, supplierAvailableBrandsEntity, excludedProperties);
+		return supplierAvailableBrandsEntity;
 	}
 	
 	public static MaterialRequirementItemsEstimate copySupplierBasicAvailableItemEstimatesDTOToEntity(
@@ -804,6 +899,25 @@ public class MaterialSupplierService {
 
 		BeanUtils.copyProperties(productCategory, ProductCategoryDTO, excludedProperties);
 		return ProductCategoryDTO;
+	}
+	
+	private static ProductBrandDTO copyBrandEntityToDTO(
+			ProductBrand productBrand) {
+		final Set<String> prop = new HashSet<>(
+				Arrays.asList("productBrandId", "productBrandName"));
+		ProductBrandDTO ProductBrandDTO = new ProductBrandDTO();
+		String[] excludedProperties = null;
+		try {
+			excludedProperties = Arrays
+					.stream(BeanUtils.getPropertyDescriptors(ProductBrandDTO.getClass()))
+					.map(PropertyDescriptor::getName).filter(name -> !prop.contains(name)).toArray(String[]::new);
+		} catch (BeansException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		BeanUtils.copyProperties(productBrand, ProductBrandDTO, excludedProperties);
+		return ProductBrandDTO;
 	}
 	
 	public static void copyMaterialSupplierBasicEntityToDTO(MaterialSupplier materialSupplierEntity, MaterialSupplierDTO materialSupplierDTO, Set<String> props) {

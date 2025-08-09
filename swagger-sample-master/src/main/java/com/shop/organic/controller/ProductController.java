@@ -92,18 +92,19 @@ public class ProductController {
 	//public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
 	public ResponseEntity<Object> getAllProductsBasedOnCategory(@RequestParam("productCategoryId") String productCategoryId) throws JsonMappingException, JsonProcessingException {
 		System.out.println("BuilderDirectory" + new Gson().toJson(productCategoryId));
-		Map<String, List<ProductSubCategoryDTO>> responseProductSubCategory = new HashMap<String, List<ProductSubCategoryDTO>>();
-		ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
-		List<ProductSubCategoryDTO> productSubCategory = null;
+		Map<String, List<ProductCategoryDTO>> responseProductCategory = new HashMap<String, List<ProductCategoryDTO>>();
+		//ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
+		List<ProductCategoryDTO> ProductCategoryDTO = new ArrayList<ProductCategoryDTO>();
+		//List<ProductSubCategoryDTO> productSubCategory = null;
 		
-		productCategoryDTO = productService.getAllProductsBasedOnCategory(Integer.parseInt(productCategoryId.replace("\"", "")));
-		if(productCategoryDTO.getProductSubCategory() != null) {
-			responseProductSubCategory.put("productSubCategory", productCategoryDTO.getProductSubCategory());
+		ProductCategoryDTO = productService.getAllProductsBasedOnCategory(Integer.parseInt(productCategoryId.replace("\"", "")));
+		if(ProductCategoryDTO != null) {
+			responseProductCategory.put("productCategory", ProductCategoryDTO);
 		}else {
-			responseProductSubCategory.put("productSubCategory", productSubCategory);
+			responseProductCategory.put("productCategory", ProductCategoryDTO);
 		}
 		
-		return generateResponse("List of Product Category!", HttpStatus.OK, responseProductSubCategory);
+		return generateResponse("List of Product Category!", HttpStatus.OK, responseProductCategory);
 		//return productCategoryDTO.getProductSubCategory();
 		
 	}

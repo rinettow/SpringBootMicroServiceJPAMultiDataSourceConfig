@@ -35,6 +35,9 @@ public class ProductCategory {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "categoryForSubCaegory")
 	private List<ProductSubCategory> productSubCategory;
 	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "categoryForBrand")
+	private List<ProductBrand> productBrand;
+	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "categoryForMaterialRequirement")
 	private List<MaterialRequirement> materialRequirement;
 	
@@ -42,6 +45,14 @@ public class ProductCategory {
 	private List<SupplierAvailableCategories> supplierAvailableCategories;
 
 	
+	public List<ProductBrand> getProductBrand() {
+		return productBrand;
+	}
+
+	public void setProductBrand(List<ProductBrand> productBrand) {
+		this.productBrand = productBrand;
+	}
+
 	public List<SupplierAvailableCategories> getSupplierAvailableCategories() {
 		return supplierAvailableCategories;
 	}

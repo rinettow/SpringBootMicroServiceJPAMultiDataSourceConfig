@@ -13,6 +13,7 @@ import org.springframework.core.io.Resource;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ import javax.persistence.TypedQuery;
 import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.servlet.http.HttpServletResponse;
@@ -153,12 +155,13 @@ public class ProductService {
 	}
 
 	
-	public ProductCategoryDTO getAllProductsBasedOnCategory(int productCategorId) {
+	public List<ProductCategoryDTO> getAllProductsBasedOnCategory(int productCategorId) {
 		// return
 		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
 		// carEntityList=carRepository.findAll();
 		List<ProductCategory> ProductCategory;
-		ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
+		List<ProductCategoryDTO> ProductCategoryDTO = new ArrayList<ProductCategoryDTO>();
+		//ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
 		EntityManager entityManager = em.getEntityManager("builder");
 
 		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
@@ -167,7 +170,7 @@ public class ProductService {
 		criteria.select(rootBuilder);
 
 		List<Predicate> restrictions = new ArrayList<Predicate>();
-		restrictions.add(builder.equal(rootBuilder.get("productCategoryId"), productCategorId));
+		//restrictions.add(builder.equal(rootBuilder.get("productCategoryId"), productCategorId));
 		
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		TypedQuery<ProductCategory> query = entityManager.createQuery(criteria);
@@ -176,9 +179,10 @@ public class ProductService {
 		ProductCategory = query.getResultList();
 
 		if (!ProductCategory.isEmpty()) {
-			productCategoryDTO = this.setProductCategoryDTO(ProductCategory.get(0));
+			ProductCategoryDTO = ProductCategory.stream().map(catg->this.setProductCategoryDTO(catg)).collect(Collectors.toList());
+			//productCategoryDTO = this.setProductCategoryDTO(ProductCategory.get(0));
 		}
-		return productCategoryDTO;
+		return ProductCategoryDTO;
 	}
 	
 	
@@ -294,8 +298,25 @@ public class ProductService {
 			String isCustomerOrBuilder, String productCategoryId) {
 		boolean isCartAlreadyAvailable = false;
 		EntityManager entityManager = em.getEntityManager("builder");
-
 		entityManager.getTransaction().begin();
+		
+		
+		long prodId = 1L;
+		CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+		CriteriaUpdate<Product> q = cb.createCriteriaUpdate(Product.class);
+		Root<Product> root = q.from(Product.class);
+		q.set("measuremmentUnit",  "LTR");
+		q.where(cb.equal(root.get("productId"), prodId)); 
+
+		int result = entityManager.createQuery(q).executeUpdate();
+		
+		
+		
+		
+		
+		
+		
+		
 		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
 
 		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
@@ -552,6 +573,40 @@ public class ProductService {
 		}
 
 		return productCategory;
+	}
+	
+	public List<ProductSubCategory> getSubCategoryByProductSubCategoryId(int productSubCategoryId) {
+		boolean isSubCategoryAvailableForSubCatgId = false;
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		List<ProductSubCategory> productSubCategory = new ArrayList<ProductSubCategory>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<ProductSubCategory> criteria = builder.createQuery(ProductSubCategory.class);
+		Root<ProductSubCategory> rootBuilder = criteria.from(ProductSubCategory.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		
+		restrictions.add(builder.equal(rootBuilder.get("productSubCategoryId"), productSubCategoryId));
+		
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<ProductSubCategory> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		productSubCategory = query.getResultList();
+
+		
+		entityManager.flush();
+		entityManager.getTransaction().commit();
+		entityManager.close();
+		
+		if(!productSubCategory.isEmpty()) {
+			isSubCategoryAvailableForSubCatgId = true;
+		}
+
+		return productSubCategory;
 	}
 	
 	public List<Product> getProductInfoByProducttId(int productId) {
@@ -818,6 +873,7 @@ public class ProductService {
 	public ProductDTO setProductDTO(Product product) {
 		ProductDTO ProductDTO = new ProductDTO();
 		HttpServletResponse response = null;
+		ProductDTO.setSubCategoryForProduct(setProductSubCategoryDTOWithoutProduct(getSubCategoryByProductSubCategoryId(product.getProductSubcategoryId()).get(0)));;
 		final Set<String> prop = new HashSet<>(Arrays.asList("productId", "productSubcategoryId", "productName", "productDescription", "measuremmentUnit", "quantity", "brandName", "productImagePath"));
 		this.copyProductBasicEntityToDTO(product, ProductDTO, prop);
 		
@@ -829,18 +885,24 @@ public class ProductService {
 			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
 			InputStream in = null;
 			try {
-				in = this.getFileSystem(product.getProductImagePath(), response).getInputStream();
+				Resource resource= this.getFileSystem(product.getProductImagePath(), response);
+				if(resource != null) {
+					in = this.getFileSystem(product.getProductImagePath(), response).getInputStream();
+					byte[] media = IOUtils.toByteArray(in);
+					ProductDTO.setProductImage(media);
+				
+				}
+				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			try {
+			/*try {
 				byte[] media = IOUtils.toByteArray(in);
 				ProductDTO.setProductImage(media);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
 
 		}
 		/*if(product.getSubCategoryForProduct() != null) {
@@ -882,8 +944,13 @@ public class ProductService {
 		final String FILE_DIRECTORY = "C:/Users/User/GitHub Repository/BuildersImage/Builder23/Project29/";
 		switch (resourceType) {
 		case FILE_SYSTEM:
-			resource = new FileSystemResource(filename);
-			System.out.println("ceateImageDirectoryForBuilder2" + resource.exists());
+			File f = new File(filename);
+			if(f.exists() && !f.isDirectory()) { 
+				resource = new FileSystemResource(filename);
+				//System.out.println("ceateImageDirectoryForBuilder2" + resource.exists());
+				break;
+			
+			}
 			break;
 		case CLASSPATH:
 			resource = new ClassPathResource("data/" + filename);

@@ -20,6 +20,7 @@ import org.hibernate.annotations.Parameter;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.shop.organic.entity.car.MaterialRequirement;
+import com.shop.organic.entity.car.ProductBrand;
 
 
 public class ProductCategoryDTO {
@@ -27,16 +28,26 @@ public class ProductCategoryDTO {
 	private int productCategoryId;
     private String productCategoryName;
 	private List<ProductSubCategoryDTO> productSubCategory;
-	private List<MaterialRequirement> materialRequirement;
+	private List<MaterialRequirementDTO> materialRequirement;
+	private List<ProductBrandDTO> productBrand;
 	
 	
 	
-	public List<MaterialRequirement> getMaterialRequirement() {
+
+	public List<MaterialRequirementDTO> getMaterialRequirement() {
 		return materialRequirement;
 	}
 
-	public void setMaterialRequirement(List<MaterialRequirement> materialRequirement) {
+	public void setMaterialRequirement(List<MaterialRequirementDTO> materialRequirement) {
 		this.materialRequirement = materialRequirement;
+	}
+
+	public List<ProductBrandDTO> getProductBrand() {
+		return productBrand;
+	}
+
+	public void setProductBrand(List<ProductBrandDTO> productBrand) {
+		this.productBrand = productBrand;
 	}
 
 	public List<ProductSubCategoryDTO> getProductSubCategory() {

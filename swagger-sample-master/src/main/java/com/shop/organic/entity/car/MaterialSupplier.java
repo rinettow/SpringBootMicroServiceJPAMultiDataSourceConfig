@@ -58,6 +58,9 @@ public class MaterialSupplier {
 
 	@Column(name = "MATERIAL_SUPPLIER_PASSWORD")
 	private String materialSupplierPassword;
+	
+	@Column(name = "ACCOUNT_STATUS")
+	private String accountStatus;
 
 	@OneToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "MATERIAL_SUPPLIER_ADDRESS_ID", referencedColumnName = "MATERIAL_SUPPLIER_ADDRESS_ID")
@@ -69,7 +72,26 @@ public class MaterialSupplier {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "materialSupplierForSupplierAvailableCategories")
 	private List<SupplierAvailableCategories> materialSupplierAvailableCategories;
 	
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "materialSupplierForSupplierAvailableBrands")
+	private List<SupplierAvailableBrands> materialSupplierAvailableBrands;
 	
+	
+
+	public List<SupplierAvailableBrands> getMaterialSupplierAvailableBrands() {
+		return materialSupplierAvailableBrands;
+	}
+
+	public void setMaterialSupplierAvailableBrands(List<SupplierAvailableBrands> materialSupplierAvailableBrands) {
+		this.materialSupplierAvailableBrands = materialSupplierAvailableBrands;
+	}
+
+	public String getAccountStatus() {
+		return accountStatus;
+	}
+
+	public void setAccountStatus(String accountStatus) {
+		this.accountStatus = accountStatus;
+	}
 
 	public List<SupplierAvailableCategories> getMaterialSupplierAvailableCategories() {
 		return materialSupplierAvailableCategories;

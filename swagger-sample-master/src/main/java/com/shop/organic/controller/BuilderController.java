@@ -43,6 +43,7 @@ import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.MaterialRequirementDTO;
 import com.shop.organic.dto.PictureDTO;
+import com.shop.organic.dto.ProductCategoryDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.dto.StateDTO;
@@ -50,6 +51,7 @@ import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuilderRedRequirements;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.Picture;
+import com.shop.organic.entity.car.ProductCategory;
 import com.shop.organic.entity.car.Projects;
 import com.shop.organic.entity.car.ProjectsAvailableAmenities;
 import com.shop.organic.entity.car.State;
@@ -274,6 +276,15 @@ public class BuilderController {
 		headers.setCacheControl(CacheControl.noCache().getHeaderValue());
 		return (ResponseEntity<List<StateDTO>>) ResponseEntity.ok().headers(headers).body(allStatesDTO);
 	}
+	
+	@GetMapping(value = "/GetCategoriesWithBrand")
+	public ResponseEntity<List<ProductCategoryDTO>> GetCategoriesWithBrand() {
+		List<ProductCategoryDTO> productCategoryDTO = new ArrayList<ProductCategoryDTO>();
+		productCategoryDTO = builderService.getAllCategoriesWithBrands();
+		final HttpHeaders headers = new HttpHeaders();
+		headers.setCacheControl(CacheControl.noCache().getHeaderValue());
+		return (ResponseEntity<List<ProductCategoryDTO>>) ResponseEntity.ok().headers(headers).body(productCategoryDTO);
+	}
 
 	// @CrossOrigin(origins = "http://localhost", methods = {RequestMethod.POST,
 	// RequestMethod.OPTIONS},
@@ -430,6 +441,22 @@ public class BuilderController {
 		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
 		//return generateResponse("List of Builders!", HttpStatus.OK, loginBuilder);
+	}
+	
+	@PostMapping(value = "/DeleteAccount")
+	//public ResponseEntity<Object> SendOTP(@RequestBody BuilderDTO builderDTO) {
+	public ResponseEntity<Object> DeleteAccount(@RequestParam("isBuilderOrCustomerOrsupplier") String isBuilderOrCustomerOrsupplier, @RequestParam("accountId") String accountId) {
+		if(isBuilderOrCustomerOrsupplier.equals("Builder")) {
+			builderService.deleteBuildersAccount(accountId);
+		}else if(isBuilderOrCustomerOrsupplier.equals("Customer")) {
+			builderService.deleteCustomersAccount(accountId);
+			
+		}else if(isBuilderOrCustomerOrsupplier.equals("Supplier")) {
+			builderService.deleteMaterialSupplierAccount(accountId);
+			
+		}
+		
+		return generateResponse("Builder Account Deleted Succesful!", HttpStatus.OK, null);
 	}
 	
 	@PostMapping(value = "/AcceptDeclineMaterialQuotation")

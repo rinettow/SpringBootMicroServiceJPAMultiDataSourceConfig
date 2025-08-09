@@ -52,6 +52,7 @@ import com.shop.organic.dto.PictureDTO;
 import com.shop.organic.dto.ProjectsAvailableAmenitiesDTO;
 import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.dto.StateDTO;
+import com.shop.organic.dto.SupplierAvailableBrandsDTO;
 import com.shop.organic.dto.SupplierAvailableCategoriesDTO;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuilderRedRequirements;
@@ -62,6 +63,7 @@ import com.shop.organic.entity.car.Picture;
 import com.shop.organic.entity.car.Projects;
 import com.shop.organic.entity.car.ProjectsAvailableAmenities;
 import com.shop.organic.entity.car.State;
+import com.shop.organic.entity.car.SupplierAvailableBrands;
 import com.shop.organic.entity.car.SupplierAvailableCategories;
 import com.shop.organic.exception.ResourceNotFoundException;
 import com.shop.organic.service.BuilderService;
@@ -110,6 +112,12 @@ public class MaterialSupplierController {
 							.getMaterialSupplierAvailableCategories().stream()
 							.peek(supplierAvailableCatgDTO -> supplierAvailableCatgDTO.setMaterialSupplierId(supplierid))
 							.collect(Collectors.toList());
+					
+					List<SupplierAvailableBrandsDTO> supplierAvailableBrandDTOWithSupplierId = materialSupplierDTO
+							.getMaterialSupplierAvailableBrands()
+							.stream()
+							.peek(supplierAvailableBrandDTO -> supplierAvailableBrandDTO.setMaterialSupplierId(supplierid))
+							.collect(Collectors.toList());
 				
 					
 					List<SupplierAvailableCategories> supplierAvailableCategories = supplierAvailableCategoriesDTOWithSupplierId
@@ -118,11 +126,21 @@ public class MaterialSupplierController {
 									supplierAvailableCatgDTO, new SupplierAvailableCategories()))
 							.collect(Collectors.toList());
 					
+					List<SupplierAvailableBrands> supplierAvailableBrands = supplierAvailableBrandDTOWithSupplierId
+							.stream()
+							.map(supplierAvailableBrandDTO -> materialSupplierService.copySupplierBasicAvailableBrandsDTOToEntity(
+									supplierAvailableBrandDTO, new SupplierAvailableBrands()))
+							.collect(Collectors.toList());
+					
 					
 					for (SupplierAvailableCategories supplierAvailableCategoriesToRegister : supplierAvailableCategories) {
 						materialSupplierService.registerSupplierAvailableCategories(supplierAvailableCategoriesToRegister);
 					}
-					;
+					
+					
+					for (SupplierAvailableBrands brandForSupplier : supplierAvailableBrands) {
+						materialSupplierService.registerSupplierAvailableBrands(brandForSupplier);
+					}
 
 					Object uriVariables = null;
 					//builderService.ceateImageDirectoryForBuilder(registeredBuilder);

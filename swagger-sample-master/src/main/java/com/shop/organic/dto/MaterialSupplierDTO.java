@@ -19,6 +19,7 @@ import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.shop.organic.entity.car.SupplierAvailableBrands;
 import com.shop.organic.entity.car.SupplierAvailableCategories;
 
 public class MaterialSupplierDTO {
@@ -34,9 +35,16 @@ public class MaterialSupplierDTO {
 	private List<SupplierAvailableCategoriesDTO> materialSupplierAvailableCategories;
 	private List<MaterialRequirementDTO> materialRequirement;
 	private BuilderDTO builderDTO;
+	private List<SupplierAvailableBrandsDTO> materialSupplierAvailableBrands;
 	
 	
 	
+	public List<SupplierAvailableBrandsDTO> getMaterialSupplierAvailableBrands() {
+		return materialSupplierAvailableBrands;
+	}
+	public void setMaterialSupplierAvailableBrands(List<SupplierAvailableBrandsDTO> materialSupplierAvailableBrands) {
+		this.materialSupplierAvailableBrands = materialSupplierAvailableBrands;
+	}
 	public List<MaterialRequirementDTO> getMaterialRequirement() {
 		return materialRequirement;
 	}
