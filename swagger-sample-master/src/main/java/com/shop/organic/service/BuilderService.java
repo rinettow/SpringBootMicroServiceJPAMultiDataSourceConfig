@@ -110,6 +110,11 @@ import java.util.concurrent.Future;
 
 import javax.annotation.PreDestroy;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
+
 @Service
 @Transactional
 //@ConfigurationProperties("application-dev")
@@ -1044,10 +1049,10 @@ public class BuilderService {
 
 	}
 
-	public void closeCustomerRequirement(BuildersEstimateDTO buildersEstimateDTO) {
+	public void closeOrCancelCustomerRequirement(BuildersEstimateDTO buildersEstimateDTO, String isCloseOrCancelReq) {
 		List<CustomerRequirement> customerRequirement;
-		List<CustomerRequirement> toCloseCustomerRequirement = null;
-		List<CustomerRequirement> closedCustomerRequirement;
+		List<CustomerRequirement> toCloseOrCancelCustomerRequirement = null;
+		List<CustomerRequirement> closedOrCanceledCustomerRequirement;
 
 		boolean isAnyQuotationAcceptedForRequirement = false;
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -1069,20 +1074,26 @@ public class BuilderService {
 		customerRequirement = query.getResultList();
 
 		if (customerRequirement != null && !customerRequirement.isEmpty()) {
-			toCloseCustomerRequirement = customerRequirement.stream()
-					.peek(custReq -> custReq.setRequirementStatus("CLOSED")).collect(Collectors.toList());
+			if(isCloseOrCancelReq.equals("CLOSED")) {
+				toCloseOrCancelCustomerRequirement = customerRequirement.stream()
+						.peek(custReq -> custReq.setRequirementStatus("CLOSED")).collect(Collectors.toList());
+			}else if(isCloseOrCancelReq.equals("CANCELLED")) {
+				toCloseOrCancelCustomerRequirement = customerRequirement.stream()
+						.peek(custReq -> custReq.setRequirementStatus("CANCELLED")).collect(Collectors.toList());
+			}
+			
 		}
 
-		if (toCloseCustomerRequirement != null && !toCloseCustomerRequirement.isEmpty()) {
-			closedCustomerRequirement = toCloseCustomerRequirement.stream()
-					.map(closeReq -> this.closeCustRequirement(closeReq)).collect(Collectors.toList());
+		if (toCloseOrCancelCustomerRequirement != null && !toCloseOrCancelCustomerRequirement.isEmpty()) {
+			closedOrCanceledCustomerRequirement = toCloseOrCancelCustomerRequirement.stream()
+					.map(closeReq -> this.closeOrCancelCustRequirement(closeReq)).collect(Collectors.toList());
 		}
 
 		entityManager.close();
 
 	}
 
-	public CustomerRequirement closeCustRequirement(CustomerRequirement customerRequirement) {
+	public CustomerRequirement closeOrCancelCustRequirement(CustomerRequirement customerRequirement) {
 		BuildersEstimateDTO responseBuildersEstimateDTO = new BuildersEstimateDTO();
 
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -1185,6 +1196,20 @@ public class BuilderService {
 		List<CustomerRequirementDTO> allOpenRequirementsDTO = null;
 		List<CustomerRequirementDTO> allViewedAndUnViewedOpenRequirementsDTO = null;
 		boolean isQouteAlreadyRequestedToBuilder = false;
+		
+		 // Get the current date and time
+        LocalDateTime now = LocalDateTime.now();
+
+        // Subtract 45 days from the current date and time
+        LocalDateTime fortyFiveDaysAgo = now.minusDays(45);
+
+        // Convert LocalDateTime to java.sql.Timestamp
+        // You might need to specify a ZoneId if time zone handling is critical for your application.
+        // For simplicity, using the system default zone ID here.
+        Timestamp timestampFortyFiveDaysAgo = Timestamp.from(fortyFiveDaysAgo.atZone(ZoneId.systemDefault()).toInstant());
+
+        System.out.println("Current Timestamp: " + Timestamp.from(now.atZone(ZoneId.systemDefault()).toInstant()));
+        System.out.println("Timestamp 45 days older: " + timestampFortyFiveDaysAgo);
 
 		EntityManager entityManager = em.getEntityManager("builder");
 
@@ -1203,6 +1228,7 @@ public class BuilderService {
 		restrictions.add(builder.equal(rootBuilder.get("requirementStatus"), "OPEN"));
 		restrictions.add(builder.equal(rootBuilder.get("state"), builderDTO.getAddress().getState()));
 		restrictions.add(builder.equal(rootBuilder.get("district"), builderDTO.getAddress().getDistrict()));
+		restrictions.add(builder.greaterThan(rootBuilder.get("reqCreatedTimestamp"), timestampFortyFiveDaysAgo));
 
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		TypedQuery<CustomerRequirement> query = entityManager.createQuery(criteria);
@@ -1667,38 +1693,42 @@ public class BuilderService {
 	// @Async
 	public BuilderDTO setBuilderDTO(Builder builderEntity) {
 		BuilderDTO builderDTO = new BuilderDTO();
-		Address address = builderEntity.getAddress();
-		List<Address> builderAddress = GetBuilderAddressByAddressId(address.getAddressId());
-		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderAddress.get(0));
+		//Address address = builderEntity.getAddress();
+		//List<Address> builderAddress = GetBuilderAddressByAddressId(address.getAddressId());
+		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderEntity.getAddress());
 		builderDTO.setAddress(addressDTO);
 
-		List<Projects> builderProjects = this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
+		/*List<Projects> builderProjects = this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
 		if (builderProjects != null && !builderProjects.isEmpty()) {
 			builderDTO.setProjects(
 					builderProjects.stream().map(project -> setProjectDTO(project)).collect(Collectors.toList()));
+		}*/
+		if (builderEntity.getProjects() != null && !builderEntity.getProjects().isEmpty()) {
+			builderDTO.setProjects(
+					builderEntity.getProjects().stream().map(project -> setProjectDTO(project)).collect(Collectors.toList()));
 		}
 		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
 		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
-		List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
-				.GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
-		if (builderAvailableAmenitiesById != null && !builderAvailableAmenitiesById.isEmpty()) {
-			builderDTO.setBuildersAvailableAmenities(builderAvailableAmenitiesById.stream()
+		//List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
+			//	.GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getBuildersAvailableAmenities() != null && !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
+			builderDTO.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
 					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
 							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
 					.collect(Collectors.toList()));
 		}
 
-		List<BuildersEstimate> buildersEstimates = this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
-		if (buildersEstimates != null && !buildersEstimates.isEmpty()) {
-			builderDTO.setBuildersEstimate(buildersEstimates.stream()
+		//List<BuildersEstimate> buildersEstimates = this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getBuildersEstimate() != null && !builderEntity.getBuildersEstimate().isEmpty()) {
+			builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
 					.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
 					.collect(Collectors.toList()));
 		}
 
-		List<MaterialRequirement> materialRequirements = GetMaterialRequirementByBuilderId(
-				builderEntity.getBuilderId());
-		if (materialRequirements != null && !materialRequirements.isEmpty()) {
-			builderDTO.setMaterialRequirement(materialRequirements.stream()
+		//List<MaterialRequirement> materialRequirements = GetMaterialRequirementByBuilderId(
+				//builderEntity.getBuilderId());
+		if (builderEntity.getMaterialRequirement() != null && !builderEntity.getMaterialRequirement().isEmpty()) {
+			builderDTO.setMaterialRequirement(builderEntity.getMaterialRequirement().stream()
 					.map(materialRequirement -> productService.setMaterialRequirementDTO(materialRequirement))
 					.collect(Collectors.toList()));
 
@@ -1873,30 +1903,30 @@ public class BuilderService {
 
 	public BuilderDTO setBuilderDTOForCustomer(Builder builderEntity) {
 		BuilderDTO builderDTO = new BuilderDTO();
-		Address address = builderEntity.getAddress();
-		List<Address> builderAddress = GetBuilderAddressByAddressId(address.getAddressId());
-		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderAddress.get(0));
+		//Address address = builderEntity.getAddress();
+		//List<Address> builderAddress = GetBuilderAddressByAddressId(address.getAddressId());
+		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderEntity.getAddress());
 		builderDTO.setAddress(addressDTO);
 
-		List<Projects> builderProjects = this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
-		if (builderProjects != null && !builderProjects.isEmpty()) {
+		//List<Projects> builderProjects = this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getProjects() != null && !builderEntity.getProjects().isEmpty()) {
 			builderDTO.setProjects(
-					builderProjects.stream().map(project -> setProjectDTO(project)).collect(Collectors.toList()));
+					builderEntity.getProjects().stream().map(project -> setProjectDTO(project)).collect(Collectors.toList()));
 		}
 		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
 		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
-		List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
-				.GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
-		if (builderAvailableAmenitiesById != null && !builderAvailableAmenitiesById.isEmpty()) {
-			builderDTO.setBuildersAvailableAmenities(builderAvailableAmenitiesById.stream()
+		//List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
+				//.GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getBuildersAvailableAmenities() != null && !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
+			builderDTO.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
 					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
 							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
 					.collect(Collectors.toList()));
 		}
 
-		List<BuildersEstimate> buildersEstimates = this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
-		if (buildersEstimates != null && !buildersEstimates.isEmpty()) {
-			builderDTO.setBuildersEstimate(buildersEstimates.stream()
+		//List<BuildersEstimate> buildersEstimates = this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getBuildersEstimate() != null && !builderEntity.getBuildersEstimate().isEmpty()) {
+			builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
 					.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
 					.collect(Collectors.toList()));
 		}
@@ -1957,15 +1987,15 @@ public class BuilderService {
 		 * getBuilderForProjects())); }
 		 */
 
-		List<Picture> projectPictures = this.GetProjectPicturesByProjectId(projectEntity.getProjectId());
-		if (projectPictures != null && !projectPictures.isEmpty()) {
-			projectDTO.setPicture(projectPictures.stream().map(this::setPictureDTO).collect(Collectors.toList()));
+		//List<Picture> projectPictures = this.GetProjectPicturesByProjectId(projectEntity.getProjectId());
+		if (projectEntity.getPicture() != null && !projectEntity.getPicture().isEmpty()) {
+			projectDTO.setPicture(projectEntity.getPicture().stream().map(this::setPictureDTO).collect(Collectors.toList()));
 		}
 
-		List<ProjectsAvailableAmenities> projectsAvailableAmenities = this
-				.GetProjectAvailableAmenitiesByProjectId(projectEntity.getProjectId());
-		if (projectsAvailableAmenities != null) {
-			projectDTO.setProjectsAvailableAmenities(projectsAvailableAmenities.stream()
+		//List<ProjectsAvailableAmenities> projectsAvailableAmenities = this
+				//.GetProjectAvailableAmenitiesByProjectId(projectEntity.getProjectId());
+		if (projectEntity.getProjectsAvailableAmenities() != null) {
+			projectDTO.setProjectsAvailableAmenities(projectEntity.getProjectsAvailableAmenities().stream()
 					.map(projectsAvailableEntities -> this.copyProjectsBasicAvailableAmenitiesEntityToDTO(
 							projectsAvailableEntities, new ProjectsAvailableAmenitiesDTO()))
 					.collect(Collectors.toList()));

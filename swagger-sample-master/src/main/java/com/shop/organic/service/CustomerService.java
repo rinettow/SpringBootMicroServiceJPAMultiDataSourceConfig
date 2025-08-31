@@ -89,6 +89,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.util.FileSystemUtils;
 
 import java.net.MalformedURLException;
+import java.sql.Date;
+import java.sql.Timestamp;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
@@ -114,6 +116,9 @@ public class CustomerService {
 
 	@Autowired
 	private BuilderService builderService;
+	
+	@Autowired
+	private ProductService productService;
 
 	// @Value("${server.port}")
 	private String port;
@@ -295,6 +300,13 @@ public class CustomerService {
 		if (customerEntity.getCustomerRequirement() != null && !customerEntity.getCustomerRequirement().isEmpty()) {
 			customerDTO.setCustomerRequirement(customerEntity.getCustomerRequirement().stream()
 					.map(this::setCustomerRequirementDTO).collect(Collectors.toList()));
+		}
+		
+		if (customerEntity.getMaterialRequirement() != null && !customerEntity.getMaterialRequirement().isEmpty()) {
+			customerDTO.setMaterialRequirement(customerEntity.getMaterialRequirement().stream()
+					.map(materialRequirement -> productService.setMaterialRequirementDTO(materialRequirement))
+					.collect(Collectors.toList()));
+
 		}
 		// carDTOList.add(carDTO);
 		return customerDTO;
@@ -592,6 +604,22 @@ public class CustomerService {
 		CustomerRequirement customerRequirementEntity = new CustomerRequirement();
 		copyCustomerRequirementBasicDTOToEntity(customerRequirementDTO, customerRequirementEntity);
 		EntityManager entityManager = em.getEntityManager("builder");
+		
+		 // Create a java.sql.Date object (e.g., representing today's date)
+        long currentTimeMillis = System.currentTimeMillis();
+        Date sqlDate = new Date(currentTimeMillis);
+
+        // Get the timestamp (long value representing milliseconds)
+        long timestampMillis = sqlDate.getTime();
+
+        // Optionally, create a java.sql.Timestamp object from the milliseconds
+        Timestamp timestampObject = new Timestamp(timestampMillis);
+
+        System.out.println("java.sql.Date: " + sqlDate);
+        System.out.println("Timestamp (milliseconds): " + timestampMillis);
+        System.out.println("java.sql.Timestamp object: " + timestampObject);
+		
+		customerRequirementEntity.setReqCreatedTimestamp(timestampObject);
 
 		entityManager.getTransaction().begin();
 
@@ -900,10 +928,10 @@ public class CustomerService {
 		 * buildersEstimateDTO.setProjectDTO(builderService.setProjectDTO(
 		 * buildersEstimateEntity.getProjectForBuildersEstimate())); }
 		 */
-		List<Builder> builder= GetBuilderByBuilderId(buildersEstimateEntity.getBuilderId());
-		if (builder != null) {
+		//List<Builder> builder= GetBuilderByBuilderId(buildersEstimateEntity.getBuilderId());
+		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
 			buildersEstimateDTO.setBuilderDTO(
-					builderService.setBuilderDTOWithoutProject(builder.get(0)));
+					builderService.setBuilderDTOWithoutProject(buildersEstimateEntity.getBuilderForBuildersEstimate()));
 		}
 		// carDTOList.add(carDTO);
 		return buildersEstimateDTO;
@@ -1017,15 +1045,15 @@ public class CustomerService {
 			}
 
 		}
-		List<Customer> customer = GetCustomerByCustomerId(customerRequirementEntity.getCustomerId());
-		if (customer != null) {
+		//List<Customer> customer = GetCustomerByCustomerId(customerRequirementEntity.getCustomerId());
+		if (customerRequirementEntity.getCustomerForCustomerRequirement() != null) {
 			customerRequirementDTO.setCustomerForCustomerRequirement(
-					setCustomerDTOWithoutRequirement(customer.get(0)));
+					setCustomerDTOWithoutRequirement(customerRequirementEntity.getCustomerForCustomerRequirement()));
 		}
-		List<AmenitiesAndSpecifications> amenitiesAndSpecifications = GetAmenityAndSpecificationByAmenityId(customerRequirementEntity.getAmenityAndSpecifiactionId());
-		if (amenitiesAndSpecifications != null) {
+		//List<AmenitiesAndSpecifications> amenitiesAndSpecifications = GetAmenityAndSpecificationByAmenityId(customerRequirementEntity.getAmenityAndSpecifiactionId());
+		if (customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement() != null) {
 			customerRequirementDTO
-					.setAmenitiesAndSpecificationsForCustomerRequirement(copyAmenitiesAndSpecificationEntityToDto(amenitiesAndSpecifications.get(0)));
+					.setAmenitiesAndSpecificationsForCustomerRequirement(copyAmenitiesAndSpecificationEntityToDto(customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement()));
 		}
 		// carDTOList.add(carDTO);
 		return customerRequirementDTO;

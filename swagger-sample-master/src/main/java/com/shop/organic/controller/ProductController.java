@@ -104,7 +104,9 @@ public class ProductController {
 			responseProductCategory.put("productCategory", ProductCategoryDTO);
 		}
 		
-		return generateResponse("List of Product Category!", HttpStatus.OK, responseProductCategory);
+		ResponseEntity<Object> response = generateResponse("List of Product Category!", HttpStatus.OK, responseProductCategory);
+		
+		return response;
 		//return productCategoryDTO.getProductSubCategory();
 		
 	}
@@ -157,20 +159,19 @@ public class ProductController {
 			@RequestParam("isCustomerOrBuilder") String isCustomerOrBuilder,
 			@RequestParam("productCategoryId") String productCategoryId) throws JsonMappingException, JsonProcessingException {
 		System.out.println("BuilderDirectory" + new Gson().toJson(productCategoryId));
-		MaterialRequirement materialRequirement = new MaterialRequirement();
 		MaterialRequirementDTO materialRequirementDTO = new MaterialRequirementDTO();
 		
 		customerOrBuilderId = customerOrBuilderId.replace("\"", "");
 		isCustomerOrBuilder = isCustomerOrBuilder.replace("\"", "");
 		productCategoryId = productCategoryId.replace("\"", "");
-
+		materialRequirementDTO = productService.fetchCart(customerOrBuilderId, isCustomerOrBuilder, productCategoryId);
 		
-		materialRequirement = productService.fetchCart(customerOrBuilderId, isCustomerOrBuilder, productCategoryId);
-		if(materialRequirement != null) {
-			materialRequirementDTO = productService.setMaterialRequirementDTO(materialRequirement);
+		if(materialRequirementDTO != null) {
+			return generateResponse("Cart Retrieved Successfull!", HttpStatus.OK, materialRequirementDTO);
+		}else {
+			return generateResponse("Cart Empty!", HttpStatus.NOT_FOUND, materialRequirementDTO);
 		}
 		
-		return generateResponse("Product added to cart Successfully!", HttpStatus.OK, materialRequirementDTO);
 		//return productCategoryDTO.getProductSubCategory();
 		
 	}

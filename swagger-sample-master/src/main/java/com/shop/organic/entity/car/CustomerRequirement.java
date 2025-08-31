@@ -2,6 +2,7 @@ package com.shop.organic.entity.car;
 
 import java.util.List;
 
+import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -14,6 +15,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.Parameter;
@@ -91,7 +94,11 @@ public class CustomerRequirement {
 
 	@Column(name = "TILES_FLOOR_WALL_BRAND")
 	private String tilesFloorWallBrand;
-
+	
+	@Column(name = "REQ_CREATED_TIMESTAMP")
+    private java.sql.Timestamp reqCreatedTimestamp;
+	
+	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "CUSTOMER_ID", insertable = false, updatable = false)
 	private Customer customerForCustomerRequirement;
@@ -109,6 +116,16 @@ public class CustomerRequirement {
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "customerRequirementForSiteLocation")
 	private List<SiteLocation> siteLocations;
 	
+
+	
+	
+	public java.sql.Timestamp getReqCreatedTimestamp() {
+		return reqCreatedTimestamp;
+	}
+
+	public void setReqCreatedTimestamp(java.sql.Timestamp reqCreatedTimestamp) {
+		this.reqCreatedTimestamp = reqCreatedTimestamp;
+	}
 
 	public List<BuilderRedRequirements> getBuilderRedRequirements() {
 		return builderRedRequirements;

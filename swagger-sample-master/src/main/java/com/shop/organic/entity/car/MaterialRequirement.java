@@ -100,11 +100,22 @@ public class MaterialRequirement {
 	@Column(name = "COUNTRY")
 	private String country;
 	
+	@Column(name = "REQ_CREATED_TIMESTAMP")
+    private java.sql.Timestamp reqCreatedTimestamp;
+	
 	@OneToMany(fetch = FetchType.LAZY, mappedBy = "materialRequirementForMaterialRequirementItemsEstimate")
 	private List<MaterialRequirementItemsEstimate> materialRequirementItemsEstimate;
 
 	
 	
+	public java.sql.Timestamp getReqCreatedTimestamp() {
+		return reqCreatedTimestamp;
+	}
+
+	public void setReqCreatedTimestamp(java.sql.Timestamp reqCreatedTimestamp) {
+		this.reqCreatedTimestamp = reqCreatedTimestamp;
+	}
+
 	public String getDoorNumber() {
 		return doorNumber;
 	}

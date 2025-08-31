@@ -46,6 +46,7 @@ import com.shop.organic.dto.BuildersEstimateDTO;
 import com.shop.organic.dto.CustomerDTO;
 import com.shop.organic.dto.CustomerRequirementDTO;
 import com.shop.organic.dto.MaterialRequirementDTO;
+import com.shop.organic.dto.MaterialRequirementItemsDTO;
 import com.shop.organic.dto.MaterialRequirementItemsEstimateDTO;
 import com.shop.organic.dto.MaterialSupplierDTO;
 import com.shop.organic.dto.PictureDTO;
@@ -54,6 +55,7 @@ import com.shop.organic.dto.ProjectsDTO;
 import com.shop.organic.dto.StateDTO;
 import com.shop.organic.dto.SupplierAvailableBrandsDTO;
 import com.shop.organic.dto.SupplierAvailableCategoriesDTO;
+import com.shop.organic.dto.SuppliersEstimates;
 import com.shop.organic.entity.car.Builder;
 import com.shop.organic.entity.car.BuilderRedRequirements;
 import com.shop.organic.entity.car.BuildersAvailableAmenities;
@@ -232,25 +234,60 @@ public class MaterialSupplierController {
 		String districtQuotesRemoved =materialSupplierDTO.getMaterialSupplierAddress().getDistrict().replace("\"","");
 		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
 		List<MaterialRequirementDTO> materialRequirementDTO = new ArrayList<MaterialRequirementDTO>();
+		List<MaterialRequirementDTO> brandFilteredMaterialRequirementDTO = new ArrayList<MaterialRequirementDTO>();
 		BuilderDTO builderDTO = new BuilderDTO();
 		materialRequirement = materialSupplierService.GetAllOpenMaterialReqirements(materialSupplierDTO, stateQuotesRemoved, districtQuotesRemoved);
+		
+		
 		if(materialRequirement != null) {
 			try {
 				materialRequirementDTO = materialRequirement.stream()
 						.filter(materialReq-> !materialSupplierService.verifyIfEstimateAlreadySubmittedForMaterialRequirementByBuilderCustomer(materialReq, materialSupplierDTO.getMaterialSupplierBuilderId()))
 						.map(matReq-> productService.setMaterialRequirementDTO(matReq)).collect(Collectors.toList());
+				List<String> brandNames = new ArrayList<String>();
+
+				materialSupplierDTO.getMaterialSupplierAvailableBrands().stream()
+						.filter(brand -> brandNames.add(brand.getProductBrandForSupplierAvailableBrands().getProductBrandName()))
+						.collect(Collectors.toList());
+
+				List<String> distinctBrandNames = brandNames.stream().distinct().collect(Collectors.toList());
+				
+				brandFilteredMaterialRequirementDTO = materialRequirementDTO.stream()
+						.map(matReqDTO-> this.setMaterialRequirementDTO(matReqDTO, distinctBrandNames))
+						.filter(matReqDTO->matReqDTO.getMaterialRequirementItems() != null && !matReqDTO.getMaterialRequirementItems().isEmpty())
+						.collect(Collectors.toList());
 			}catch(Exception e) {
 				System.out.println("Autowired Exception::::::" +e.getMessage());
 			}
 			
 		}
-		builderDTO.setMaterialRequirement(materialRequirementDTO);
+		
+		
+		builderDTO.setMaterialRequirement(brandFilteredMaterialRequirementDTO);
 		
 		return generateResponse("Get All Material Open Requirements!", HttpStatus.OK, builderDTO);
 		//return productCategoryDTO.getProductSubCategory();
 		
 	}
 	
+	
+	public MaterialRequirementDTO setMaterialRequirementDTO(MaterialRequirementDTO materialRequirementDTO, List<String> distinctBrandNames) {
+		List<MaterialRequirementItemsDTO> filteredItemsBrandAvail = null;
+		if(materialRequirementDTO.getMaterialRequirementItems() != null) {
+	    	filteredItemsBrandAvail = materialRequirementDTO.getMaterialRequirementItems().stream()
+					.filter(item-> distinctBrandNames.contains(item.getProductForMaterialRequirementItems().getBrandName()))
+					.collect(Collectors.toList());
+	    }
+		materialRequirementDTO.setMaterialRequirementItems(filteredItemsBrandAvail);
+		return materialRequirementDTO;
+		
+	}
+
+
+	/**/
+	
+
+
 	
 	//public ResponseEntity<Object> registerBuilder(@RequestBody ProductDTO ProductDTO) {
 	//public ResponseEntity<Object> uploadSupplierEstimatewithTotalCost(@RequestBody List<MaterialRequirementItemsEstimateDTO> MaterialRequirementItemsEstimates) throws JsonMappingException, JsonProcessingException {

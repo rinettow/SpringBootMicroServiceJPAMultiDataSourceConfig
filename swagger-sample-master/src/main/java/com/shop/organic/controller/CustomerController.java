@@ -81,10 +81,12 @@ public class CustomerController {
 	List<BuilderDTO> buildersList = null;
 
 	@PostMapping(value = "/RegisterCustomer")
-	public ResponseEntity<Object> registerBuilder(@RequestParam("otp") String otp, @RequestParam("customerDTO") String customerDTOString) throws JsonMappingException, JsonProcessingException {
+	public ResponseEntity<Object> registerBuilder(@RequestParam("otp") String otp,
+			@RequestParam("customerDTO") String customerDTOString)
+			throws JsonMappingException, JsonProcessingException {
 		System.out.println("BuilderDirectory" + new Gson().toJson(customerDTOString));
 		CustomerDTO registeredCustomerDTO = new CustomerDTO();
-		
+
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		CustomerDTO customerDTO = new CustomerDTO();
@@ -97,10 +99,10 @@ public class CustomerController {
 
 					customerService.ceateImageDirectoryForCustomer(registeredCustomerDTO);
 					return generateResponse("Customer Registered Successful!", HttpStatus.OK, registeredCustomerDTO);
-				}else {
+				} else {
 					return generateResponse("Mobile Number Already registered as Builder!", HttpStatus.CONFLICT, null);
 				}
-				
+
 			} else {
 				return generateResponse("Already registered Customer!", HttpStatus.ALREADY_REPORTED, null);
 			}
@@ -108,15 +110,15 @@ public class CustomerController {
 			return generateResponse("Incorrect OTP!", HttpStatus.NOT_FOUND, null);
 		}
 
-		
 	}
-	
-	
+
 	@PostMapping(value = "/ResetCustomerPassword")
-	public ResponseEntity<Object> ResetCustomerPassword(@RequestParam("otp") String otp, @RequestParam("customerDTO") String customerDTOString) throws JsonMappingException, JsonProcessingException {
+	public ResponseEntity<Object> ResetCustomerPassword(@RequestParam("otp") String otp,
+			@RequestParam("customerDTO") String customerDTOString)
+			throws JsonMappingException, JsonProcessingException {
 		System.out.println("BuilderDirectory" + new Gson().toJson(customerDTOString));
 		CustomerDTO registeredCustomerDTO = new CustomerDTO();
-		
+
 		ObjectMapper objectMapper = new ObjectMapper();
 
 		CustomerDTO customerDTO = new CustomerDTO();
@@ -134,7 +136,6 @@ public class CustomerController {
 			return generateResponse("Incorrect OTP!", HttpStatus.NOT_FOUND, null);
 		}
 
-		
 	}
 
 	@PostMapping(value = "/GenerateCustomersOTP")
@@ -147,7 +148,8 @@ public class CustomerController {
 	@PostMapping(value = "/CreateCustomerRequirement")
 	public ResponseEntity<Object> CreateCustomerRequirement(
 			@RequestParam("planPDFFileFormat") MultipartFile planPDFFileFormat,
-			//@RequestParam("landImagePNGorJPGFileFormat") MultipartFile landImagePNGorJPGFileFormat,
+			// @RequestParam("landImagePNGorJPGFileFormat") MultipartFile
+			// landImagePNGorJPGFileFormat,
 			@RequestParam("files[]") MultipartFile[] landImagePNGorJPGFileFormat,
 			@RequestParam("customerRequirementDTO") String createRequirementDTO)
 			throws JsonMappingException, JsonProcessingException {
@@ -243,13 +245,27 @@ public class CustomerController {
 			} else {
 				uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
 				builderService.DeclineRestAllQuotationsExceptApprovedQuote(buildersEstimateDTO);
-				builderService.closeCustomerRequirement(buildersEstimateDTO);
+				builderService.closeOrCancelCustomerRequirement(buildersEstimateDTO, "CLOSED");
 			}
 		} else if (buildersEstimateDTO.getCustomerAcceptedDeclined().equals("DECLINE")) {
 			uploadedEstimate = builderService.AcceptDeclineQuotation(buildersEstimateDTO);
 		}
 
 		return generateResponse("List of Builders!", HttpStatus.OK, uploadedEstimate);
+	}
+
+	@PostMapping(value = "/CancalCustomerRequirement")
+	public ResponseEntity<Object> CancalCustomerRequirement(
+			@RequestParam("customerRequirementId") String customerRequirementId) throws IOException {
+		System.out.println("pictureDTO" + new Gson().toJson(customerRequirementId));
+		ObjectMapper objectMapper = new ObjectMapper();
+
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		buildersEstimateDTO.setCustomerRequirementId(Integer.parseInt(customerRequirementId));
+		builderService.DeclineRestAllQuotationsExceptApprovedQuote(buildersEstimateDTO);
+		builderService.closeOrCancelCustomerRequirement(buildersEstimateDTO, "CANCELLED");
+
+		return generateResponse("List of Builders!", HttpStatus.OK, null);
 	}
 
 	@PostMapping(value = "/SubmitReview")
@@ -297,22 +313,26 @@ public class CustomerController {
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
 
 	}
-	
-	
+
 	@PostMapping(value = "/CustomerRedQuotation")
 	public ResponseEntity<Object> CustomerRedQuotation(@RequestParam("customerId") String customerId,
 			@RequestParam("customerRedQuotations") String customerRedQuotations) throws IOException {
 		ObjectMapper objectMapper = new ObjectMapper();
 		List<String> customerRedEstimates = new ArrayList<String>();
-		//buildersEstimatesDTO = objectMapper.readValue(builderEstimates, new TypeReference<List<BuildersEstimateDTO.class>>(){});
-		customerRedEstimates = objectMapper.readValue(customerRedQuotations, new TypeReference<List<String>>(){});
-		
-		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
-		//customerRequirementDTO = objectMapper.readValue(customerRedQuotations, CustomerRequirementDTO.class);
+		// buildersEstimatesDTO = objectMapper.readValue(builderEstimates, new
+		// TypeReference<List<BuildersEstimateDTO.class>>(){});
+		customerRedEstimates = objectMapper.readValue(customerRedQuotations, new TypeReference<List<String>>() {
+		});
 
-		List<BuildersEstimateDTO> buildersEstimatesDTOResponse = customerRedEstimates.stream().map(estimateId-> customerService.customerRedQuotations(Integer.parseInt(estimateId), Integer.parseInt(customerId))).collect(Collectors.toList());
-		
-		
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		// customerRequirementDTO = objectMapper.readValue(customerRedQuotations,
+		// CustomerRequirementDTO.class);
+
+		List<BuildersEstimateDTO> buildersEstimatesDTOResponse = customerRedEstimates.stream()
+				.map(estimateId -> customerService.customerRedQuotations(Integer.parseInt(estimateId),
+						Integer.parseInt(customerId)))
+				.collect(Collectors.toList());
+
 		return generateResponse("List of Builders!", HttpStatus.OK, buildersEstimatesDTOResponse);
 	}
 
@@ -328,9 +348,10 @@ public class CustomerController {
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
 		return generateResponse("List of Builders!", HttpStatus.OK, selectedProject.getPicture());
 	}
-	
+
 	@PostMapping(value = "/getCustomerSiteLocationByRequirmentId")
-	public ResponseEntity<Object> getCustomerSiteLocationByRequirmentId(@RequestBody CustomerRequirementDTO customerRequirementDTO) {
+	public ResponseEntity<Object> getCustomerSiteLocationByRequirmentId(
+			@RequestBody CustomerRequirementDTO customerRequirementDTO) {
 		List<SiteLocationDTO> siteLocationDTO;
 		siteLocationDTO = customerService.getCustomerSiteLocationByRequirmentId(customerRequirementDTO);
 		Object uriVariables = null;
@@ -338,7 +359,7 @@ public class CustomerController {
 		// carList = carService.findCarList();
 		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
-		return generateResponse("List of Builders!", HttpStatus.OK, siteLocationDTO	);
+		return generateResponse("List of Builders!", HttpStatus.OK, siteLocationDTO);
 	}
 
 	public static ResponseEntity<Object> generateResponse(String message, HttpStatus status, Object responseObj) {

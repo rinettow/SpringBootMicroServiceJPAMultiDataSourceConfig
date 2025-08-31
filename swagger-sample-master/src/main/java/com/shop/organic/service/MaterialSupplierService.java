@@ -1,6 +1,9 @@
 package com.shop.organic.service;
 
 import java.beans.PropertyDescriptor;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,6 +42,7 @@ import com.shop.organic.dto.ProductCategoryDTO;
 import com.shop.organic.dto.SupplierAvailableBrandsDTO;
 import com.shop.organic.dto.SupplierAvailableCategoriesDTO;
 import com.shop.organic.entity.car.Builder;
+import com.shop.organic.entity.car.BuildersAvailableAmenities;
 import com.shop.organic.entity.car.Customer;
 import com.shop.organic.entity.car.MaterialRequirement;
 import com.shop.organic.entity.car.MaterialRequirementItems;
@@ -441,6 +445,20 @@ public class MaterialSupplierService {
 
 		entityManager.getTransaction().begin();
 		List<MaterialRequirement> materialRequirement = new ArrayList<MaterialRequirement>();
+		
+		 // Get the current date and time
+        LocalDateTime now = LocalDateTime.now();
+
+        // Subtract 45 days from the current date and time
+        LocalDateTime fortyFiveDaysAgo = now.minusDays(45);
+
+        // Convert LocalDateTime to java.sql.Timestamp
+        // You might need to specify a ZoneId if time zone handling is critical for your application.
+        // For simplicity, using the system default zone ID here.
+        Timestamp timestampFortyFiveDaysAgo = Timestamp.from(fortyFiveDaysAgo.atZone(ZoneId.systemDefault()).toInstant());
+
+        System.out.println("Current Timestamp: " + Timestamp.from(now.atZone(ZoneId.systemDefault()).toInstant()));
+        System.out.println("Timestamp 45 days older: " + timestampFortyFiveDaysAgo);
 
 		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
 		CriteriaQuery<MaterialRequirement> criteria = builder.createQuery(MaterialRequirement.class);
@@ -470,12 +488,23 @@ public class MaterialSupplierService {
 		restrictions.add(builder.equal(rootBuilder.get("state"), state));
 		restrictions.add(builder.equal(rootBuilder.get("district"), district));
 		restrictions.add(builder.equal(rootBuilder.get("requirementStatus"), "OPEN"));
+		restrictions.add(builder.greaterThan(rootBuilder.get("reqCreatedTimestamp"), timestampFortyFiveDaysAgo));
 
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		TypedQuery<MaterialRequirement> query = entityManager.createQuery(criteria);
-		query.setHint(QueryHints.HINT_CACHEABLE, true);
-		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		//query.setHint(QueryHints.HINT_CACHEABLE, true);
+		//query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
 		materialRequirement = query.getResultList();
+		
+		
+		/*Query q = entityManager.createQuery(
+				"SELECT m FROM MaterialRequirement m WHERE m.state = :state and m.district = :district and m.requirementStatus = :requirementStatus",
+				MaterialRequirement.class);
+		// q.setParameter(1, builderId);
+		q.setParameter("state", state);
+		q.setParameter("district", district);
+		q.setParameter("requirementStatus", "OPEN");
+		materialRequirement = q.getResultList();*/
 
 		
 		entityManager.flush();

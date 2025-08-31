@@ -25,15 +25,16 @@ public class CustomerDTO {
 	private String phoneCustomer;
 	private String passwordCustomer;
 	private List<CustomerRequirementDTO> customerRequirement;
-	private List<MaterialRequirement> materialRequirement;
+	private List<MaterialRequirementDTO> materialRequirement;
 	
 	
 	
-	public List<MaterialRequirement> getMaterialRequirement() {
+	
+	public List<MaterialRequirementDTO> getMaterialRequirement() {
 		return materialRequirement;
 	}
 
-	public void setMaterialRequirement(List<MaterialRequirement> materialRequirement) {
+	public void setMaterialRequirement(List<MaterialRequirementDTO> materialRequirement) {
 		this.materialRequirement = materialRequirement;
 	}
 
