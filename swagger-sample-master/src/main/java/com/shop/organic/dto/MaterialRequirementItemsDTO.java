@@ -33,10 +33,24 @@ public class MaterialRequirementItemsDTO {
 	private ProductSubCategoryDTO productSubCategoryForMaterialRequirementItems;
 	private List<MaterialRequirementItemsEstimateDTO> materialRequirementItemsEstimate;
 	private int quantity;
+	private float bestPrice;
+	private MaterialSupplierDTO bestPriceMaterialSupplier;
 	
 	
 	
 	
+	public MaterialSupplierDTO getBestPriceMaterialSupplier() {
+		return bestPriceMaterialSupplier;
+	}
+	public void setBestPriceMaterialSupplier(MaterialSupplierDTO bestPriceMaterialSupplier) {
+		this.bestPriceMaterialSupplier = bestPriceMaterialSupplier;
+	}
+	public float getBestPrice() {
+		return bestPrice;
+	}
+	public void setBestPrice(float bestPrice) {
+		this.bestPrice = bestPrice;
+	}
 	public int getMaterialRequirementId() {
 		return materialRequirementId;
 	}

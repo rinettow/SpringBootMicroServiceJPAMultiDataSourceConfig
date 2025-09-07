@@ -3,6 +3,7 @@ package com.shop.organic.controller;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,6 +106,19 @@ public class ProductController {
 		}
 		
 		ResponseEntity<Object> response = generateResponse("List of Product Category!", HttpStatus.OK, responseProductCategory);
+		
+		return response;
+		//return productCategoryDTO.getProductSubCategory();
+		
+	}
+	
+	@PostMapping(value = "/getAllProductsImageResource")
+	//public ResponseEntity<Object> registerBuilder(@RequestBody BuilderDTO builderDTO) {
+	public ResponseEntity<Object> getAllProductsImageResource(@RequestBody ProductDTO[] productDTO) throws JsonMappingException, JsonProcessingException {
+		System.out.println("BuilderDirectory" + new Gson().toJson(productDTO));
+		
+		List<ProductDTO> productDTOWithImage = productService.getProductImageForProduct(Arrays.asList(productDTO));
+		ResponseEntity<Object> response = generateResponse("List of Product Category!", HttpStatus.OK, productDTOWithImage);
 		
 		return response;
 		//return productCategoryDTO.getProductSubCategory();

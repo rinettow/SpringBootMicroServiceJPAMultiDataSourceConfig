@@ -48,6 +48,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.common.base.Supplier;
 import com.google.gson.Gson;
 import com.shop.organic.dto.AddressDTO;
 import com.shop.organic.dto.AmenitiesAndSpecificationsDTO;
@@ -121,6 +122,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import javax.annotation.PreDestroy;
+
+import java.util.Comparator;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -735,23 +739,23 @@ public class ProductService {
 
 		ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
 		final Set<String> propCatg = new HashSet<>(Arrays.asList("productCategoryId", "productCategoryName"));
-	    this.copyProductCategoryBasicEntityToDTO(this.getCategoryByProductCategoryId(materialRequirement.getProductCategoryId()).get(0),
-		 productCategoryDTO, propCatg);
-		//this.copyProductCategoryBasicEntityToDTO(materialRequirement.getCategoryForMaterialRequirement(),
-			//	productCategoryDTO, propCatg);
+		this.copyProductCategoryBasicEntityToDTO(
+				this.getCategoryByProductCategoryId(materialRequirement.getProductCategoryId()).get(0),
+				productCategoryDTO, propCatg);
+		// this.copyProductCategoryBasicEntityToDTO(materialRequirement.getCategoryForMaterialRequirement(),
+		// productCategoryDTO, propCatg);
 		materialRequirementDTO.setCategoryForMaterialRequirement(productCategoryDTO);
 
-		 materialRequirementItems =
-		 this.getAllItemsByRequirementId(materialRequirement.getMaterialRequirementId());
+		materialRequirementItems = this.getAllItemsByRequirementId(materialRequirement.getMaterialRequirementId());
 		if (materialRequirementItems != null) {
 			// System.out.println("Test"
 			// +materialRequirementItems.get(0).getMaterialRequirementId());
-			materialRequirementDTO.setMaterialRequirementItems(materialRequirementItems
-					.stream().map(item -> this.setMaterialRequirementItemsDTO(item)).collect(Collectors.toList()));
+			materialRequirementDTO.setMaterialRequirementItems(materialRequirementItems.stream()
+					.map(item -> this.setMaterialRequirementItemsDTO(item)).collect(Collectors.toList()));
 		}
 
-		 materialRequirementItemsEstimate =
-		 this.getAllItemsEstimatesByRequirementId(materialRequirement.getMaterialRequirementId());
+		materialRequirementItemsEstimate = this
+				.getAllItemsEstimatesByRequirementId(materialRequirement.getMaterialRequirementId());
 		if (materialRequirementItemsEstimate != null) {
 			List<String> supplierIds = new ArrayList<String>();
 
@@ -771,7 +775,8 @@ public class ProductService {
 			Map<MaterialSupplierDTO, List<MaterialRequirementItemsEstimateDTO>> suppliersEstimate1 = new HashMap<MaterialSupplierDTO, List<MaterialRequirementItemsEstimateDTO>>();
 			List<SuppliersEstimates> allSuppliersWithEstimate = new ArrayList<SuppliersEstimates>();
 			distinctsupplierIds.stream().forEach(supplierId -> {
-				List<MaterialRequirementItemsEstimateDTO> materialRequirementItemsEstimateDTO = materialRequirementItemsEstimate.stream()
+				List<MaterialRequirementItemsEstimateDTO> materialRequirementItemsEstimateDTO = materialRequirementItemsEstimate
+						.stream()
 						.filter(estimateEntity -> estimateEntity.getMaterialSupplierId() == Integer.valueOf(supplierId))
 						.map(estimateEntity -> materialSupplierService.copyMaterialRequirementItemsEstimateEntityToDTO(
 								estimateEntity, new MaterialRequirementItemsEstimateDTO()))
@@ -790,19 +795,25 @@ public class ProductService {
 			materialRequirementDTO.setSuppliersEstimates(allSuppliersWithEstimate);
 		}
 
+		if(materialRequirementDTO.getSuppliersEstimates() != null && !materialRequirementDTO.getSuppliersEstimates().isEmpty()) {
+			List<MaterialRequirementItemsDTO> materialRequirementItemsBestpriceAdded = materialRequirementDTO.getMaterialRequirementItems()
+					.stream().map(item -> this.setBestPriceForItem(item, materialRequirementDTO)).collect(Collectors.toList());
+			materialRequirementDTO.setMaterialRequirementItems(materialRequirementItemsBestpriceAdded);
+		}
+		
+		
 		Set<String> prop = null;
 		if (materialRequirement.getBuilderId() != null) {
-			 List<Builder> builderEntity =
-			  getBuilderByBuilderId(materialRequirement.getBuilderId());
-			materialRequirementDTO.setBuilderForMaterialRequirement(
-					builderService.setBuilderDTOWithoutProject(builderEntity.get(0)));
+			List<Builder> builderEntity = getBuilderByBuilderId(materialRequirement.getBuilderId());
+			materialRequirementDTO
+					.setBuilderForMaterialRequirement(builderService.setBuilderDTOWithoutProject(builderEntity.get(0)));
 			prop = new HashSet<>(Arrays.asList("materialRequirementId", "builderId", "productCategoryId",
 					"requirementStatus", "state", "district", "doorNumber", "streetFirst", "streetSecond", "landmark",
 					"city", "pincode", "country"));
 		} else if (materialRequirement.getCustomerId() != null) {
-			List<Customer> customerEntity =getCustomerByCustomerId(materialRequirement.getCustomerId());
-			materialRequirementDTO.setCustomerForMaterialRequirement(customerService
-					.setCustomerDTOWithoutRequirement(customerEntity.get(0)));
+			List<Customer> customerEntity = getCustomerByCustomerId(materialRequirement.getCustomerId());
+			materialRequirementDTO.setCustomerForMaterialRequirement(
+					customerService.setCustomerDTOWithoutRequirement(customerEntity.get(0)));
 			prop = new HashSet<>(Arrays.asList("materialRequirementId", "customerId", "productCategoryId",
 					"requirementStatus", "state", "district", "doorNumber", "streetFirst", "streetSecond", "landmark",
 					"city", "pincode", "country"));
@@ -811,6 +822,44 @@ public class ProductService {
 		this.copyMaterialRequirementBasicEntityToDTO(materialRequirement, materialRequirementDTO, prop);
 		// carDTOList.add(carDTO);
 		return materialRequirementDTO;
+	}
+	
+	public MaterialRequirementItemsDTO setBestPriceForItem(MaterialRequirementItemsDTO materialRequirementItemsDTO, MaterialRequirementDTO materialRequirementDTO) {
+
+
+		List<MaterialRequirementItemsEstimateDTO> eachItemEstimatebyDifferentSupplier = null;
+		eachItemEstimatebyDifferentSupplier = materialRequirementDTO.getSuppliersEstimates().stream()
+				.map(supplier -> this.getEachItemEstimatebyDifferentSupplier(supplier, materialRequirementItemsDTO))
+				.collect(Collectors.toList());
+		
+		if(eachItemEstimatebyDifferentSupplier != null && !eachItemEstimatebyDifferentSupplier.isEmpty()) {
+			Optional<MaterialRequirementItemsEstimateDTO> lowEstimatedPrice = eachItemEstimatebyDifferentSupplier
+					.stream().filter(echItmEst->Optional.ofNullable(echItmEst).isPresent() && echItmEst.getTotalPrice() > 0.0).min(Comparator.comparing(MaterialRequirementItemsEstimateDTO::getTotalPrice));
+			
+			if(lowEstimatedPrice.isPresent()) {
+				List<SuppliersEstimates> supplierInfo = materialRequirementDTO.getSuppliersEstimates().stream()
+						.filter(supplier -> supplier.getMaterialSupplier().getMaterialSupplierBuilderId() == lowEstimatedPrice.get().getMaterialSupplierId())
+						.collect(Collectors.toList());
+						materialRequirementItemsDTO.setBestPrice(lowEstimatedPrice.get().getTotalPrice());
+						materialRequirementItemsDTO.setBestPriceMaterialSupplier(supplierInfo.get(0).getMaterialSupplier());
+			}
+			
+		}
+		
+		
+        return materialRequirementItemsDTO;
+	
+	}
+	
+	public MaterialRequirementItemsEstimateDTO getEachItemEstimatebyDifferentSupplier( SuppliersEstimates supplier, MaterialRequirementItemsDTO materialRequirementItemsDTO) {
+		List<MaterialRequirementItemsEstimateDTO> supplierItemFiltered = supplier
+				.getMaterialRequirementItemsEstimate().stream().filter(estimate -> estimate
+						.getMaterialRequirementItemId() == materialRequirementItemsDTO.getMaterialRequirementItemsId())
+				.collect(Collectors.toList());
+		if(supplierItemFiltered != null && !supplierItemFiltered.isEmpty()) {
+			return supplierItemFiltered.get(0);
+		}
+		return new MaterialRequirementItemsEstimateDTO();
 	}
 
 	public List<Builder> getBuilderByBuilderId(int builderId) {
@@ -841,7 +890,7 @@ public class ProductService {
 
 		return builderEntity;
 	}
-	
+
 	public List<Customer> getCustomerByCustomerId(int customerId) {
 		boolean isItemsEstimateAvailableForMaterialRequirementId = false;
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -966,7 +1015,8 @@ public class ProductService {
 					// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
 					InputStream in = null;
 					try {
-						Resource resource = this.getFileSystem(product.getProductImagePath(), response);
+						//Resource resource = this.getFileSystem(product.getProductImagePath(), response);
+						Resource resource = null;
 						if (resource != null) {
 							in = this.getFileSystem(product.getProductImagePath(), response).getInputStream();
 							byte[] media = IOUtils.toByteArray(in);
@@ -1005,6 +1055,44 @@ public class ProductService {
 		this.copyProductSubCategoryBasicEntityToDTO(productSubCategory, productSubCategoryDTO, prop);
 		// carDTOList.add(carDTO);
 		return productSubCategoryDTO;
+	}
+	
+	public List<ProductDTO> getProductImageForProduct(List<ProductDTO> productDTO) {
+		
+		List<ProductDTO> productDTOWithImage = productDTO.stream().map(product -> {
+
+			
+			if (product.getProductImagePath() != null) {
+				// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+				// response));
+				ServletContext sc = null;
+				HttpServletResponse response = null;
+				// InputStream in =
+				// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+				InputStream in = null;
+				try {
+					Resource resource = this.getFileSystem(product.getProductImagePath(), response);
+					if (resource != null) {
+						in = this.getFileSystem(product.getProductImagePath(), response).getInputStream();
+						byte[] media = IOUtils.toByteArray(in);
+						product.setProductImage(media);
+
+					}
+
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+
+			}
+			return product;
+			
+
+		}).collect(Collectors.toList());
+		
+		return productDTOWithImage;
+		
 	}
 
 	public ProductSubCategoryDTO setProductSubCategoryDTOWithoutProduct(ProductSubCategory productSubCategory) {
