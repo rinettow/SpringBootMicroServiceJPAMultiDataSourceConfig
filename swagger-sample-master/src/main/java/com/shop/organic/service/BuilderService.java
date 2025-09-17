@@ -502,7 +502,14 @@ public class BuilderService {
 		criteria.select(rootBuilder);
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
-		restrictions.add(builder.equal(rootBuilder.get("materialSupplierId"), supplierId));
+		//restrictions.add(builder.equal(rootBuilder.get("materialSupplierId"), supplierId));
+		
+		List<Long> supplierIds = new ArrayList<>();
+		supplierIds = Arrays.asList(supplierId.substring(1, supplierId.length()-1).split(","))
+				.stream().map(supplier-> Long.parseLong(supplier))
+				.collect(Collectors.toList());
+		
+		restrictions.add(rootBuilder.get("materialSupplierId").in(supplierIds));
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		TypedQuery<MaterialRequirementItemsEstimate> query = entityManager.createQuery(criteria);
 		query.setHint(QueryHints.HINT_CACHEABLE, true);
@@ -771,7 +778,14 @@ public class BuilderService {
 
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
-		restrictions.add(builder.notEqual(rootBuilder.get("materialSupplierId"), supplierId));
+		//restrictions.add(builder.notEqual(rootBuilder.get("materialSupplierId"), supplierId));
+		List<Long> supplierIds = new ArrayList<>();
+		supplierIds = Arrays.asList(supplierId.substring(1, supplierId.length()-1).split(","))
+				.stream().map(supplier-> Long.parseLong(supplier))
+				.collect(Collectors.toList());
+		
+		//restrictions.add(rootBuilder.get("materialSupplierId").in(supplierIds));
+		restrictions.add(builder.not(rootBuilder.get("materialSupplierId").in(supplierIds)));
 
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		TypedQuery<MaterialRequirementItemsEstimate> query = entityManager.createQuery(criteria);

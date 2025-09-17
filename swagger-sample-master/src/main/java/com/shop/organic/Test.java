@@ -1,5 +1,6 @@
 package com.shop.organic;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -14,6 +15,13 @@ public class Test {
 		System.out.println(value.replace("\"",""));
 		String availCatg = "[6,2,3,4]";
 		System.out.println(availCatg.substring(1, availCatg.length()-1));
+		List<Long> supplierIds = new ArrayList<>();
+		supplierIds = Arrays.asList(availCatg.substring(1, availCatg.length()-1).split(","))
+				.stream().map(stringValue-> Long.parseLong(stringValue))
+				.collect(Collectors.toList());;
+		
+				System.out.println(supplierIds);
+		
 		int length = 4; 
         //System.out.println(OTP(length)); 
         String req = "[{\"materialRequirementItemId\":6,\"materialRequirementId\":2,\"materialSupplierId\":13,\"totalPrice\":4800,\"customerBuilderAceptedDeclined\":\"ON_HOLD\",\"deliveryCharge\":600}][{\"materialRequirementItemId\":6,\"materialRequirementId\":2,\"materialSupplierId\":13,\"totalPrice\":4800,\"customerBuilderAceptedDeclined\":\"ON_HOLD\",\"deliveryCharge\":600}]";
