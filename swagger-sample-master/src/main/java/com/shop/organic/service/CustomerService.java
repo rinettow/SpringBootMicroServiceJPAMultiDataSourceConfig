@@ -1144,7 +1144,7 @@ public class CustomerService {
 	public static void copyCustomerRequirementBasicDTOToEntity(CustomerRequirementDTO customerRequirementDTO,
 			CustomerRequirement CustomerRequirementEntity) {
 		final Set<String> prop = new HashSet<>(Arrays.asList("customerRequirementId", "customerId",
-				"amenityAndSpecifiactionId", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet",
+				"amenityAndSpecifiactionId", "projectBudgetFullHouseConstructionWithMaterial", "requirementStatus", "bhkCount", "totalSquareFeet", "totalWallSquareFeet",
 				"planImagePath", "landImagePath", "brickType", "pillerBeamRequired", "floorType", "woodType",
 				"paintCoatCount", "paintWallPuttyCount", "paintBrand", "paintQuality", "plumbingBrand",
 				"electricalBrand", "cementBrand", "steelBrand", "tilesFloorWallBrand", "state", "district", "doorNumber", "streetFirst", "streetSecond", "landmark", "city", "pincode", "country"));

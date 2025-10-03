@@ -29,6 +29,7 @@ public class CustomerRequirementDTO {
 	private int customerRequirementId;
 	private int customerId;
 	private int amenityAndSpecifiactionId;
+	private String projectBudgetFullHouseConstructionWithMaterial;
 	private String requirementStatus;
 	private String bhkCount;
 	private int totalSquareFeet;
@@ -66,6 +67,14 @@ public class CustomerRequirementDTO {
 	private String isRequirementViewedByBuilder;
 	
 	
+
+	public String getProjectBudgetFullHouseConstructionWithMaterial() {
+		return projectBudgetFullHouseConstructionWithMaterial;
+	}
+
+	public void setProjectBudgetFullHouseConstructionWithMaterial(String projectBudgetFullHouseConstructionWithMaterial) {
+		this.projectBudgetFullHouseConstructionWithMaterial = projectBudgetFullHouseConstructionWithMaterial;
+	}
 
 	public String getDoorNumber() {
 		return doorNumber;

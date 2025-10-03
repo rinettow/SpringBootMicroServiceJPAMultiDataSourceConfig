@@ -1235,6 +1235,12 @@ public class BuilderService {
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		List<Long> amenityIds = new ArrayList<>();
 		for (BuildersAvailableAmenitiesDTO availAmenity : builderDTO.getBuildersAvailableAmenities()) {
+			if(availAmenity.getAmenitiesAndSpecificationsId() == 1) {
+				amenityIds.add(Long.valueOf(2));
+				amenityIds.add(Long.valueOf(3));
+				amenityIds.add(Long.valueOf(4));
+				amenityIds.add(Long.valueOf(5));
+			}
 			amenityIds.add(Long.valueOf(availAmenity.getAmenitiesAndSpecificationsId()));
 
 		}

@@ -36,9 +36,16 @@ public class MaterialSupplierDTO {
 	private List<MaterialRequirementDTO> materialRequirement;
 	private BuilderDTO builderDTO;
 	private List<SupplierAvailableBrandsDTO> materialSupplierAvailableBrands;
+	private boolean isSupplierSelectedButtonDisabled;
 	
 	
 	
+	public boolean isSupplierSelectedButtonDisabled() {
+		return isSupplierSelectedButtonDisabled;
+	}
+	public void setSupplierSelectedButtonDisabled(boolean isSupplierSelectedButtonDisabled) {
+		this.isSupplierSelectedButtonDisabled = isSupplierSelectedButtonDisabled;
+	}
 	public List<SupplierAvailableBrandsDTO> getMaterialSupplierAvailableBrands() {
 		return materialSupplierAvailableBrands;
 	}

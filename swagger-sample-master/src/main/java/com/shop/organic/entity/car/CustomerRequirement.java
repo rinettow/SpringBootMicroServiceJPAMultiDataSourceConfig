@@ -37,6 +37,9 @@ public class CustomerRequirement {
 
 	@Column(name = "AMENITIES_AND_SPECIFICATIONS_ID")
 	private int amenityAndSpecifiactionId;
+	
+	@Column(name = "PROJECT_BUDGET_FULL_HOUSE_WTH_MATERIAL")
+	private String projectBudgetFullHouseConstructionWithMaterial;
 
 	@Column(name = "REQUIREMENT_STATUS")
 	private String requirementStatus;
@@ -119,6 +122,14 @@ public class CustomerRequirement {
 
 	
 	
+	public String getProjectBudgetFullHouseConstructionWithMaterial() {
+		return projectBudgetFullHouseConstructionWithMaterial;
+	}
+
+	public void setProjectBudgetFullHouseConstructionWithMaterial(String projectBudgetFullHouseConstructionWithMaterial) {
+		this.projectBudgetFullHouseConstructionWithMaterial = projectBudgetFullHouseConstructionWithMaterial;
+	}
+
 	public java.sql.Timestamp getReqCreatedTimestamp() {
 		return reqCreatedTimestamp;
 	}
