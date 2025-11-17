@@ -443,7 +443,7 @@ public class BuilderController {
 		//return generateResponse("List of Builders!", HttpStatus.OK, loginBuilder);
 	}
 	
-	@PostMapping(value = "/DeleteAccount")
+	@GetMapping(value = "/DeleteAccount")
 	//public ResponseEntity<Object> SendOTP(@RequestBody BuilderDTO builderDTO) {
 	public ResponseEntity<Object> DeleteAccount(@RequestParam("isBuilderOrCustomerOrsupplier") String isBuilderOrCustomerOrsupplier, @RequestParam("accountId") String accountId) {
 		if(isBuilderOrCustomerOrsupplier.equals("Builder")) {
@@ -456,7 +456,7 @@ public class BuilderController {
 			
 		}
 		
-		return generateResponse("Builder Account Deleted Succesful!", HttpStatus.OK, null);
+		return generateResponse("Customer Account Deleted Succesful!", HttpStatus.OK, null);
 	}
 	
 	@PostMapping(value = "/AcceptDeclineMaterialQuotation")
