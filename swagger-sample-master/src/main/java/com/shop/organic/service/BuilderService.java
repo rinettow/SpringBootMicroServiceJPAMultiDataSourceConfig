@@ -396,7 +396,7 @@ public class BuilderService {
 		System.out.println("builderEntity.getBuilderId()::::" + projectEntity.getProjectId());
 		System.out.println("builderEntity.getAddress().getAddressId())::::" + projectEntity.getBuilderId());
 
-		projectsDTO = setProjectDTO(projectEntityResponse);
+		projectsDTO = setProjectPicturesDTO(projectEntityResponse);
 		entityManager.close();
 		return projectsDTO;
 	}
@@ -2081,6 +2081,22 @@ public class BuilderService {
 		return projectDTO;
 	}
 	
+	public ProjectsDTO setProjectPicturesDTO(Projects projectEntity) {
+		ProjectsDTO projectDTO = new ProjectsDTO();
+		HttpServletResponse response = null;
+		final Set<String> prop = new HashSet<>(Arrays.asList("projectId", "builderId", "amenitiesAndSpecificationsId",
+				"estimateCost", "areaInSquareFeet", "projMainPicFilePath", "projMainVideoFilePath"));
+		this.copyProjectsBasicEntityToDTO(projectEntity, projectDTO, prop);
+		
+		if (projectEntity.getPicture() != null && !projectEntity.getPicture().isEmpty()) {
+			projectDTO.setPicture(
+					projectEntity.getPicture().stream().map(this::setPictureDTOIndividually).collect(Collectors.toList()));
+		}
+
+		
+		return projectDTO;
+	}
+	
 	public ProjectsDTO setProjectDTOImageIndividually(Projects projectEntity) {
 		ProjectsDTO projectDTO = new ProjectsDTO();
 		HttpServletResponse response = null;
@@ -2201,6 +2217,37 @@ public class BuilderService {
 
 		}
 		// carDTOList.add(carDTO);
+		return pictureDTO;
+	}
+	
+	public PictureDTO setPictureDTOIndividually(Picture pictureEntity) {
+		PictureDTO pictureDTO = new PictureDTO();
+		HttpServletResponse response = null;
+		final Set<String> prop = new HashSet<>(Arrays.asList("pictureId", "projectId", "pictureFilePath",
+				"videoFilePath", "roomType", "roomDescription", "materialBrand", "paintBrand", "plumbingBrand",
+				"electricalBrand", "cementBrand", "steelBrand"));
+		this.copyPicturesBasicEntityToDTO(pictureEntity, pictureDTO, prop);
+		if (pictureEntity.getPictureFilePath() != null) {
+			
+			ServletContext sc = null;
+			
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(pictureEntity.getPictureFilePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				pictureDTO.setPicture(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		
 		return pictureDTO;
 	}
 
