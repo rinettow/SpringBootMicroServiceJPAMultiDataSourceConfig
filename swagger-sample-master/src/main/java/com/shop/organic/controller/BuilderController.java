@@ -498,6 +498,19 @@ public class BuilderController {
 		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
 		return generateResponse("List of Builders!", HttpStatus.OK, selectedProject.getPicture());
 	}
+	
+	@PostMapping(value = "/getProjectImagesByBuilderId")
+	public ResponseEntity<Object> getProjectImagesByBuilderId(@RequestBody BuilderDTO builderDTO) {
+		List<ProjectsDTO> selectedProjects = new ArrayList<ProjectsDTO>();
+		System.out.println("builderDTO:::::Test" + new Gson().toJson(builderDTO));
+		selectedProjects = builderService.getProjectImageByBuilderId(builderDTO);
+		Object uriVariables = null;
+		// throw new RuntimeException("Not Available");
+		// carList = carService.findCarList();
+		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
+		return generateResponse("List of Builders!", HttpStatus.OK, selectedProjects);
+	}
 
 	/*
 	 * @GetMapping(value = "/{builderId}") public ResponseEntity<Object>

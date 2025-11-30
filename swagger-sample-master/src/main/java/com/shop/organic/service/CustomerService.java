@@ -299,7 +299,7 @@ public class CustomerService {
 
 		if (customerEntity.getCustomerRequirement() != null && !customerEntity.getCustomerRequirement().isEmpty()) {
 			customerDTO.setCustomerRequirement(customerEntity.getCustomerRequirement().stream()
-					.map(this::setCustomerRequirementDTO).collect(Collectors.toList()));
+					.map(this::setCustomerRequirementDTOForCustomerLogin).collect(Collectors.toList()));
 		}
 		
 		if (customerEntity.getMaterialRequirement() != null && !customerEntity.getMaterialRequirement().isEmpty()) {
@@ -753,8 +753,137 @@ public class CustomerService {
 		if (customerRequirementEntity.getBuildersEstimate() != null
 				&& !customerRequirementEntity.getBuildersEstimate().isEmpty()) {
 			customerRequirementDTO.setBuildersEstimate(customerRequirementEntity.getBuildersEstimate().stream()
-					.map(this::setBuilderEstimateDTO).collect(Collectors.toList()));
+				.map(this::setBuilderEstimateDTO).collect(Collectors.toList()));
 		}
+		// carDTOList.add(carDTO);
+		return customerRequirementDTO;
+	}
+	
+	
+	public CustomerRequirementDTO setCustomerRequirementDTOForCustomerLogin(CustomerRequirement customerRequirementEntity) {
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		this.copyCustomerRequirementBasicEntityToDTO(customerRequirementEntity, customerRequirementDTO);
+		HttpServletResponse response = null;
+		if (customerRequirementEntity.getPlanImagePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(customerRequirementEntity.getPlanImagePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				customerRequirementDTO.setPlanPDFFileFormat(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+
+		/*
+		 * if (customerRequirementEntity.getLandImagePath() != null) { //
+		 * projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath()
+		 * , // response)); ServletContext sc = null; // InputStream in = //
+		 * sc.getResourceAsStream(projectEntity.getProjMainPicFilePath()); InputStream
+		 * in = null; try { in =
+		 * this.getFileSystem(customerRequirementEntity.getLandImagePath(),
+		 * response).getInputStream(); } catch (IOException e) { // TODO Auto-generated
+		 * catch block e.printStackTrace(); } try { byte[] media =
+		 * IOUtils.toByteArray(in);
+		 * customerRequirementDTO.setLandImagePNGorJPGFileFormat(media); } catch
+		 * (IOException e) { // TODO Auto-generated catch block e.printStackTrace(); }
+		 * 
+		 * }
+		 */
+
+		if (customerRequirementEntity.getSiteLocations() != null
+				&& !customerRequirementEntity.getSiteLocations().isEmpty()) {
+			customerRequirementDTO.setSiteLocations(customerRequirementEntity.getSiteLocations().stream()
+					.map(siteLocation -> this.setSiteLOcationDTO(siteLocation)).collect(Collectors.toList()));
+		}
+
+		
+		if (customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement() != null) {
+			customerRequirementDTO
+					.setAmenitiesAndSpecificationsForCustomerRequirement(copyAmenitiesAndSpecificationEntityToDto(
+							customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement()));
+		}
+		if (customerRequirementEntity.getBuildersEstimate() != null
+				&& !customerRequirementEntity.getBuildersEstimate().isEmpty()) {
+			customerRequirementDTO.setBuildersEstimate(customerRequirementEntity.getBuildersEstimate().stream()
+				.map(this::setBuilderEstimateDTOForCustomerLogin).collect(Collectors.toList()));
+		}
+		// carDTOList.add(carDTO);
+		return customerRequirementDTO;
+	}
+	
+	
+	public CustomerRequirementDTO setCustomerRequirementDTOForBuilderOpenTenders(CustomerRequirement customerRequirementEntity) {
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		this.copyCustomerRequirementBasicEntityToDTO(customerRequirementEntity, customerRequirementDTO);
+		HttpServletResponse response = null;
+		if (customerRequirementEntity.getPlanImagePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(customerRequirementEntity.getPlanImagePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				//customerRequirementDTO.setPlanPDFFileFormat(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+
+		/*
+		 * if (customerRequirementEntity.getLandImagePath() != null) { //
+		 * projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath()
+		 * , // response)); ServletContext sc = null; // InputStream in = //
+		 * sc.getResourceAsStream(projectEntity.getProjMainPicFilePath()); InputStream
+		 * in = null; try { in =
+		 * this.getFileSystem(customerRequirementEntity.getLandImagePath(),
+		 * response).getInputStream(); } catch (IOException e) { // TODO Auto-generated
+		 * catch block e.printStackTrace(); } try { byte[] media =
+		 * IOUtils.toByteArray(in);
+		 * customerRequirementDTO.setLandImagePNGorJPGFileFormat(media); } catch
+		 * (IOException e) { // TODO Auto-generated catch block e.printStackTrace(); }
+		 * 
+		 * }
+		 */
+
+		if (customerRequirementEntity.getSiteLocations() != null
+				&& !customerRequirementEntity.getSiteLocations().isEmpty()) {
+			customerRequirementDTO.setSiteLocations(customerRequirementEntity.getSiteLocations().stream()
+					.map(siteLocation -> this.setSiteLOcationDTO(siteLocation)).collect(Collectors.toList()));
+		}
+
+		if (customerRequirementEntity.getCustomerForCustomerRequirement() != null) {
+			customerRequirementDTO.setCustomerForCustomerRequirement(
+					setCustomerDTOWithoutRequirement(customerRequirementEntity.getCustomerForCustomerRequirement()));
+		}
+		if (customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement() != null) {
+			customerRequirementDTO
+					.setAmenitiesAndSpecificationsForCustomerRequirement(copyAmenitiesAndSpecificationEntityToDto(
+							customerRequirementEntity.getAmenitiesAndSpecificationsForCustomerRequirement()));
+		}
+		
 		// carDTOList.add(carDTO);
 		return customerRequirementDTO;
 	}
@@ -779,7 +908,7 @@ public class CustomerService {
 			}
 			try {
 				byte[] media = IOUtils.toByteArray(in);
-				siteLocationDTO.setLandImagePNGorJPGFileFormat(media);
+				//siteLocationDTO.setLandImagePNGorJPGFileFormat(media);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -833,6 +962,68 @@ public class CustomerService {
 		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
 			buildersEstimateDTO.setBuilderDTO(
 					builderService.setBuilderDTOForCustomer(buildersEstimateEntity.getBuilderForBuildersEstimate()));
+		}
+
+		
+		if(buildersEstimateEntity.getCustomerRequirementForBuildersEstimate() != null) {
+			List<CustomerRedQuotations> customerRedQuotations = this.getAllViewedQuotationsbyCustomer(String.valueOf(buildersEstimateEntity.getCustomerRequirementForBuildersEstimate().getCustomerId()));
+			List<String> customerViewedQuotationIds = null;
+			if (customerRedQuotations != null && !customerRedQuotations.isEmpty()) {
+				customerViewedQuotationIds = customerRedQuotations.stream()
+						.map(custReqQuote -> this.getCustomerViewedBuilderEstimateId(custReqQuote))
+						.collect(Collectors.toList());
+
+			}
+
+			if(customerViewedQuotationIds != null && !customerViewedQuotationIds.isEmpty()) {
+				if(customerViewedQuotationIds.contains(String.valueOf(buildersEstimateEntity.getBuildersEstimateId()))) {
+					buildersEstimateDTO.setIsEstimateRedByCustomer("Viewed");
+				}else {
+					buildersEstimateDTO.setIsEstimateRedByCustomer("New");
+				}
+			}else {
+				buildersEstimateDTO.setIsEstimateRedByCustomer("New");
+			}
+		}	
+		
+		// carDTOList.add(carDTO);
+		return buildersEstimateDTO;
+	}
+	
+	
+	public BuildersEstimateDTO setBuilderEstimateDTOForCustomerLogin(BuildersEstimate buildersEstimateEntity) {
+		HttpServletResponse response = null;
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		this.copyBuildersEstimateBasicEntityToDTO(buildersEstimateEntity, buildersEstimateDTO);
+
+		if (buildersEstimateEntity.getDetailedEstimateFilePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(buildersEstimateEntity.getDetailedEstimateFilePath(), response)
+						.getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				buildersEstimateDTO.setDetailedEstimateFile(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+
+
+		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
+			buildersEstimateDTO.setBuilderDTO(
+					builderService.setBuilderDTOForCustomerLogin(buildersEstimateEntity.getBuilderForBuildersEstimate()));
 		}
 
 		
@@ -929,10 +1120,10 @@ public class CustomerService {
 		 * buildersEstimateEntity.getProjectForBuildersEstimate())); }
 		 */
 		//List<Builder> builder= GetBuilderByBuilderId(buildersEstimateEntity.getBuilderId());
-		if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
+		/*if (buildersEstimateEntity.getBuilderForBuildersEstimate() != null) {
 			buildersEstimateDTO.setBuilderDTO(
 					builderService.setBuilderDTOWithoutProject(buildersEstimateEntity.getBuilderForBuildersEstimate()));
-		}
+		}*/
 		// carDTOList.add(carDTO);
 		return buildersEstimateDTO;
 	}

@@ -113,7 +113,7 @@ import javax.annotation.PreDestroy;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 @Transactional
@@ -141,6 +141,13 @@ public class BuilderService {
 
 	private enum ResourceType {
 		FILE_SYSTEM, CLASSPATH
+	}
+
+	private WebClient webClient = null;
+
+	@Autowired
+	public BuilderService(WebClient webClient) {
+		this.webClient = webClient;
 	}
 
 	@PreDestroy
@@ -229,7 +236,7 @@ public class BuilderService {
 		return allStatesDTO;
 
 	}
-	
+
 	public List<ProductCategoryDTO> getAllCategoriesWithBrands() {
 		// return
 		// categoryRepository.findAll().stream().map(this::copyCategoryEntityToDto).collect(Collectors.toList());
@@ -248,7 +255,8 @@ public class BuilderService {
 		// commit transaction at all
 		// entityManager.getTransaction().commit();
 
-		allProductCategoryDTO = allProductCategory.stream().map(catg -> setProductCategoryWithBrand(catg)).collect(Collectors.toList());
+		allProductCategoryDTO = allProductCategory.stream().map(catg -> setProductCategoryWithBrand(catg))
+				.collect(Collectors.toList());
 		entityManager.close();
 		return allProductCategoryDTO;
 
@@ -392,6 +400,39 @@ public class BuilderService {
 		entityManager.close();
 		return projectsDTO;
 	}
+	public List<ProjectsDTO> getProjectImageByBuilderId(BuilderDTO builderDTO) {
+		List<ProjectsDTO> projectsDTO = new ArrayList<ProjectsDTO>();
+		
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		
+		
+		List<Projects> projectsEntity = new ArrayList<Projects>();
+
+		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<Projects> criteria = builder.createQuery(Projects.class);
+		Root<Projects> rootBuilder = criteria.from(Projects.class);
+		criteria.select(rootBuilder);
+
+		List<Predicate> restrictions = new ArrayList<Predicate>();
+		restrictions.add(builder.equal(rootBuilder.get("builderId"), builderDTO.getBuilderId()));
+
+		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
+		TypedQuery<Projects> query = entityManager.createQuery(criteria);
+		query.setHint(QueryHints.HINT_CACHEABLE, true);
+		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
+		projectsEntity = query.getResultList();
+		
+		if (projectsEntity != null) {
+			projectsDTO = projectsEntity.stream().map(this::setProjectDTOImageIndividually).collect(Collectors.toList());
+		}
+		
+		entityManager.getTransaction().commit();
+
+		entityManager.close();
+		return projectsDTO;
+	}
 
 	public PictureDTO addNewPicture(PictureDTO pictureDTO) {
 		PictureDTO responsePictureDTO = new PictureDTO();
@@ -502,13 +543,13 @@ public class BuilderService {
 		criteria.select(rootBuilder);
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
-		//restrictions.add(builder.equal(rootBuilder.get("materialSupplierId"), supplierId));
-		
+		// restrictions.add(builder.equal(rootBuilder.get("materialSupplierId"),
+		// supplierId));
+
 		List<Long> supplierIds = new ArrayList<>();
-		supplierIds = Arrays.asList(supplierId.substring(1, supplierId.length()-1).split(","))
-				.stream().map(supplier-> Long.parseLong(supplier))
-				.collect(Collectors.toList());
-		
+		supplierIds = Arrays.asList(supplierId.substring(1, supplierId.length() - 1).split(",")).stream()
+				.map(supplier -> Long.parseLong(supplier)).collect(Collectors.toList());
+
 		restrictions.add(rootBuilder.get("materialSupplierId").in(supplierIds));
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		TypedQuery<MaterialRequirementItemsEstimate> query = entityManager.createQuery(criteria);
@@ -610,17 +651,7 @@ public class BuilderService {
 		entityManager1.close();
 		return builder;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+
 	public void deleteCustomersAccount(String customerId) {
 		EntityManager entityManager = em.getEntityManager("builder");
 
@@ -676,8 +707,7 @@ public class BuilderService {
 		entityManager1.close();
 		return customer;
 	}
-	
-	
+
 	public void deleteMaterialSupplierAccount(String suplierId) {
 		EntityManager entityManager = em.getEntityManager("builder");
 
@@ -716,7 +746,8 @@ public class BuilderService {
 		EntityManager entityManager1 = em.getEntityManager("builder");
 		entityManager1.getTransaction().begin();
 		if (!entityManager1.contains(supplier)) {
-			MaterialSupplier entityAvailableOrNot = entityManager1.find(MaterialSupplier.class, supplier.getMaterialSupplierBuilderId());
+			MaterialSupplier entityAvailableOrNot = entityManager1.find(MaterialSupplier.class,
+					supplier.getMaterialSupplierBuilderId());
 			if (entityAvailableOrNot == null) {
 				// persist object - add to entity manager
 				entityManager1.persist(supplier);
@@ -733,36 +764,6 @@ public class BuilderService {
 		entityManager1.close();
 		return supplier;
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
 	public void DeclineRestAllMaterialQuotation(String supplierId, String materialRequirementId) {
 		EntityManager entityManager = em.getEntityManager("builder");
@@ -778,13 +779,13 @@ public class BuilderService {
 
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		restrictions.add(builder.equal(rootBuilder.get("materialRequirementId"), materialRequirementId));
-		//restrictions.add(builder.notEqual(rootBuilder.get("materialSupplierId"), supplierId));
+		// restrictions.add(builder.notEqual(rootBuilder.get("materialSupplierId"),
+		// supplierId));
 		List<Long> supplierIds = new ArrayList<>();
-		supplierIds = Arrays.asList(supplierId.substring(1, supplierId.length()-1).split(","))
-				.stream().map(supplier-> Long.parseLong(supplier))
-				.collect(Collectors.toList());
-		
-		//restrictions.add(rootBuilder.get("materialSupplierId").in(supplierIds));
+		supplierIds = Arrays.asList(supplierId.substring(1, supplierId.length() - 1).split(",")).stream()
+				.map(supplier -> Long.parseLong(supplier)).collect(Collectors.toList());
+
+		// restrictions.add(rootBuilder.get("materialSupplierId").in(supplierIds));
 		restrictions.add(builder.not(rootBuilder.get("materialSupplierId").in(supplierIds)));
 
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
@@ -1088,14 +1089,14 @@ public class BuilderService {
 		customerRequirement = query.getResultList();
 
 		if (customerRequirement != null && !customerRequirement.isEmpty()) {
-			if(isCloseOrCancelReq.equals("CLOSED")) {
+			if (isCloseOrCancelReq.equals("CLOSED")) {
 				toCloseOrCancelCustomerRequirement = customerRequirement.stream()
 						.peek(custReq -> custReq.setRequirementStatus("CLOSED")).collect(Collectors.toList());
-			}else if(isCloseOrCancelReq.equals("CANCELLED")) {
+			} else if (isCloseOrCancelReq.equals("CANCELLED")) {
 				toCloseOrCancelCustomerRequirement = customerRequirement.stream()
 						.peek(custReq -> custReq.setRequirementStatus("CANCELLED")).collect(Collectors.toList());
 			}
-			
+
 		}
 
 		if (toCloseOrCancelCustomerRequirement != null && !toCloseOrCancelCustomerRequirement.isEmpty()) {
@@ -1210,20 +1211,22 @@ public class BuilderService {
 		List<CustomerRequirementDTO> allOpenRequirementsDTO = null;
 		List<CustomerRequirementDTO> allViewedAndUnViewedOpenRequirementsDTO = null;
 		boolean isQouteAlreadyRequestedToBuilder = false;
-		
-		 // Get the current date and time
-        LocalDateTime now = LocalDateTime.now();
 
-        // Subtract 45 days from the current date and time
-        LocalDateTime fortyFiveDaysAgo = now.minusDays(45);
+		// Get the current date and time
+		LocalDateTime now = LocalDateTime.now();
 
-        // Convert LocalDateTime to java.sql.Timestamp
-        // You might need to specify a ZoneId if time zone handling is critical for your application.
-        // For simplicity, using the system default zone ID here.
-        Timestamp timestampFortyFiveDaysAgo = Timestamp.from(fortyFiveDaysAgo.atZone(ZoneId.systemDefault()).toInstant());
+		// Subtract 45 days from the current date and time
+		LocalDateTime fortyFiveDaysAgo = now.minusDays(45);
 
-        System.out.println("Current Timestamp: " + Timestamp.from(now.atZone(ZoneId.systemDefault()).toInstant()));
-        System.out.println("Timestamp 45 days older: " + timestampFortyFiveDaysAgo);
+		// Convert LocalDateTime to java.sql.Timestamp
+		// You might need to specify a ZoneId if time zone handling is critical for your
+		// application.
+		// For simplicity, using the system default zone ID here.
+		Timestamp timestampFortyFiveDaysAgo = Timestamp
+				.from(fortyFiveDaysAgo.atZone(ZoneId.systemDefault()).toInstant());
+
+		System.out.println("Current Timestamp: " + Timestamp.from(now.atZone(ZoneId.systemDefault()).toInstant()));
+		System.out.println("Timestamp 45 days older: " + timestampFortyFiveDaysAgo);
 
 		EntityManager entityManager = em.getEntityManager("builder");
 
@@ -1235,7 +1238,7 @@ public class BuilderService {
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		List<Long> amenityIds = new ArrayList<>();
 		for (BuildersAvailableAmenitiesDTO availAmenity : builderDTO.getBuildersAvailableAmenities()) {
-			if(availAmenity.getAmenitiesAndSpecificationsId() == 1) {
+			if (availAmenity.getAmenitiesAndSpecificationsId() == 1) {
 				amenityIds.add(Long.valueOf(2));
 				amenityIds.add(Long.valueOf(3));
 				amenityIds.add(Long.valueOf(4));
@@ -1282,7 +1285,7 @@ public class BuilderService {
 
 		if (allOpenRequirementsEstimateNotYetApproved != null && !allOpenRequirementsEstimateNotYetApproved.isEmpty()) {
 			allOpenRequirementsDTO = allOpenRequirementsEstimateNotYetApproved.stream()
-					.map(req -> customerService.setCustomerRequirementDTO(req)).collect(Collectors.toList());
+					.map(req -> customerService.setCustomerRequirementDTOForBuilderOpenTenders(req)).collect(Collectors.toList());
 		}
 
 		if (allOpenRequirementsDTO != null && !allOpenRequirementsDTO.isEmpty()) {
@@ -1548,24 +1551,28 @@ public class BuilderService {
 		List<Predicate> restrictions = new ArrayList<Predicate>();
 		restrictions.add(builder.equal(rootBuilder.get("phone"), Phone));
 		restrictions.add(builder.isNull(rootBuilder.get("accountStatus")));
-		//restrictions.add(builder.notEqual(rootBuilder.get("accountStatus"), "DELETED"));
+		// restrictions.add(builder.notEqual(rootBuilder.get("accountStatus"),
+		// "DELETED"));
 
 		criteria.where(restrictions.toArray(new Predicate[restrictions.size()]));
 		TypedQuery<Builder> query = entityManager.createQuery(criteria);
 		query.setHint(QueryHints.HINT_CACHEABLE, true);
 		query.setHint(QueryHints.HINT_CACHE_REGION, "blCarIdQuery");
 
-		/*EntityManager entityManager = em.getEntityManager("builder");
-
-		Query q = entityManager.createQuery(
-				"SELECT b FROM Builder b WHERE b.phone = :phone and b.accountStatus <> :accountStatus", Builder.class);
-		q.setParameter("phone", Phone);
-		q.setParameter("accountStatus", "DELETED");*/
+		/*
+		 * EntityManager entityManager = em.getEntityManager("builder");
+		 * 
+		 * Query q = entityManager.createQuery(
+		 * "SELECT b FROM Builder b WHERE b.phone = :phone and b.accountStatus <> :accountStatus"
+		 * , Builder.class); q.setParameter("phone", Phone);
+		 * q.setParameter("accountStatus", "DELETED");
+		 */
 		// q.setParameter("keyword", keyword); //etc
 		loginBuilder = query.getResultList();
 
 		if (loginBuilder != null && !loginBuilder.isEmpty()) {
-			LoginBuilder = loginBuilder.stream().filter(loggedInBuilder -> loggedInBuilder.getPhone().equalsIgnoreCase(Phone))
+			LoginBuilder = loginBuilder.stream()
+					.filter(loggedInBuilder -> loggedInBuilder.getPhone().equalsIgnoreCase(Phone))
 					.collect(Collectors.toList());
 		}
 
@@ -1713,44 +1720,50 @@ public class BuilderService {
 	// @Async
 	public BuilderDTO setBuilderDTO(Builder builderEntity) {
 		BuilderDTO builderDTO = new BuilderDTO();
-		//Address address = builderEntity.getAddress();
-		//List<Address> builderAddress = GetBuilderAddressByAddressId(address.getAddressId());
+		// Address address = builderEntity.getAddress();
+		// List<Address> builderAddress =
+		// GetBuilderAddressByAddressId(address.getAddressId());
 		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderEntity.getAddress());
 		builderDTO.setAddress(addressDTO);
 
-		/*List<Projects> builderProjects = this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
-		if (builderProjects != null && !builderProjects.isEmpty()) {
-			builderDTO.setProjects(
-					builderProjects.stream().map(project -> setProjectDTO(project)).collect(Collectors.toList()));
-		}*/
+		/*
+		 * List<Projects> builderProjects =
+		 * this.GetAllProjectsByBuilderId(builderEntity.getBuilderId()); if
+		 * (builderProjects != null && !builderProjects.isEmpty()) {
+		 * builderDTO.setProjects( builderProjects.stream().map(project ->
+		 * setProjectDTO(project)).collect(Collectors.toList())); }
+		 */
 		if (builderEntity.getProjects() != null && !builderEntity.getProjects().isEmpty()) {
-			builderDTO.setProjects(
-					builderEntity.getProjects().stream().map(project -> setProjectDTO(project)).collect(Collectors.toList()));
+			builderDTO.setProjects(builderEntity.getProjects().stream().map(project -> setProjectDTO(project))
+				.collect(Collectors.toList()));
 		}
 		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
 		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
-		//List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
-			//	.GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
-		if (builderEntity.getBuildersAvailableAmenities() != null && !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
+		// List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
+		// .GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getBuildersAvailableAmenities() != null
+				&& !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
 			builderDTO.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
 					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
 							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
 					.collect(Collectors.toList()));
 		}
 
-		//List<BuildersEstimate> buildersEstimates = this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
+		// List<BuildersEstimate> buildersEstimates =
+		// this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
 		if (builderEntity.getBuildersEstimate() != null && !builderEntity.getBuildersEstimate().isEmpty()) {
-			builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
-					.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
-					.collect(Collectors.toList()));
+			//builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
+			//		.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
+			//		.collect(Collectors.toList()));
 		}
 
-		//List<MaterialRequirement> materialRequirements = GetMaterialRequirementByBuilderId(
-				//builderEntity.getBuilderId());
+		// List<MaterialRequirement> materialRequirements =
+		// GetMaterialRequirementByBuilderId(
+		// builderEntity.getBuilderId());
 		if (builderEntity.getMaterialRequirement() != null && !builderEntity.getMaterialRequirement().isEmpty()) {
-			builderDTO.setMaterialRequirement(builderEntity.getMaterialRequirement().stream()
-					.map(materialRequirement -> productService.setMaterialRequirementDTO(materialRequirement))
-					.collect(Collectors.toList()));
+			//builderDTO.setMaterialRequirement(builderEntity.getMaterialRequirement().stream()
+			//		.map(materialRequirement -> productService.setMaterialRequirementDTO(materialRequirement))
+			//		.collect(Collectors.toList()));
 
 		}
 
@@ -1923,28 +1936,32 @@ public class BuilderService {
 
 	public BuilderDTO setBuilderDTOForCustomer(Builder builderEntity) {
 		BuilderDTO builderDTO = new BuilderDTO();
-		//Address address = builderEntity.getAddress();
-		//List<Address> builderAddress = GetBuilderAddressByAddressId(address.getAddressId());
+		// Address address = builderEntity.getAddress();
+		// List<Address> builderAddress =
+		// GetBuilderAddressByAddressId(address.getAddressId());
 		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderEntity.getAddress());
 		builderDTO.setAddress(addressDTO);
 
-		//List<Projects> builderProjects = this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
+		// List<Projects> builderProjects =
+		// this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
 		if (builderEntity.getProjects() != null && !builderEntity.getProjects().isEmpty()) {
-			builderDTO.setProjects(
-					builderEntity.getProjects().stream().map(project -> setProjectDTO(project)).collect(Collectors.toList()));
+			builderDTO.setProjects(builderEntity.getProjects().stream().map(project -> setProjectDTO(project))
+					.collect(Collectors.toList()));
 		}
 		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
 		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
-		//List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
-				//.GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
-		if (builderEntity.getBuildersAvailableAmenities() != null && !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
+		// List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
+		// .GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getBuildersAvailableAmenities() != null
+				&& !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
 			builderDTO.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
 					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
 							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
 					.collect(Collectors.toList()));
 		}
 
-		//List<BuildersEstimate> buildersEstimates = this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
+		// List<BuildersEstimate> buildersEstimates =
+		// this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
 		if (builderEntity.getBuildersEstimate() != null && !builderEntity.getBuildersEstimate().isEmpty()) {
 			builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
 					.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
@@ -1957,9 +1974,114 @@ public class BuilderService {
 		// carDTOList.add(carDTO);
 		return builderDTO;
 	}
+	
+	
+	public BuilderDTO setBuilderDTOForCustomerLogin(Builder builderEntity) {
+		BuilderDTO builderDTO = new BuilderDTO();
+		// Address address = builderEntity.getAddress();
+		// List<Address> builderAddress =
+		// GetBuilderAddressByAddressId(address.getAddressId());
+		AddressDTO addressDTO = this.copyAddressBasicEntityToDto(builderEntity.getAddress());
+		builderDTO.setAddress(addressDTO);
+
+		// List<Projects> builderProjects =
+		// this.GetAllProjectsByBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getProjects() != null && !builderEntity.getProjects().isEmpty()) {
+			builderDTO.setProjects(builderEntity.getProjects().stream().map(project -> setProjectDTO(project))
+					.collect(Collectors.toList()));
+		}
+		// List<BuildersAvailableAmenities> buildersAvailableAmenities=
+		// getAllBuildersAvaiableAmenitiesByBuilderid(builderEntity.getBuilderId());
+		// List<BuildersAvailableAmenities> builderAvailableAmenitiesById = this
+		// .GetBuildersAvailableAmenitiesBuilderId(builderEntity.getBuilderId());
+		if (builderEntity.getBuildersAvailableAmenities() != null
+				&& !builderEntity.getBuildersAvailableAmenities().isEmpty()) {
+			builderDTO.setBuildersAvailableAmenities(builderEntity.getBuildersAvailableAmenities().stream()
+					.map(builderAvailableAmenities -> this.copyBuildersBasicAvailableAmenitiesEntityToDTO(
+							builderAvailableAmenities, new BuildersAvailableAmenitiesDTO()))
+					.collect(Collectors.toList()));
+		}
+
+
+		final Set<String> prop = new HashSet<>(Arrays.asList("builderId", "builderName", "manufacturingCompany",
+				"projectType", "phone", "userName", "password", "amenityAndSpecificationId"));
+		this.copyBuilderBasicEntityToDTO(builderEntity, builderDTO, prop);
+		// carDTOList.add(carDTO);
+		return builderDTO;
+	}
+	
+	
 
 	// @Async
 	public ProjectsDTO setProjectDTO(Projects projectEntity) {
+		ProjectsDTO projectDTO = new ProjectsDTO();
+		HttpServletResponse response = null;
+		final Set<String> prop = new HashSet<>(Arrays.asList("projectId", "builderId", "amenitiesAndSpecificationsId",
+				"estimateCost", "areaInSquareFeet", "projMainPicFilePath", "projMainVideoFilePath"));
+		this.copyProjectsBasicEntityToDTO(projectEntity, projectDTO, prop);
+		if (projectEntity.getProjMainPicFilePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(projectEntity.getProjMainPicFilePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				//projectDTO.setImage(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+		/*
+		 * if (projectEntity.getProjMainVideoFilePath() != null) { //
+		 * projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath()
+		 * , // response)); ServletContext sc = null; // InputStream in = //
+		 * sc.getResourceAsStream(projectEntity.getProjMainPicFilePath()); InputStream
+		 * in = null; try { in =
+		 * this.getFileSystem(projectEntity.getProjMainVideoFilePath(),
+		 * response).getInputStream(); } catch (IOException e) { // TODO Auto-generated
+		 * catch block e.printStackTrace(); } try { byte[] media =
+		 * IOUtils.toByteArray(in); projectDTO.setImage(media); } catch (IOException e)
+		 * { // TODO Auto-generated catch block e.printStackTrace(); }
+		 * 
+		 * }
+		 */
+		/*
+		 * if (projectEntity.getBuilderForProjects() != null) {
+		 * projectDTO.setBuilder(setBuilderDTOWithoutProject(projectEntity.
+		 * getBuilderForProjects())); }
+		 */
+
+		// List<Picture> projectPictures =
+		// this.GetProjectPicturesByProjectId(projectEntity.getProjectId());
+		if (projectEntity.getPicture() != null && !projectEntity.getPicture().isEmpty()) {
+			projectDTO.setPicture(
+					projectEntity.getPicture().stream().map(this::setPictureDTO).collect(Collectors.toList()));
+		}
+
+		// List<ProjectsAvailableAmenities> projectsAvailableAmenities = this
+		// .GetProjectAvailableAmenitiesByProjectId(projectEntity.getProjectId());
+		if (projectEntity.getProjectsAvailableAmenities() != null) {
+			projectDTO.setProjectsAvailableAmenities(projectEntity.getProjectsAvailableAmenities().stream()
+					.map(projectsAvailableEntities -> this.copyProjectsBasicAvailableAmenitiesEntityToDTO(
+							projectsAvailableEntities, new ProjectsAvailableAmenitiesDTO()))
+					.collect(Collectors.toList()));
+		}
+
+		// carDTOList.add(carDTO);
+		return projectDTO;
+	}
+	
+	public ProjectsDTO setProjectDTOImageIndividually(Projects projectEntity) {
 		ProjectsDTO projectDTO = new ProjectsDTO();
 		HttpServletResponse response = null;
 		final Set<String> prop = new HashSet<>(Arrays.asList("projectId", "builderId", "amenitiesAndSpecificationsId",
@@ -1987,41 +2109,8 @@ public class BuilderService {
 			}
 
 		}
-		/*
-		 * if (projectEntity.getProjMainVideoFilePath() != null) { //
-		 * projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath()
-		 * , // response)); ServletContext sc = null; // InputStream in = //
-		 * sc.getResourceAsStream(projectEntity.getProjMainPicFilePath()); InputStream
-		 * in = null; try { in =
-		 * this.getFileSystem(projectEntity.getProjMainVideoFilePath(),
-		 * response).getInputStream(); } catch (IOException e) { // TODO Auto-generated
-		 * catch block e.printStackTrace(); } try { byte[] media =
-		 * IOUtils.toByteArray(in); projectDTO.setImage(media); } catch (IOException e)
-		 * { // TODO Auto-generated catch block e.printStackTrace(); }
-		 * 
-		 * }
-		 */
-		/*
-		 * if (projectEntity.getBuilderForProjects() != null) {
-		 * projectDTO.setBuilder(setBuilderDTOWithoutProject(projectEntity.
-		 * getBuilderForProjects())); }
-		 */
-
-		//List<Picture> projectPictures = this.GetProjectPicturesByProjectId(projectEntity.getProjectId());
-		if (projectEntity.getPicture() != null && !projectEntity.getPicture().isEmpty()) {
-			projectDTO.setPicture(projectEntity.getPicture().stream().map(this::setPictureDTO).collect(Collectors.toList()));
-		}
-
-		//List<ProjectsAvailableAmenities> projectsAvailableAmenities = this
-				//.GetProjectAvailableAmenitiesByProjectId(projectEntity.getProjectId());
-		if (projectEntity.getProjectsAvailableAmenities() != null) {
-			projectDTO.setProjectsAvailableAmenities(projectEntity.getProjectsAvailableAmenities().stream()
-					.map(projectsAvailableEntities -> this.copyProjectsBasicAvailableAmenitiesEntityToDTO(
-							projectsAvailableEntities, new ProjectsAvailableAmenitiesDTO()))
-					.collect(Collectors.toList()));
-		}
-
-		// carDTOList.add(carDTO);
+		
+		
 		return projectDTO;
 	}
 
@@ -2104,7 +2193,7 @@ public class BuilderService {
 			}
 			try {
 				byte[] media = IOUtils.toByteArray(in);
-				pictureDTO.setPicture(media);
+				//pictureDTO.setPicture(media);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -2128,10 +2217,11 @@ public class BuilderService {
 		}
 		return response;
 	}
-	
+
 	public ProductCategoryDTO setProductCategoryWithBrand(ProductCategory productCategory) {
 		threadpoolToGtetAllStates = Executors.newCachedThreadPool();
-		Future<ProductCategoryDTO> futureTask = threadpoolToGtetAllStates.submit(() -> setProductCategoryWithBrandDTOThreadExecution(productCategory));
+		Future<ProductCategoryDTO> futureTask = threadpoolToGtetAllStates
+				.submit(() -> setProductCategoryWithBrandDTOThreadExecution(productCategory));
 		ProductCategoryDTO response = null;
 		try {
 			response = futureTask.get();
@@ -2155,15 +2245,15 @@ public class BuilderService {
 		// carDTOList.add(carDTO);
 		return stateDTO;
 	}
-	
+
 	public ProductCategoryDTO setProductCategoryWithBrandDTOThreadExecution(ProductCategory productCategory) {
 		ProductCategoryDTO productCategoryDTO = new ProductCategoryDTO();
 		if (productCategory.getProductBrand() != null && !productCategory.getProductBrand().isEmpty()) {
-			productCategoryDTO.setProductBrand(productCategory.getProductBrand().stream().map(brand -> setProductBrandDTO(brand))
-					.collect(Collectors.toList()));
-			
+			productCategoryDTO.setProductBrand(productCategory.getProductBrand().stream()
+					.map(brand -> setProductBrandDTO(brand)).collect(Collectors.toList()));
+
 		}
-		
+
 		final Set<String> prop = new HashSet<>(Arrays.asList("productCategoryId", "productCategoryName"));
 		this.copyProductCategoryBasicEntityToDTO(productCategory, productCategoryDTO, prop);
 		// carDTOList.add(carDTO);
@@ -2178,10 +2268,10 @@ public class BuilderService {
 		// carDTOList.add(carDTO);
 		return districtDTO;
 	}
-	
+
 	public ProductBrandDTO setProductBrandDTO(ProductBrand productBrand) {
 		ProductBrandDTO productBrandDTO = new ProductBrandDTO();
-		
+
 		final Set<String> prop = new HashSet<>(Arrays.asList("productBrandId", "productBrandName"));
 		this.copyBrandBasicEntityToDTO(productBrand, productBrandDTO, prop);
 		// carDTOList.add(carDTO);
@@ -2292,8 +2382,9 @@ public class BuilderService {
 
 		BeanUtils.copyProperties(stateEntity, stateDTO, excludedProperties);
 	}
-	
-	public static void copyProductCategoryBasicEntityToDTO(ProductCategory productCategoryEntity, ProductCategoryDTO productCategoryDTO, Set<String> props) {
+
+	public static void copyProductCategoryBasicEntityToDTO(ProductCategory productCategoryEntity,
+			ProductCategoryDTO productCategoryDTO, Set<String> props) {
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(productCategoryEntity.getClass()))
 				.map(PropertyDescriptor::getName).filter(name -> !props.contains(name)).toArray(String[]::new);
 
@@ -2307,7 +2398,7 @@ public class BuilderService {
 
 		BeanUtils.copyProperties(districtEntity, districtDTO, excludedProperties);
 	}
-	
+
 	public static void copyBrandBasicEntityToDTO(ProductBrand ProductBrandEntity, ProductBrandDTO ProductBrandDTO,
 			Set<String> props) {
 		String[] excludedProperties = Arrays.stream(BeanUtils.getPropertyDescriptors(ProductBrandEntity.getClass()))
@@ -2567,6 +2658,20 @@ public class BuilderService {
 		entityManager.getTransaction().commit();
 
 		entityManager.close();
+
+		String response = webClient.get().uri(
+				"/smsapi.aspx?uid=marilabor&pwd=11985&mobile="+builderDTO.getPhone()+"&msg=Please use the OTP- "+builderOtp.getBuildersOtpNumber()+" to complete Builder registration. - Mari Labor Estimates&sid=MARILE&type=0&dtTimeNow=09:00:57&entityid=1601819176286494692&tempid=1607100000000366850") // Appends
+																																																																// to
+																																																																// the
+																																																																// base
+																																																																// URL
+																																																																// configured
+																																																																// in
+																																																																// the
+																																																																// bean
+				.retrieve() // Initiate the request and retrieve the response
+				.bodyToMono(String.class) // Specify the expected response body type as a Mono
+				.block(); // Block to get the result synchronously (useful in non-reactive services)
 
 	}
 
