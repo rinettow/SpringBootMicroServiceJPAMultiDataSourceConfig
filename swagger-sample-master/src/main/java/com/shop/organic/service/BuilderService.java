@@ -400,6 +400,101 @@ public class BuilderService {
 		entityManager.close();
 		return projectsDTO;
 	}
+	
+	public CustomerRequirementDTO getSiteLocationByCustomerReqId(String customerRequirementId) {
+		ProjectsDTO projectsDTO = new ProjectsDTO();
+		CustomerRequirement customerRequirement = new CustomerRequirement();
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		customerRequirement = entityManager.find(CustomerRequirement.class, Integer.parseInt(customerRequirementId));
+		entityManager.getTransaction().commit();
+		
+		customerRequirementDTO.setSiteLocations(customerRequirement.getSiteLocations().stream()
+				.map(siteLocation -> customerService.setSiteLOcationDTOWithImage(siteLocation)).collect(Collectors.toList()));
+
+		entityManager.close();
+		return customerRequirementDTO;
+	}
+	
+	public CustomerRequirementDTO getPlanByCustomerReqId(String customerRequirementId) {
+		ProjectsDTO projectsDTO = new ProjectsDTO();
+		CustomerRequirement customerRequirement = new CustomerRequirement();
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		customerRequirement = entityManager.find(CustomerRequirement.class, Integer.parseInt(customerRequirementId));
+		entityManager.getTransaction().commit();
+		
+		HttpServletResponse response = null;
+		if (customerRequirement.getPlanImagePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(customerRequirement.getPlanImagePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				customerRequirementDTO.setPlanPDFFileFormat(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+
+		entityManager.close();
+		return customerRequirementDTO;
+	}
+	
+	public BuildersEstimateDTO getEstimateByBuilderEstimateId(String builderEstimateId) {
+		ProjectsDTO projectsDTO = new ProjectsDTO();
+		BuildersEstimate buildersEstimate = new BuildersEstimate();
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		EntityManager entityManager = em.getEntityManager("builder");
+
+		entityManager.getTransaction().begin();
+		buildersEstimate = entityManager.find(BuildersEstimate.class, Integer.parseInt(builderEstimateId));
+		entityManager.getTransaction().commit();
+		
+		HttpServletResponse response = null;
+		if (buildersEstimate.getDetailedEstimateFilePath()!= null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(buildersEstimate.getDetailedEstimateFilePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				buildersEstimateDTO.setDetailedEstimateFile(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+
+		entityManager.close();
+		return buildersEstimateDTO;
+	}
+	
+	
 	public List<ProjectsDTO> getProjectImageByBuilderId(BuilderDTO builderDTO) {
 		List<ProjectsDTO> projectsDTO = new ArrayList<ProjectsDTO>();
 		
@@ -1752,9 +1847,9 @@ public class BuilderService {
 		// List<BuildersEstimate> buildersEstimates =
 		// this.GetBuildersEstimatesByBuilderId(builderEntity.getBuilderId());
 		if (builderEntity.getBuildersEstimate() != null && !builderEntity.getBuildersEstimate().isEmpty()) {
-			//builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
-			//		.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
-			//		.collect(Collectors.toList()));
+			builderDTO.setBuildersEstimate(builderEntity.getBuildersEstimate().stream()
+					.map(estimate -> customerService.setBuilderEstimateDTObymanualCustomerRequirementPicking(estimate))
+					.collect(Collectors.toList()));
 		}
 
 		// List<MaterialRequirement> materialRequirements =

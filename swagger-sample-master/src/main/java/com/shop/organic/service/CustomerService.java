@@ -918,6 +918,37 @@ public class CustomerService {
 
 		return siteLocationDTO;
 	}
+	
+	public SiteLocationDTO setSiteLOcationDTOWithImage(SiteLocation siteLocationEntity) {
+		SiteLocationDTO siteLocationDTO = new SiteLocationDTO();
+		this.copySiteLocationBasicEntityToDTO(siteLocationEntity, siteLocationDTO);
+		HttpServletResponse response = null;
+
+		if (siteLocationEntity.getSiteLocationFilePath() != null) {
+			// projectDTO.setImage(this.getFileSystem(projectEntity.getProjMainPicFilePath(),
+			// response));
+			ServletContext sc = null;
+			// InputStream in =
+			// sc.getResourceAsStream(projectEntity.getProjMainPicFilePath());
+			InputStream in = null;
+			try {
+				in = this.getFileSystem(siteLocationEntity.getSiteLocationFilePath(), response).getInputStream();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				byte[] media = IOUtils.toByteArray(in);
+				siteLocationDTO.setLandImagePNGorJPGFileFormat(media);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+
+		return siteLocationDTO;
+	}
 
 	public BuildersEstimateDTO setBuilderEstimateDTO(BuildersEstimate buildersEstimateEntity) {
 		HttpServletResponse response = null;
@@ -1106,7 +1137,7 @@ public class CustomerService {
 			}
 			try {
 				byte[] media = IOUtils.toByteArray(in);
-				buildersEstimateDTO.setDetailedEstimateFile(media);
+				//buildersEstimateDTO.setDetailedEstimateFile(media);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -1181,7 +1212,8 @@ public class CustomerService {
 		if (custRequirement.isEmpty()) {
 			throw new ResourceNotFoundException("customerRequirementId: " + customerRequirementId + " not Found...");
 		}
-		custRequirementDTO = setCustomerRequirementDTOWithoutBuilderEstimate(custRequirement.get(0));
+		custRequirementDTO = setCustomerRequirementDTOForBuilderOpenTenders(custRequirement.get(0));
+		//custRequirementDTO = setCustomerRequirementDTOWithoutBuilderEstimate(custRequirement.get(0));
 		entityManager.close();
 		return custRequirementDTO;
 	}

@@ -499,6 +499,49 @@ public class BuilderController {
 		return generateResponse("List of Builders!", HttpStatus.OK, selectedProject.getPicture());
 	}
 	
+	@PostMapping(value = "/getSiteLocationByCustomerReqId")
+	public ResponseEntity<Object> getSiteLocationByCustomerReqId(@RequestParam("customerRequirementId") String customerRequirementId) {
+		ProjectsDTO selectedProject = new ProjectsDTO();
+		System.out.println("builderDTO:::::Test" + new Gson().toJson(customerRequirementId));
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		customerRequirementDTO = builderService.getSiteLocationByCustomerReqId(customerRequirementId);
+		Object uriVariables = null;
+		// throw new RuntimeException("Not Available");
+		// carList = carService.findCarList();
+		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
+		return generateResponse("List of Builders!", HttpStatus.OK, customerRequirementDTO);
+	}
+	
+	@PostMapping(value = "/getPlanByCustomerReqId")
+	public ResponseEntity<Object> getPlanByCustomerReqId(@RequestParam("customerRequirementId") String customerRequirementId) {
+		ProjectsDTO selectedProject = new ProjectsDTO();
+		System.out.println("builderDTO:::::Test" + new Gson().toJson(customerRequirementId));
+		CustomerRequirementDTO customerRequirementDTO = new CustomerRequirementDTO();
+		customerRequirementDTO = builderService.getPlanByCustomerReqId(customerRequirementId);
+		Object uriVariables = null;
+		// throw new RuntimeException("Not Available");
+		// carList = carService.findCarList();
+		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
+		return generateResponse("List of Builders!", HttpStatus.OK, customerRequirementDTO);
+	}
+	
+	@PostMapping(value = "/getEstimateByBuilderEstimateId")
+	public ResponseEntity<Object> getEstimateByBuilderEstimateId(@RequestParam("builderEstimateId") String builderEstimateId) {
+		ProjectsDTO selectedProject = new ProjectsDTO();
+		System.out.println("builderDTO:::::Test" + new Gson().toJson(builderEstimateId));
+		BuildersEstimateDTO buildersEstimateDTO = new BuildersEstimateDTO();
+		buildersEstimateDTO = builderService.getEstimateByBuilderEstimateId(builderEstimateId);
+		Object uriVariables = null;
+		// throw new RuntimeException("Not Available");
+		// carList = carService.findCarList();
+		// return new ResponseEntity<List<CategoryDTO>>(list, HttpStatus.OK);
+		// return generateResponse("List of Cars!", HttpStatus.OK, carList);
+		return generateResponse("List of Builders!", HttpStatus.OK, buildersEstimateDTO);
+	}
+	
+	
 	@PostMapping(value = "/getProjectImagesByBuilderId")
 	public ResponseEntity<Object> getProjectImagesByBuilderId(@RequestBody BuilderDTO builderDTO) {
 		List<ProjectsDTO> selectedProjects = new ArrayList<ProjectsDTO>();
