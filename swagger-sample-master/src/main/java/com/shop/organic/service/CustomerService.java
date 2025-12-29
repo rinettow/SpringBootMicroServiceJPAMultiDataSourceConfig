@@ -44,6 +44,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import com.google.gson.Gson;
 import com.shop.organic.dto.AddressDTO;
@@ -125,6 +126,13 @@ public class CustomerService {
 
 	@Autowired
 	private CreateEntityManager em;
+	
+	private WebClient webClient = null;
+
+	@Autowired
+	public CustomerService(WebClient webClient) {
+		this.webClient = webClient;
+	}
 
 	private enum ResourceType {
 		FILE_SYSTEM, CLASSPATH
@@ -303,9 +311,9 @@ public class CustomerService {
 		}
 		
 		if (customerEntity.getMaterialRequirement() != null && !customerEntity.getMaterialRequirement().isEmpty()) {
-			customerDTO.setMaterialRequirement(customerEntity.getMaterialRequirement().stream()
-					.map(materialRequirement -> productService.setMaterialRequirementDTO(materialRequirement))
-					.collect(Collectors.toList()));
+			//customerDTO.setMaterialRequirement(customerEntity.getMaterialRequirement().stream()
+			//	.map(materialRequirement -> productService.setMaterialRequirementDTO(materialRequirement))
+			//	.collect(Collectors.toList()));
 
 		}
 		// carDTOList.add(carDTO);
@@ -779,7 +787,7 @@ public class CustomerService {
 			}
 			try {
 				byte[] media = IOUtils.toByteArray(in);
-				customerRequirementDTO.setPlanPDFFileFormat(media);
+				//customerRequirementDTO.setPlanPDFFileFormat(media);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -1043,7 +1051,7 @@ public class CustomerService {
 			}
 			try {
 				byte[] media = IOUtils.toByteArray(in);
-				buildersEstimateDTO.setDetailedEstimateFile(media);
+				//buildersEstimateDTO.setDetailedEstimateFile(media);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -1528,6 +1536,20 @@ public class CustomerService {
 		entityManager.getTransaction().commit();
 
 		entityManager.close();
+		
+		String response = webClient.get().uri(
+				"/smsapi.aspx?uid=marilabor&pwd=11985&mobile="+customerOtp.getCustomerPhoneNumber()+"&msg=Please use the OTP- "+customerOtp.getCustomerOtpNumber()+" to complete Customer registration. - Mari Labor Estimates&sid=MARILE&type=0&dtTimeNow=09:00:57&entityid=1601819176286494692&tempid=1607100000000366850") // Appends
+																																																																// to
+																																																																// the
+																																																																// base
+																																																																// URL
+																																																																// configured
+																																																																// in
+																																																																// the
+																																																																// bean
+				.retrieve() // Initiate the request and retrieve the response
+				.bodyToMono(String.class) // Specify the expected response body type as a Mono
+				.block(); // Block to get the result synchronously (useful in non-reactive services)
 
 	}
 
